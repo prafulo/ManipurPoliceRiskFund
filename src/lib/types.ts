@@ -8,6 +8,13 @@ export type Unit = {
   name: string;
 };
 
+export type Nominee = {
+  name: string;
+  relation: string;
+  age: number;
+  share: number;
+};
+
 export type Member = {
   id: string;
   membershipCode: string;
@@ -31,10 +38,7 @@ export type Member = {
   closureReason?: ClosureReason;
   isDoubling: boolean;
   subscriptionStartDate: Date;
-  nominee: {
-    name: string;
-    relation: string;
-  };
+  nominees: Nominee[];
   firstWitness: {
     name: string;
     address: string;

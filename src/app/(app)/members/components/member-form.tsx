@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {
   Form,
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Save } from 'lucide-react';
+import { CalendarIcon, Save, Trash2, PlusCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,13 @@ import { units } from '@/lib/data';
 import type { Member } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+
+const nomineeSchema = z.object({
+  name: z.string().min(2, 'Nominee name is required.'),
+  relation: z.string().min(2, 'Relation is required.'),
+  age: z.coerce.number().min(1, 'Age must be at least 1.').max(120),
+  share: z.coerce.number().min(1, 'Share must be at least 1%').max(100, 'Share cannot exceed 100%'),
+});
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -47,8 +54,7 @@ const formSchema = z.object({
   unitId: z.string({ required_error: "Unit is required." }),
   status: z.enum(["Opened", "Closed"]),
   isDoubling: z.boolean().default(false),
-  nomineeName: z.string().min(2, "Nominee name is required."),
-  nomineeRelation: z.string().min(2, "Nominee relation is required."),
+  nominees: z.array(nomineeSchema).min(1, 'At least one nominee is required.'),
   closureReason: z.enum(["", "Retirement", "Death", "Doubling", "Expelled"]),
   badgeNumber: z.string().min(1, "Badge number is required."),
   bloodGroup: z.string().min(1, "Blood group is required."),
@@ -71,6 +77,15 @@ const formSchema = z.object({
 }, {
   message: "Reason for closure is required when status is 'Closed'.",
   path: ["closureReason"],
+}).refine(data => {
+  if (data.nominees.length > 0) {
+    const totalShare = data.nominees.reduce((sum, nominee) => sum + nominee.share, 0);
+    return totalShare === 100;
+  }
+  return true;
+}, {
+  message: "Total share for all nominees must be 100%.",
+  path: ["nominees"],
 });
 
 
@@ -101,8 +116,7 @@ export function MemberForm({ member }: MemberFormProps) {
       unitId: member?.unitId ?? '',
       status: member?.status ?? 'Opened',
       isDoubling: member?.isDoubling ?? false,
-      nomineeName: member?.nominee.name ?? '',
-      nomineeRelation: member?.nominee.relation ?? '',
+      nominees: member?.nominees ?? [{ name: '', relation: '', age: 0, share: 100 }],
       closureReason: member?.closureReason ?? '',
       badgeNumber: member?.badgeNumber ?? '',
       bloodGroup: member?.bloodGroup ?? '',
@@ -120,6 +134,12 @@ export function MemberForm({ member }: MemberFormProps) {
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "nominees",
+  });
+
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     toast({
       title: member ? "Member Updated" : "Member Created",
@@ -130,6 +150,8 @@ export function MemberForm({ member }: MemberFormProps) {
   }
 
   const status = form.watch("status");
+  const nomineeValues = form.watch("nominees");
+  const totalShare = nomineeValues.reduce((acc, nominee) => acc + (Number(nominee.share) || 0), 0);
 
   return (
     <Card className="shadow-lg">
@@ -272,7 +294,7 @@ export function MemberForm({ member }: MemberFormProps) {
             <Separator />
             
             <div className="space-y-6">
-               <h3 className="text-xl font-bold font-headline text-primary">Membership &amp; Nominee</h3>
+               <h3 className="text-xl font-bold font-headline text-primary">Membership Details</h3>
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="p-3 bg-muted/50 rounded-lg border">
                   <FormLabel>Membership Code</FormLabel>
@@ -330,18 +352,60 @@ export function MemberForm({ member }: MemberFormProps) {
                   )}
                 />
               </div>
-              <div className="grid md:grid-cols-2 gap-8">
-                <FormField control={form.control} name="nomineeName" render={({ field }) => (
-                    <FormItem><FormLabel>Nominee Name</FormLabel><FormControl><Input placeholder="Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}
-                />
-                <FormField control={form.control} name="nomineeRelation" render={({ field }) => (
-                    <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}
-                />
-              </div>
             </div>
             
+            <Separator />
+            
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold font-headline text-primary">Nominees</h3>
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', relation: '', age: 0, share: 0 })}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Nominee
+                </Button>
+              </div>
+
+              {form.formState.errors.nominees?.root && <FormMessage>{form.formState.errors.nominees.root.message}</FormMessage>}
+              
+              <div className="space-y-6">
+                {fields.map((item, index) => (
+                  <div key={item.id} className="p-4 border rounded-md relative space-y-4 bg-muted/20">
+                     {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <div className="grid md:grid-cols-4 gap-6 items-end">
+                      <FormField control={form.control} name={`nominees.${index}.name`} render={({ field }) => (
+                          <FormItem><FormLabel>Nominee Name</FormLabel><FormControl><Input placeholder="Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                        )}
+                      />
+                      <FormField control={form.control} name={`nominees.${index}.relation`} render={({ field }) => (
+                          <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage /></FormItem>
+                        )}
+                      />
+                      <FormField control={form.control} name={`nominees.${index}.age`} render={({ field }) => (
+                          <FormItem><FormLabel>Age</FormLabel><FormControl><Input type="number" placeholder="35" {...field} /></FormControl><FormMessage /></FormItem>
+                        )}
+                      />
+                      <FormField control={form.control} name={`nominees.${index}.share`} render={({ field }) => (
+                          <FormItem><FormLabel>Share (%)</FormLabel><FormControl><Input type="number" placeholder="100" {...field} /></FormControl><FormMessage /></FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+               <div className="text-right font-medium text-primary pr-4">Total Share: {totalShare}%</div>
+
+            </div>
+
             <Separator />
 
             <div className="space-y-6">
