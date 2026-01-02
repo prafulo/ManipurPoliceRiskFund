@@ -1,0 +1,108 @@
+'use client';
+import Link from 'next/link';
+import {
+  Menu,
+  GanttChartSquare,
+  UserCircle,
+  ChevronDown,
+  Home,
+  Users,
+  FileText,
+  Settings
+} from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
+
+const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/members', label: 'Members', icon: Users },
+  { href: '/reports', label: 'Reports', icon: FileText },
+  { href: '/settings', label: 'Settings', icon: Settings },
+];
+
+export function Header() {
+  const pathname = usePathname();
+  const { role, unit, switchRole } = useAuth();
+
+  return (
+    <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="flex flex-col">
+          <nav className="grid gap-4 text-base font-medium">
+            <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
+              <GanttChartSquare className="h-6 w-6 text-primary" />
+              <span className="text-primary font-headline">Unitrax</span>
+            </Link>
+            {navItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <SheetClose asChild key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary',
+                      isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                </SheetClose>
+              );
+            })}
+          </nav>
+        </SheetContent>
+      </Sheet>
+      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+        <div className="ml-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 relative">
+                <UserCircle className="h-8 w-8" />
+                <div className="text-left">
+                  <p className="text-sm font-medium">{role}</p>
+                  {unit && <p className="text-xs text-muted-foreground">{unit} Unit</p>}
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Switch Role</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => switchRole('Super Admin')}>
+                Super Admin
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => switchRole('Unit Admin')}>
+                Unit Admin
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </header>
+  );
+}
