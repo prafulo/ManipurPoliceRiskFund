@@ -1,4 +1,4 @@
-import { MemberForm } from "../components/member-form";
+import { ClientOnlyMemberForm } from "../components/client-only-member-form";
 
 export default function NewMemberPage() {
   return (
@@ -7,7 +7,7 @@ export default function NewMemberPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline">Create New Member Profile</h2>
         <p className="text-muted-foreground">Fill out the form to add a new member to the system.</p>
       </div>
-      <MemberForm />
+      <ClientOnlyMemberForm />
     </div>
   );
 }
