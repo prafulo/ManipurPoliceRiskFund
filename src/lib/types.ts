@@ -1,6 +1,7 @@
 export type MembershipStatus = "Opened" | "Closed";
 export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "";
 export type UserRole = "Super Admin" | "Unit Admin";
+export type MemberPostType = "Officiating" | "Temporary" | "Substantive";
 
 export type Unit = {
   id: string;
@@ -15,8 +16,13 @@ export type Member = {
   rank: string;
   trade: string;
   serviceNumber: string;
+  badgeNumber: string;
+  bloodGroup: string;
+  memberPostType: MemberPostType;
+  joiningRank: string;
   dateOfBirth: Date;
   dateOfEnrolment: Date;
+  superannuationDate: Date;
   dateOfDischarge?: Date;
   address: string;
   phone: string;
@@ -29,6 +35,18 @@ export type Member = {
     name: string;
     relation: string;
   };
+  firstWitness: {
+    name: string;
+    address: string;
+  };
+  secondWitness: {
+    name: string;
+    address: string;
+  };
+  parentDepartment?: string;
+  dateApplied: Date;
+  receiptDate: Date;
+  allotmentDate: Date;
 };
 
 export type Payment = {

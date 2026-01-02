@@ -50,6 +50,19 @@ const formSchema = z.object({
   nomineeName: z.string().min(2, "Nominee name is required."),
   nomineeRelation: z.string().min(2, "Nominee relation is required."),
   closureReason: z.enum(["", "Retirement", "Death", "Doubling", "Expelled"]),
+  badgeNumber: z.string().min(1, "Badge number is required."),
+  bloodGroup: z.string().min(1, "Blood group is required."),
+  memberPostType: z.enum(["Officiating", "Temporary", "Substantive"]),
+  joiningRank: z.string().min(1, "Joining rank is required."),
+  superannuationDate: z.date({ required_error: "Superannuation date is required." }),
+  firstWitnessName: z.string().min(2, "First witness name is required."),
+  firstWitnessAddress: z.string().min(5, "First witness address is required."),
+  secondWitnessName: z.string().min(2, "Second witness name is required."),
+  secondWitnessAddress: z.string().min(5, "Second witness address is required."),
+  parentDepartment: z.string().optional(),
+  dateApplied: z.date({ required_error: "Date applied is required." }),
+  receiptDate: z.date({ required_error: "Receipt date is required." }),
+  allotmentDate: z.date({ required_error: "Allotment date is required." }),
 }).refine(data => {
   if (data.status === 'Closed') {
     return data.closureReason !== "";
@@ -91,6 +104,19 @@ export function MemberForm({ member }: MemberFormProps) {
       nomineeName: member?.nominee.name ?? '',
       nomineeRelation: member?.nominee.relation ?? '',
       closureReason: member?.closureReason ?? '',
+      badgeNumber: member?.badgeNumber ?? '',
+      bloodGroup: member?.bloodGroup ?? '',
+      memberPostType: member?.memberPostType ?? 'Substantive',
+      joiningRank: member?.joiningRank ?? '',
+      superannuationDate: member?.superannuationDate,
+      firstWitnessName: member?.firstWitness.name ?? '',
+      firstWitnessAddress: member?.firstWitness.address ?? '',
+      secondWitnessName: member?.secondWitness.name ?? '',
+      secondWitnessAddress: member?.secondWitness.address ?? '',
+      parentDepartment: member?.parentDepartment ?? '',
+      dateApplied: member?.dateApplied,
+      receiptDate: member?.receiptDate,
+      allotmentDate: member?.allotmentDate,
     },
   });
 
@@ -110,47 +136,26 @@ export function MemberForm({ member }: MemberFormProps) {
       <CardContent className="p-6 md:p-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid md:grid-cols-3 gap-8 items-start">
-              <FormField name="name" control={form.control} render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Member Name</FormLabel>
-                    <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField name="fatherName" control={form.control} render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Father's Name</FormLabel>
-                    <FormControl><Input placeholder="Richard Doe" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="p-3 bg-muted/50 rounded-lg border">
-                <FormLabel>Membership Code</FormLabel>
-                <p className="text-lg font-mono font-semibold pt-2 text-primary">{member?.membershipCode ?? newMemberCode}</p>
-                <FormDescription>Auto-generated on creation.</FormDescription>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              <FormField name="rank" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Rank</FormLabel><FormControl><Input placeholder="Sergeant" {...field} /></FormControl><FormMessage /></FormItem>
-                )}
-              />
-              <FormField name="trade" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Trade</FormLabel><FormControl><Input placeholder="Infantry" {...field} /></FormControl><FormMessage /></FormItem>
-                )}
-              />
-              <FormField name="serviceNumber" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Service No.</FormLabel><FormControl><Input placeholder="12345" {...field} /></FormControl><FormMessage /></FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-                <FormField control={form.control} name="dateOfBirth" render={({ field }) => (
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold font-headline text-primary">Personal Information</h3>
+              <div className="grid md:grid-cols-3 gap-8 items-start">
+                <FormField name="name" control={form.control} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Member Name</FormLabel>
+                      <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField name="fatherName" control={form.control} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Father's Name</FormLabel>
+                      <FormControl><Input placeholder="Richard Doe" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField control={form.control} name="dateOfBirth" render={({ field }) => (
                     <FormItem className="flex flex-col"><FormLabel>Date of Birth</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild><FormControl>
@@ -166,6 +171,62 @@ export function MemberForm({ member }: MemberFormProps) {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+              </div>
+              <div className="grid md:grid-cols-3 gap-8">
+                <FormField name="address" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="123 Main St..." {...field} /></FormControl><FormMessage /></FormItem>
+                    )}
+                />
+                <FormField name="phone" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="555-123-4567" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}
+                />
+                <FormField name="bloodGroup" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Blood Group</FormLabel><FormControl><Input placeholder="O+" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator />
+            
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold font-headline text-primary">Service Details</h3>
+              <div className="grid md:grid-cols-4 gap-8">
+                <FormField name="serviceNumber" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Service No.</FormLabel><FormControl><Input placeholder="12345" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}
+                />
+                <FormField name="badgeNumber" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Badge No.</FormLabel><FormControl><Input placeholder="BN123" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}
+                />
+                <FormField name="joiningRank" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Joining Rank</FormLabel><FormControl><Input placeholder="Recruit" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}
+                />
+                 <FormField name="rank" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Present Rank</FormLabel><FormControl><Input placeholder="Sergeant" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}
+                />
+                <FormField name="trade" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Trade</FormLabel><FormControl><Input placeholder="Infantry" {...field} /></FormControl><FormMessage /></FormItem>
+                  )}
+                />
+                <FormField control={form.control} name="memberPostType" render={({ field }) => (
+                  <FormItem><FormLabel>Member Post Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Select post type" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="Officiating">Officiating</SelectItem>
+                        <SelectItem value="Temporary">Temporary</SelectItem>
+                        <SelectItem value="Substantive">Substantive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
                 />
                 <FormField control={form.control} name="dateOfEnrolment" render={({ field }) => (
                     <FormItem className="flex flex-col"><FormLabel>Date of Enrolment</FormLabel>
@@ -184,24 +245,40 @@ export function MemberForm({ member }: MemberFormProps) {
                     </FormItem>
                   )}
                 />
+                <FormField control={form.control} name="superannuationDate" render={({ field }) => (
+                    <FormItem className="flex flex-col"><FormLabel>Superannuation Date</FormLabel>
+                       <Popover>
+                        <PopoverTrigger asChild><FormControl>
+                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
+                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date()} initialFocus/>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField name="parentDepartment" control={form.control} render={({ field }) => (
+                  <FormItem><FormLabel>Parent Department (for Deputationist)</FormLabel><FormControl><Input placeholder="e.g. Ministry of Defense" {...field} /></FormControl><FormDescription>Only fill if the member is on deputation.</FormDescription><FormMessage /></FormItem>
+                )}
+              />
             </div>
+
+            <Separator />
             
-            <div className="grid md:grid-cols-2 gap-8">
-                <FormField name="address" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="123 Main St..." {...field} /></FormControl><FormMessage /></FormItem>
-                    )}
-                />
-                <FormField name="phone" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="555-123-4567" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}
-                />
-            </div>
-
-            <Separator className="my-8" />
-
-            <div className="grid md:grid-cols-2 gap-x-8 gap-y-8">
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium font-headline">Membership Details</h3>
+            <div className="space-y-6">
+               <h3 className="text-xl font-bold font-headline text-primary">Membership &amp; Nominee</h3>
+              <div className="grid md:grid-cols-3 gap-8">
+                <div className="p-3 bg-muted/50 rounded-lg border">
+                  <FormLabel>Membership Code</FormLabel>
+                  <p className="text-lg font-mono font-semibold pt-2 text-primary">{member?.membershipCode ?? newMemberCode}</p>
+                  <FormDescription>Auto-generated on creation.</FormDescription>
+                </div>
                 <FormField control={form.control} name="unitId" render={({ field }) => (
                     <FormItem><FormLabel>Unit</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -243,7 +320,7 @@ export function MemberForm({ member }: MemberFormProps) {
                   />
                 )}
                 <FormField control={form.control} name="isDoubling" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/50">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/50 col-span-3">
                       <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange}/></FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>Membership Doubling</FormLabel>
@@ -253,8 +330,7 @@ export function MemberForm({ member }: MemberFormProps) {
                   )}
                 />
               </div>
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium font-headline">Nominee Details</h3>
+              <div className="grid md:grid-cols-2 gap-8">
                 <FormField control={form.control} name="nomineeName" render={({ field }) => (
                     <FormItem><FormLabel>Nominee Name</FormLabel><FormControl><Input placeholder="Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
                     )}
@@ -265,6 +341,36 @@ export function MemberForm({ member }: MemberFormProps) {
                 />
               </div>
             </div>
+            
+            <Separator />
+
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold font-headline text-primary">Witnesses</h3>
+               <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4 p-4 border rounded-md">
+                     <h4 className="font-medium">First Witness</h4>
+                     <FormField control={form.control} name="firstWitnessName" render={({ field }) => (<FormItem><FormLabel>Witness Name</FormLabel><FormControl><Input placeholder="Witness One" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="firstWitnessAddress" render={({ field }) => (<FormItem><FormLabel>Witness Address</FormLabel><FormControl><Input placeholder="123 Witness Ave" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+                   <div className="space-y-4 p-4 border rounded-md">
+                     <h4 className="font-medium">Second Witness</h4>
+                     <FormField control={form.control} name="secondWitnessName" render={({ field }) => (<FormItem><FormLabel>Witness Name</FormLabel><FormControl><Input placeholder="Witness Two" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="secondWitnessAddress" render={({ field }) => (<FormItem><FormLabel>Witness Address</FormLabel><FormControl><Input placeholder="456 Witness Blvd" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+               </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold font-headline text-primary">Application Dates</h3>
+               <div className="grid md:grid-cols-3 gap-8">
+                  <FormField control={form.control} name="dateApplied" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Date Applied</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="receiptDate" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Receipt Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="allotmentDate" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Allotment Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover><FormMessage /></FormItem>)} />
+               </div>
+            </div>
+
 
             <div className="flex justify-end pt-4">
               <Button type="submit">
