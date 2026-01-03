@@ -2,10 +2,11 @@
 
 import { ClientOnlyMemberForm } from "../components/client-only-member-form";
 import { notFound } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import type { Member } from "@/lib/types";
 
-export default function EditMemberPage({ params }: { params: { id: string } }) {
+export default function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -13,13 +14,13 @@ export default function EditMemberPage({ params }: { params: { id: string } }) {
     const allMembersString = localStorage.getItem('members');
     if (allMembersString) {
       const allMembers = JSON.parse(allMembersString);
-      const foundMember = allMembers.find((m: Member) => m.id === params.id);
+      const foundMember = allMembers.find((m: Member) => m.id === id);
       if (foundMember) {
         setMember(foundMember);
       }
     }
     setLoading(false);
-  }, [params.id]);
+  }, [id]);
 
   if (loading) {
     return <div>Loading member data...</div>;
