@@ -29,10 +29,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { units } from '@/lib/data';
+import { units, members as allMembers } from '@/lib/data';
 import type { Member } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const nomineeSchema = z.object({
   name: z.string().min(2, 'Nominee name is required.'),
@@ -63,7 +64,7 @@ const formSchema = z.object({
   superannuationDate: z.date({ required_error: "Superannuation date is required." }),
   firstWitnessName: z.string().min(2, "First witness name is required."),
   firstWitnessAddress: z.string().min(5, "First witness address is required."),
-  secondWitnessName: z.string().min(2, "Second witness name is required."),
+  secondWitnessName: z_string().min(2, "Second witness name is required."),
   secondWitnessAddress: z.string().min(5, "Second witness address is required."),
   parentDepartment: z.string().optional(),
   dateApplied: z.date({ required_error: "Date applied is required." }),
@@ -93,13 +94,33 @@ type MemberFormProps = {
   member?: Member;
 };
 
+// In a real app, these would come from a database or a config file.
+const initialSerialNumbers: Record<string, number> = {
+  '1': 31000, // 1MR
+  '2': 31000, // 2MR
+  '3': 31000, // 3MR
+  '4': 51000, // HQ
+};
+
+function getNextSerialNumber(unitId: string): number {
+  const membersOfUnit = allMembers.filter(m => m.unitId === unitId);
+  if (membersOfUnit.length === 0) {
+    return initialSerialNumbers[unitId] || 10000;
+  }
+  const lastMember = membersOfUnit.reduce((latest, current) => {
+    const latestNum = parseInt(latest.membershipCode.split('-')[1], 10);
+    const currentNum = parseInt(current.membershipCode.split('-')[1], 10);
+    return currentNum > latestNum ? current : latest;
+  });
+  const lastSerialNumber = parseInt(lastMember.membershipCode.split('-')[1], 10);
+  return lastSerialNumber + 1;
+}
+
+
 export function MemberForm({ member }: MemberFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-
-  // In a real app, the unique number would come from a database sequence.
-  // We simulate it here for demonstration.
-  const newMemberCode = `1MR-${31004 + Math.floor(Math.random() * 100)}-${format(new Date(), 'MMdd')}`;
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -139,14 +160,31 @@ export function MemberForm({ member }: MemberFormProps) {
     name: "nominees",
   });
 
+  const selectedUnitId = form.watch("unitId");
+
+  useEffect(() => {
+    if (!member && selectedUnitId) {
+      const unit = units.find(u => u.id === selectedUnitId);
+      if (unit) {
+        const nextSerial = getNextSerialNumber(selectedUnitId);
+        const datePart = format(new Date(), 'MMdd');
+        setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
+      }
+    }
+  }, [selectedUnitId, member]);
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    const finalValues = {
+      ...values,
+      membershipCode: member?.membershipCode || generatedCode,
+    };
     toast({
       title: member ? "Member Updated" : "Member Created",
       description: `Profile for ${values.name} has been saved successfully.`,
     });
     router.push('/members');
-    console.log(values);
+    console.log(finalValues);
   }
 
   const status = form.watch("status");
@@ -298,8 +336,8 @@ export function MemberForm({ member }: MemberFormProps) {
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="p-3 bg-muted/50 rounded-lg border">
                   <FormLabel>Membership Code</FormLabel>
-                  <p className="text-lg font-mono font-semibold pt-2 text-primary">{member?.membershipCode ?? newMemberCode}</p>
-                  <FormDescription>Auto-generated on creation.</FormDescription>
+                  <p className="text-lg font-mono font-semibold pt-2 text-primary">{member?.membershipCode ?? generatedCode ?? 'Select a unit'}</p>
+                  <FormDescription>{member ? 'Assigned membership code' : 'Auto-generated on creation'}</FormDescription>
                 </div>
                 <FormField control={form.control} name="unitId" render={({ field }) => (
                     <FormItem><FormLabel>Unit</FormLabel>
@@ -387,7 +425,7 @@ export function MemberForm({ member }: MemberFormProps) {
                         )}
                       />
                       <FormField control={form.control} name={`nominees.${index}.relation`} render={({ field }) => (
-                          <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage /></FormItem>
+                          <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage /></FormMessage>
                         )}
                       />
                       <FormField control={form.control} name={`nominees.${index}.age`} render={({ field }) => (
