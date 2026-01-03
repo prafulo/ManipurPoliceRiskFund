@@ -48,7 +48,7 @@ const formSchema = z.object({
   trade: z.string().min(1, "Trade is required."),
   serviceNumber: z.string().min(1, "Service number is required."),
   dateOfBirth: z.date({ required_error: "Date of birth is required." }),
-  dateOfEnrolment: z.date({ required_error: "Date of enrolment is required." }),
+  dateOfEnrollment: z.date({ required_error: "Date of enrollment is required." }),
   address: z.string().min(5, "Address is required."),
   phone: z.string().min(10, "A valid phone number is required."),
   unitId: z.string({ required_error: "Unit is required." }),
@@ -250,8 +250,8 @@ export function MemberForm({ member }: MemberFormProps) {
                   </FormItem>
                 )}
                 />
-                <FormField control={form.control} name="dateOfEnrolment" render={({ field }) => (
-                    <FormItem className="flex flex-col"><FormLabel>Date of Enrolment</FormLabel>
+                <FormField control={form.control} name="dateOfEnrollment" render={({ field }) => (
+                    <FormItem className="flex flex-col"><FormLabel>Date of Enrollment</FormLabel>
                        <Popover>
                         <PopoverTrigger asChild><FormControl>
                             <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
@@ -448,5 +448,3 @@ export function MemberForm({ member }: MemberFormProps) {
     </Card>
   );
 }
-
-    

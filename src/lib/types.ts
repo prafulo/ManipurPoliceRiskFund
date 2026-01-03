@@ -28,7 +28,7 @@ export type Member = {
   memberPostType: MemberPostType;
   joiningRank: string;
   dateOfBirth: Date;
-  dateOfEnrolment: Date;
+  dateOfEnrollment: Date;
   superannuationDate: Date;
   dateOfDischarge?: Date;
   address: string;
