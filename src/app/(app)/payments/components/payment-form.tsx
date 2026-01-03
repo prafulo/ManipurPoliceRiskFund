@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,7 +28,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, addMonths, startOfMonth, eachMonthOfInterval, endOfMonth } from 'date-fns';
 import type { Member, Unit, Payment } from '@/lib/types';
-import { payments as allPayments } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -48,9 +48,11 @@ type PaymentFormProps = {
 
 const MONTHLY_SUBSCRIPTION_AMOUNT = 100; // This should come from settings
 
-function addPayment(payment: Omit<Payment, 'id'>) {
-    const newId = (allPayments.length + 1).toString();
-    allPayments.push({ ...payment, id: newId });
+function addPaymentToLocalStorage(payment: Payment) {
+    const existingPaymentsString = localStorage.getItem('payments');
+    const existingPayments = existingPaymentsString ? JSON.parse(existingPaymentsString) : [];
+    existingPayments.push(payment);
+    localStorage.setItem('payments', JSON.stringify(existingPayments));
 }
 
 export function PaymentForm({ members, units }: PaymentFormProps) {
@@ -102,7 +104,8 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
         return;
     }
 
-    const newPayment = {
+    const newPayment: Payment = {
+        id: new Date().getTime().toString(), // Unique ID
         memberId: member.id,
         memberName: member.name,
         membershipCode: member.membershipCode,
@@ -112,14 +115,13 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
         paymentDate: new Date(),
     };
 
-    addPayment(newPayment);
+    addPaymentToLocalStorage(newPayment);
 
     toast({
       title: "Payment Recorded",
       description: `Payment of $${totalAmount} for ${member?.name} has been saved.`,
     });
     router.push('/payments');
-    router.refresh(); // Refresh the page to show the new payment
   }
 
   const selectedMemberId = form.watch('memberId');

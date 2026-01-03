@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -24,15 +25,28 @@ import { useRouter } from 'next/navigation';
 import type { Payment } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 type SortKey = keyof Payment | '';
 type SortDirection = 'asc' | 'desc';
 
 interface PaymentTableProps {
   data: Payment[];
+  onDelete: (paymentId: string) => void;
 }
 
-export function PaymentTable({ data }: PaymentTableProps) {
+export function PaymentTable({ data, onDelete }: PaymentTableProps) {
   const router = useRouter();
 
   const [filter, setFilter] = React.useState('');
@@ -129,20 +143,40 @@ export function PaymentTable({ data }: PaymentTableProps) {
                     <TableCell>${payment.amount.toFixed(2)}</TableCell>
                     <TableCell>{payment.months.map(m => format(new Date(m), 'MMM yyyy')).join(', ')}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View Receipt</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">Delete Payment</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                       <AlertDialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>View Receipt</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">
+                                    Delete Payment
+                                </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                         <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this payment record.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDelete(payment.id)}>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                         </AlertDialogContent>
+                       </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))
@@ -183,3 +217,4 @@ export function PaymentTable({ data }: PaymentTableProps) {
     </Card>
   );
 }
+
