@@ -29,7 +29,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { units, members as allMembers } from '@/lib/data';
+import { units } from '@/lib/data';
 import type { Member } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -104,10 +104,13 @@ const initialSerialNumbers: Record<string, number> = {
   '4': 51000, // HQ
 };
 
-function getNextSerialNumber(unitId: string): number {
+function getNextSerialNumber(unitId: string, allMembers: Member[]): number {
   const membersOfUnit = allMembers.filter(m => m.unitId === unitId);
   if (membersOfUnit.length === 0) {
-    return initialSerialNumbers[unitId] || 10000;
+    // In a real app, you'd fetch this from settings. For now, we get it from localStorage or a default.
+    const settingsString = typeof window !== 'undefined' ? localStorage.getItem('settings-serial') : null;
+    const serialSettings = settingsString ? JSON.parse(settingsString) : initialSerialNumbers;
+    return serialSettings[unitId] || 10000;
   }
   const lastMember = membersOfUnit.reduce((latest, current) => {
     const latestNum = parseInt(latest.membershipCode.split('-')[1], 10);
@@ -128,6 +131,13 @@ export function MemberForm({ member }: MemberFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: member ? {
       ...member,
+      // The dates from mock data are already Date objects. If they were strings, you'd use new Date().
+      dateOfBirth: typeof member.dateOfBirth === 'string' ? new Date(member.dateOfBirth) : member.dateOfBirth,
+      dateOfEnrollment: typeof member.dateOfEnrollment === 'string' ? new Date(member.dateOfEnrollment) : member.dateOfEnrollment,
+      superannuationDate: typeof member.superannuationDate === 'string' ? new Date(member.superannuationDate) : member.superannuationDate,
+      dateApplied: typeof member.dateApplied === 'string' ? new Date(member.dateApplied) : member.dateApplied,
+      receiptDate: typeof member.receiptDate === 'string' ? new Date(member.receiptDate) : member.receiptDate,
+      allotmentDate: typeof member.allotmentDate === 'string' ? new Date(member.allotmentDate) : member.allotmentDate,
       closureReason: member.closureReason || '',
       closureNotes: member.closureNotes || '',
       parentDepartment: member.parentDepartment || '',
@@ -169,32 +179,71 @@ export function MemberForm({ member }: MemberFormProps) {
   const selectedUnitId = form.watch("unitId");
 
   useEffect(() => {
-    // Only generate a new code if we are creating a new member.
+    // This effect should only run on the client after mount to avoid hydration errors.
     if (!member && selectedUnitId) {
+      const allMembersString = localStorage.getItem('members');
+      const allMembers = allMembersString ? JSON.parse(allMembersString) : [];
       const unit = units.find(u => u.id === selectedUnitId);
       if (unit) {
-        const nextSerial = getNextSerialNumber(selectedUnitId);
-        const datePart = format(new Date(), 'MMdd');
+        const nextSerial = getNextSerialNumber(selectedUnitId, allMembers);
+        const datePart = format(new Date(), 'MMyy'); // Format as MMYY
         setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
       }
     } else if (member) {
-      // If we are editing an existing member, just display their code.
       setGeneratedCode(member.membershipCode);
     }
   }, [selectedUnitId, member]);
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const finalValues = {
-      ...values,
-      membershipCode: member?.membershipCode || generatedCode,
-    };
+    const allMembersString = localStorage.getItem('members');
+    let allMembers = allMembersString ? JSON.parse(allMembersString) : [];
+
+    if (member) {
+      // Editing existing member
+      const memberIndex = allMembers.findIndex((m: Member) => m.id === member.id);
+      if (memberIndex !== -1) {
+        const updatedMember = {
+          ...allMembers[memberIndex],
+          ...values,
+          firstWitness: {
+              name: values.firstWitnessName,
+              address: values.firstWitnessAddress
+          },
+          secondWitness: {
+              name: values.secondWitnessName,
+              address: values.secondWitnessAddress
+          }
+        };
+        allMembers[memberIndex] = updatedMember;
+      }
+    } else {
+      // Creating new member
+      const newMember: Member = {
+        ...values,
+        id: new Date().getTime().toString(),
+        membershipCode: generatedCode!,
+        subscriptionStartDate: new Date(), // Set a default
+         firstWitness: {
+              name: values.firstWitnessName,
+              address: values.firstWitnessAddress
+          },
+          secondWitness: {
+              name: values.secondWitnessName,
+              address: values.secondWitnessAddress
+          }
+      };
+      allMembers.push(newMember);
+    }
+
+    localStorage.setItem('members', JSON.stringify(allMembers));
+
     toast({
       title: member ? "Member Updated" : "Member Created",
       description: `Profile for ${values.name} has been saved successfully.`,
     });
     router.push('/members');
-    console.log(finalValues);
+    router.refresh(); // Force a refresh to reflect changes
   }
 
   const status = form.watch("status");

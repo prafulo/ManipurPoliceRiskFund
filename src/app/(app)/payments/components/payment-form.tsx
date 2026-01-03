@@ -26,7 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Save } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format, addMonths, startOfMonth, eachMonthOfInterval, endOfMonth } from 'date-fns';
+import { format, eachMonthOfInterval, startOfMonth } from 'date-fns';
 import type { Member, Unit, Payment } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -46,20 +46,21 @@ type PaymentFormProps = {
   units: Unit[];
 };
 
-const MONTHLY_SUBSCRIPTION_AMOUNT = 100; // This should come from settings
-
-function addPaymentToLocalStorage(payment: Payment) {
-    const existingPaymentsString = localStorage.getItem('payments');
-    const existingPayments = existingPaymentsString ? JSON.parse(existingPaymentsString) : [];
-    existingPayments.push(payment);
-    localStorage.setItem('payments', JSON.stringify(existingPayments));
-}
 
 export function PaymentForm({ members, units }: PaymentFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedMemberId = searchParams.get('memberId');
+
+  const [monthlySubscriptionAmount, setMonthlySubscriptionAmount] = useState(100);
+
+  useEffect(() => {
+    const storedAmount = localStorage.getItem('settings-subscription-amount');
+    if (storedAmount) {
+      setMonthlySubscriptionAmount(Number(storedAmount));
+    }
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -80,7 +81,7 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
 
   const monthRange = form.watch('monthRange');
   const [numberOfMonths, setNumberOfMonths] = useState(1);
-  const [totalAmount, setTotalAmount] = useState(MONTHLY_SUBSCRIPTION_AMOUNT);
+  const [totalAmount, setTotalAmount] = useState(monthlySubscriptionAmount);
 
   useEffect(() => {
       if(monthRange?.from && monthRange?.to) {
@@ -89,9 +90,9 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
               end: monthRange.to
           });
           setNumberOfMonths(months.length);
-          setTotalAmount(months.length * MONTHLY_SUBSCRIPTION_AMOUNT);
+          setTotalAmount(months.length * monthlySubscriptionAmount);
       }
-  }, [monthRange]);
+  }, [monthRange, monthlySubscriptionAmount]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const member = members.find(m => m.id === values.memberId);
@@ -114,12 +115,15 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
         months: eachMonthOfInterval({ start: values.monthRange.from, end: values.monthRange.to }),
         paymentDate: new Date(),
     };
-
-    addPaymentToLocalStorage(newPayment);
+    
+    const existingPaymentsString = localStorage.getItem('payments');
+    const existingPayments = existingPaymentsString ? JSON.parse(existingPaymentsString) : [];
+    existingPayments.push(newPayment);
+    localStorage.setItem('payments', JSON.stringify(existingPayments));
 
     toast({
       title: "Payment Recorded",
-      description: `Payment of $${totalAmount} for ${member?.name} has been saved.`,
+      description: `Payment of $${totalAmount.toFixed(2)} for ${member?.name} has been saved.`,
     });
     router.push('/payments');
   }
@@ -223,7 +227,7 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
                     <h4 className="font-medium text-lg">Payment Summary</h4>
                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Monthly Rate:</span>
-                        <span className="font-semibold">${MONTHLY_SUBSCRIPTION_AMOUNT.toFixed(2)}</span>
+                        <span className="font-semibold">${monthlySubscriptionAmount.toFixed(2)}</span>
                     </div>
                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Months Selected:</span>

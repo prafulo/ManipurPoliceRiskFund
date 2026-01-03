@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { units } from '@/lib/data';
 
 // This would come from a database in a real app
-const initialSerialNumbers = units.reduce((acc, unit) => {
+const defaultSerialNumbers = units.reduce((acc, unit) => {
   acc[unit.id] = 31000; // Default starting number
   return acc;
 }, {} as Record<string, number>);
@@ -23,12 +23,23 @@ const initialSerialNumbers = units.reduce((acc, unit) => {
 
 export default function SettingsPage() {
   const [amount, setAmount] = useState(100); // Default amount
-  const [serialNumbers, setSerialNumbers] = useState(initialSerialNumbers);
+  const [serialNumbers, setSerialNumbers] = useState(defaultSerialNumbers);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const storedAmount = localStorage.getItem('settings-subscription-amount');
+    if (storedAmount) {
+      setAmount(Number(storedAmount));
+    }
+
+    const storedSerials = localStorage.getItem('settings-serial');
+    if (storedSerials) {
+      setSerialNumbers(JSON.parse(storedSerials));
+    }
+  }, []);
+
   const handleSubscriptionSave = () => {
-    // In a real app, this would be a server action to update the setting
-    console.log("Saving new amount:", amount);
+    localStorage.setItem('settings-subscription-amount', String(amount));
     toast({
       title: "Settings Saved",
       description: `The monthly subscription amount has been updated to $${amount}.`,
@@ -36,8 +47,7 @@ export default function SettingsPage() {
   }
 
   const handleSerialSave = () => {
-    // In a real app, this would be a server action to update the settings
-    console.log("Saving new serial numbers:", serialNumbers);
+    localStorage.setItem('settings-serial', JSON.stringify(serialNumbers));
     toast({
       title: "Settings Saved",
       description: `The initial membership serial numbers have been updated.`,

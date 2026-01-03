@@ -6,11 +6,42 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { MemberTable } from "./components/member-table";
-import { members, units } from "@/lib/data";
+import { members as initialMembers, units } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Member } from '@/lib/types';
 
 export default function MembersPage() {
-  // This would be a server component fetching data
+  const [members, setMembers] = React.useState<Member[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const storedMembers = localStorage.getItem('members');
+    let memberData;
+    if (storedMembers) {
+      // Dates will be strings from JSON, so we need to convert them back to Date objects
+      memberData = JSON.parse(storedMembers).map((m: any) => ({
+        ...m,
+        dateOfBirth: new Date(m.dateOfBirth),
+        dateOfEnrollment: new Date(m.dateOfEnrollment),
+        superannuationDate: new Date(m.superannuationDate),
+        subscriptionStartDate: new Date(m.subscriptionStartDate),
+        dateApplied: new Date(m.dateApplied),
+        receiptDate: new Date(m.receiptDate),
+        allotmentDate: new Date(m.allotmentDate),
+        dateOfDischarge: m.dateOfDischarge ? new Date(m.dateOfDischarge) : undefined,
+      }));
+    } else {
+      memberData = initialMembers;
+      localStorage.setItem('members', JSON.stringify(initialMembers));
+    }
+    setMembers(memberData);
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading members...</div>
+  }
+
   const enrichedMembers = members.map(member => ({
     ...member,
     unitName: units.find(u => u.id === member.unitId)?.name || 'N/A'

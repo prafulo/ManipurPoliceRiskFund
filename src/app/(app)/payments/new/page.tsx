@@ -1,9 +1,26 @@
+'use client';
+
 import { PaymentForm } from "../components/payment-form";
-import { members, units } from "@/lib/data";
-import { Suspense } from "react";
+import { units } from "@/lib/data";
+import { Suspense, useEffect, useState } from "react";
+import type { Member } from "@/lib/types";
 
 function PaymentFormLoader() {
-    // You can add a skeleton loader here if needed
+    const [members, setMembers] = useState<Member[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const storedMembers = localStorage.getItem('members');
+        if (storedMembers) {
+            setMembers(JSON.parse(storedMembers));
+        }
+        setLoading(false);
+    }, []);
+
+    if (loading) {
+        return <div>Loading form...</div>
+    }
+
     return <PaymentForm members={members} units={units} />
 }
 
