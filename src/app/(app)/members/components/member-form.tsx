@@ -120,7 +120,7 @@ function getNextSerialNumber(unitId: string): number {
 export function MemberForm({ member }: MemberFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(member?.membershipCode ?? null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -336,7 +336,7 @@ export function MemberForm({ member }: MemberFormProps) {
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="p-3 bg-muted/50 rounded-lg border">
                   <FormLabel>Membership Code</FormLabel>
-                  <p className="text-lg font-mono font-semibold pt-2 text-primary">{member?.membershipCode ?? generatedCode ?? 'Select a unit'}</p>
+                  <p className="text-lg font-mono font-semibold pt-2 text-primary">{generatedCode ?? 'Select a unit'}</p>
                   <FormDescription>{member ? 'Assigned membership code' : 'Auto-generated on creation'}</FormDescription>
                 </div>
                 <FormField control={form.control} name="unitId" render={({ field }) => (
@@ -486,3 +486,5 @@ export function MemberForm({ member }: MemberFormProps) {
     </Card>
   );
 }
+
+    
