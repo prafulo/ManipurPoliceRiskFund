@@ -122,13 +122,15 @@ function getNextSerialNumber(unitId: string): number {
 export function MemberForm({ member }: MemberFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [generatedCode, setGeneratedCode] = useState<string | null>(member?.membershipCode ?? null);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: member ? {
       ...member,
+      closureReason: member.closureReason || '',
       closureNotes: member.closureNotes || '',
+      parentDepartment: member.parentDepartment || '',
       firstWitnessName: member.firstWitness.name,
       firstWitnessAddress: member.firstWitness.address,
       secondWitnessName: member.secondWitness.name,
@@ -167,13 +169,17 @@ export function MemberForm({ member }: MemberFormProps) {
   const selectedUnitId = form.watch("unitId");
 
   useEffect(() => {
+    // Only generate a new code if we are creating a new member.
     if (!member && selectedUnitId) {
       const unit = units.find(u => u.id === selectedUnitId);
       if (unit) {
         const nextSerial = getNextSerialNumber(selectedUnitId);
-        const datePart = format(new Date(), 'MMyy');
+        const datePart = format(new Date(), 'MMdd');
         setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
       }
+    } else if (member) {
+      // If we are editing an existing member, just display their code.
+      setGeneratedCode(member.membershipCode);
     }
   }, [selectedUnitId, member]);
 
