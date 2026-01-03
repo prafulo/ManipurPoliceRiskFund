@@ -1,8 +1,13 @@
+
+'use client';
+
+import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { MemberTable } from "./components/member-table";
 import { members, units } from "@/lib/data";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function MembersPage() {
   // This would be a server component fetching data
@@ -10,6 +15,9 @@ export default function MembersPage() {
     ...member,
     unitName: units.find(u => u.id === member.unitId)?.name || 'N/A'
   }));
+
+  const openMembers = enrichedMembers.filter(m => m.status === 'Opened');
+  const closedMembers = enrichedMembers.filter(m => m.status === 'Closed');
 
   return (
     <div>
@@ -25,7 +33,19 @@ export default function MembersPage() {
           </Button>
         </Link>
       </div>
-      <MemberTable data={enrichedMembers} />
+
+      <Tabs defaultValue="opened">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="opened">Opened</TabsTrigger>
+          <TabsTrigger value="closed">Closed</TabsTrigger>
+        </TabsList>
+        <TabsContent value="opened" className="mt-4">
+          <MemberTable data={openMembers} />
+        </TabsContent>
+        <TabsContent value="closed" className="mt-4">
+          <MemberTable data={closedMembers} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

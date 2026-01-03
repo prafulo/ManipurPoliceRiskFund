@@ -34,6 +34,7 @@ import type { Member } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Textarea } from '@/components/ui/textarea';
 
 const nomineeSchema = z.object({
   name: z.string().min(2, 'Nominee name is required.'),
@@ -57,6 +58,7 @@ const formSchema = z.object({
   isDoubling: z.boolean().default(false),
   nominees: z.array(nomineeSchema).min(1, 'At least one nominee is required.'),
   closureReason: z.enum(["", "Retirement", "Death", "Doubling", "Expelled"]),
+  closureNotes: z.string().optional(),
   badgeNumber: z.string().min(1, "Badge number is required."),
   bloodGroup: z.string().min(1, "Blood group is required."),
   memberPostType: z.enum(["Officiating", "Temporary", "Substantive"]),
@@ -126,6 +128,7 @@ export function MemberForm({ member }: MemberFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: member ? {
       ...member,
+      closureNotes: member.closureNotes || '',
       firstWitnessName: member.firstWitness.name,
       firstWitnessAddress: member.firstWitness.address,
       secondWitnessName: member.secondWitness.name,
@@ -143,6 +146,7 @@ export function MemberForm({ member }: MemberFormProps) {
       isDoubling: false,
       nominees: [{ name: '', relation: '', age: 0, share: 100 }],
       closureReason: '',
+      closureNotes: '',
       badgeNumber: '',
       bloodGroup: '',
       memberPostType: 'Substantive',
@@ -363,21 +367,33 @@ export function MemberForm({ member }: MemberFormProps) {
                   )}
                 />
                 {status === 'Closed' && (
-                  <FormField control={form.control} name="closureReason" render={({ field }) => (
-                      <FormItem><FormLabel>Reason for Closure</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            <SelectItem value="Retirement">Retirement</SelectItem>
-                            <SelectItem value="Death">Death</SelectItem>
-                            <SelectItem value="Doubling">Doubling</SelectItem>
-                            <SelectItem value="Expelled">Expelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="col-span-3 grid md:grid-cols-2 gap-8">
+                    <FormField control={form.control} name="closureReason" render={({ field }) => (
+                        <FormItem><FormLabel>Reason for Closure</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              <SelectItem value="Retirement">Retirement</SelectItem>
+                              <SelectItem value="Death">Death</SelectItem>
+                              <SelectItem value="Doubling">Doubling</SelectItem>
+                              <SelectItem value="Expelled">Expelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField control={form.control} name="closureNotes" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Closure Notes</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Add any relevant notes..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
                 <FormField control={form.control} name="isDoubling" render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/50 col-span-3">
@@ -486,5 +502,3 @@ export function MemberForm({ member }: MemberFormProps) {
     </Card>
   );
 }
-
-    
