@@ -64,7 +64,7 @@ const formSchema = z.object({
   superannuationDate: z.date({ required_error: "Superannuation date is required." }),
   firstWitnessName: z.string().min(2, "First witness name is required."),
   firstWitnessAddress: z.string().min(5, "First witness address is required."),
-  secondWitnessName: z_string().min(2, "Second witness name is required."),
+  secondWitnessName: z.string().min(2, "Second witness name is required."),
   secondWitnessAddress: z.string().min(5, "Second witness address is required."),
   parentDepartment: z.string().optional(),
   dateApplied: z.date({ required_error: "Date applied is required." }),
@@ -341,7 +341,7 @@ export function MemberForm({ member }: MemberFormProps) {
                 </div>
                 <FormField control={form.control} name="unitId" render={({ field }) => (
                     <FormItem><FormLabel>Unit</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!member}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger></FormControl>
                         <SelectContent>{units.map(unit => (<SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>))}</SelectContent>
                       </Select>
@@ -425,7 +425,7 @@ export function MemberForm({ member }: MemberFormProps) {
                         )}
                       />
                       <FormField control={form.control} name={`nominees.${index}.relation`} render={({ field }) => (
-                          <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage /></FormMessage>
+                          <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage /></FormItem>
                         )}
                       />
                       <FormField control={form.control} name={`nominees.${index}.age`} render={({ field }) => (
