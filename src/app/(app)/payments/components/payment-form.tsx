@@ -26,7 +26,8 @@ import { CalendarIcon, Save } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, addMonths, startOfMonth, eachMonthOfInterval, endOfMonth } from 'date-fns';
-import type { Member, Unit } from '@/lib/types';
+import type { Member, Unit, Payment } from '@/lib/types';
+import { payments as allPayments } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -46,6 +47,11 @@ type PaymentFormProps = {
 };
 
 const MONTHLY_SUBSCRIPTION_AMOUNT = 100; // This should come from settings
+
+function addPayment(payment: Omit<Payment, 'id'>) {
+    const newId = (allPayments.length + 1).toString();
+    allPayments.push({ ...payment, id: newId });
+}
 
 export function PaymentForm({ members, units }: PaymentFormProps) {
   const { toast } = useToast();
@@ -87,12 +93,33 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const member = members.find(m => m.id === values.memberId);
+    if (!member || !values.monthRange.from || !values.monthRange.to) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Please select a member and a valid date range.",
+        });
+        return;
+    }
+
+    const newPayment = {
+        memberId: member.id,
+        memberName: member.name,
+        membershipCode: member.membershipCode,
+        unitName: units.find(u => u.id === member.unitId)?.name || 'N/A',
+        amount: totalAmount,
+        months: eachMonthOfInterval({ start: values.monthRange.from, end: values.monthRange.to }),
+        paymentDate: new Date(),
+    };
+
+    addPayment(newPayment);
+
     toast({
       title: "Payment Recorded",
       description: `Payment of $${totalAmount} for ${member?.name} has been saved.`,
     });
     router.push('/payments');
-    console.log(values);
+    router.refresh(); // Refresh the page to show the new payment
   }
 
   const selectedMemberId = form.watch('memberId');
