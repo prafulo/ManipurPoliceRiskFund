@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,44 +21,40 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import type { Member } from '@/lib/types';
+import type { Payment } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
 
-type EnrichedMember = Member & { unitName: string };
-type SortKey = keyof EnrichedMember | '';
+type SortKey = keyof Payment | '';
 type SortDirection = 'asc' | 'desc';
 
-interface MemberTableProps {
-  data: EnrichedMember[];
+interface PaymentTableProps {
+  data: Payment[];
 }
 
-export function MemberTable({ data }: MemberTableProps) {
-  const { role, unit } = useAuth();
+export function PaymentTable({ data }: PaymentTableProps) {
   const router = useRouter();
 
   const [filter, setFilter] = React.useState('');
-  const [sortKey, setSortKey] = React.useState<SortKey>('name');
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+  const [sortKey, setSortKey] = React.useState<SortKey>('paymentDate');
+  const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = React.useState(1);
   const rowsPerPage = 10;
 
-  const roleFilteredData = React.useMemo(() => {
-    if (role === 'Unit Admin' && unit) {
-      return data.filter(member => member.unitName === unit);
-    }
-    return data;
-  }, [data, role, unit]);
-
   const filteredAndSortedData = React.useMemo(() => {
-    let result = roleFilteredData.filter(member =>
-      !member.isDoubling && member.name.toLowerCase().includes(filter.toLowerCase())
+    let result = data.filter(payment =>
+      payment.memberName.toLowerCase().includes(filter.toLowerCase())
     );
 
     if (sortKey) {
       result.sort((a, b) => {
         const valA = a[sortKey];
         const valB = b[sortKey];
+
+        if (valA instanceof Date && valB instanceof Date) {
+            return sortDirection === 'asc' ? valA.getTime() - valB.getTime() : valB.getTime() - valA.getTime();
+        }
+
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
         return 0;
@@ -67,7 +62,7 @@ export function MemberTable({ data }: MemberTableProps) {
     }
 
     return result;
-  }, [roleFilteredData, filter, sortKey, sortDirection]);
+  }, [data, filter, sortKey, sortDirection]);
 
   const paginatedData = React.useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
@@ -86,10 +81,11 @@ export function MemberTable({ data }: MemberTableProps) {
   };
   
   const headers: { key: SortKey; label: string }[] = [
+    { key: 'memberName', label: 'Member Name' },
     { key: 'membershipCode', label: 'Code' },
-    { key: 'name', label: 'Name' },
     { key: 'unitName', label: 'Unit' },
-    { key: 'status', label: 'Status' },
+    { key: 'paymentDate', label: 'Payment Date' },
+    { key: 'amount', label: 'Amount' },
   ];
 
   return (
@@ -118,21 +114,20 @@ export function MemberTable({ data }: MemberTableProps) {
                     </Button>
                   </TableHead>
                 ))}
+                 <TableHead>Months Paid</TableHead>
                 <TableHead className="text-right w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedData.length > 0 ? (
-                paginatedData.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>{member.membershipCode}</TableCell>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>{member.unitName}</TableCell>
-                    <TableCell>
-                      <Badge variant={member.status === 'Opened' ? 'default' : 'destructive'} className={member.status === 'Opened' ? 'bg-green-600 hover:bg-green-700' : ''}>
-                        {member.status}
-                      </Badge>
-                    </TableCell>
+                paginatedData.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell className="font-medium">{payment.memberName}</TableCell>
+                    <TableCell>{payment.membershipCode}</TableCell>
+                    <TableCell>{payment.unitName}</TableCell>
+                    <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
+                    <TableCell>${payment.amount.toFixed(2)}</TableCell>
+                    <TableCell>{payment.months.map(m => format(new Date(m), 'MMM yyyy')).join(', ')}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -143,12 +138,9 @@ export function MemberTable({ data }: MemberTableProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => router.push(`/members/${member.id}`)}>
-                            View/Edit Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => router.push(`/payments/new?memberId=${member.id}`)}>Add Payment</DropdownMenuItem>
+                          <DropdownMenuItem>View Receipt</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">Delete Member</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">Delete Payment</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -156,8 +148,8 @@ export function MemberTable({ data }: MemberTableProps) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={headers.length + 1} className="h-24 text-center">
-                    No members found.
+                  <TableCell colSpan={headers.length + 2} className="h-24 text-center">
+                    No payments found.
                   </TableCell>
                 </TableRow>
               )}

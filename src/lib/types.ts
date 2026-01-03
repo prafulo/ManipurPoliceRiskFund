@@ -56,6 +56,9 @@ export type Member = {
 export type Payment = {
   id: string;
   memberId: string;
+  memberName: string;
+  membershipCode: string;
+  unitName: string;
   amount: number;
   months: Date[]; // Represents the months paid for, e.g. [new Date('2024-07-01'), new Date('2024-08-01')]
   paymentDate: Date;

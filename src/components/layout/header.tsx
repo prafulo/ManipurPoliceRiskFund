@@ -8,7 +8,8 @@ import {
   Home,
   Users,
   FileText,
-  Settings
+  Settings,
+  CreditCard
 } from 'lucide-react';
 import {
   Sheet,
@@ -32,6 +33,7 @@ import { useAuth } from '@/contexts/auth-context';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/members', label: 'Members', icon: Users },
+  { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];

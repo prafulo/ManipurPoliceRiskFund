@@ -1,4 +1,4 @@
-import type { Unit, Member } from './types';
+import type { Unit, Member, Payment } from './types';
 
 export const units: Unit[] = [
   { id: '1', name: '1MR' },
@@ -123,4 +123,27 @@ export const members: Member[] = [
     receiptDate: new Date('2024-04-05'),
     allotmentDate: new Date('2024-05-01'),
   },
+];
+
+export const payments: Payment[] = [
+    {
+        id: '1',
+        memberId: '1',
+        memberName: 'John Doe',
+        membershipCode: '1MR-31000-0724',
+        unitName: '1MR',
+        amount: 100,
+        months: [new Date('2024-07-01')],
+        paymentDate: new Date('2024-07-01'),
+    },
+    {
+        id: '2',
+        memberId: '2',
+        memberName: 'Peter Jones',
+        membershipCode: '2MR-31001-0724',
+        unitName: '2MR',
+        amount: 200,
+        months: [new Date('2024-07-01'), new Date('2024-08-01')],
+        paymentDate: new Date('2024-07-03'),
+    }
 ];
