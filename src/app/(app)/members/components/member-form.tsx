@@ -167,7 +167,7 @@ export function MemberForm({ member }: MemberFormProps) {
       const unit = units.find(u => u.id === selectedUnitId);
       if (unit) {
         const nextSerial = getNextSerialNumber(selectedUnitId);
-        const datePart = format(new Date(), 'MMdd');
+        const datePart = format(new Date(), 'MMyy');
         setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
       }
     }
