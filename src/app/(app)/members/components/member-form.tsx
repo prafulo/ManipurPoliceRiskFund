@@ -29,8 +29,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { units } from '@/lib/data';
-import type { Member } from '@/lib/types';
+import { units as defaultUnits } from '@/lib/data';
+import type { Member, Unit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -96,18 +96,14 @@ type MemberFormProps = {
   member?: Member;
 };
 
-// In a real app, these would come from a database or a config file.
-const initialSerialNumbers: Record<string, number> = {
-  '1': 31000, // 1MR
-  '2': 31000, // 2MR
-  '3': 31000, // 3MR
-  '4': 51000, // HQ
-};
+const initialSerialNumbers: Record<string, number> = defaultUnits.reduce((acc, unit) => {
+    acc[unit.id] = 31000;
+    return acc;
+}, {} as Record<string, number>);
 
 function getNextSerialNumber(unitId: string, allMembers: Member[]): number {
   const membersOfUnit = allMembers.filter(m => m.unitId === unitId);
   if (membersOfUnit.length === 0) {
-    // In a real app, you'd fetch this from settings. For now, we get it from localStorage or a default.
     const settingsString = typeof window !== 'undefined' ? localStorage.getItem('settings-serial') : null;
     const serialSettings = settingsString ? JSON.parse(settingsString) : initialSerialNumbers;
     return serialSettings[unitId] || 10000;
@@ -126,12 +122,17 @@ export function MemberForm({ member }: MemberFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [units, setUnits] = useState<Unit[]>([]);
+
+  useEffect(() => {
+    const storedUnits = localStorage.getItem('units');
+    setUnits(storedUnits ? JSON.parse(storedUnits) : defaultUnits);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: member ? {
       ...member,
-      // The dates from mock data are already Date objects. If they were strings, you'd use new Date().
       dateOfBirth: typeof member.dateOfBirth === 'string' ? new Date(member.dateOfBirth) : member.dateOfBirth,
       dateOfEnrollment: typeof member.dateOfEnrollment === 'string' ? new Date(member.dateOfEnrollment) : member.dateOfEnrollment,
       superannuationDate: typeof member.superannuationDate === 'string' ? new Date(member.superannuationDate) : member.superannuationDate,
@@ -179,20 +180,21 @@ export function MemberForm({ member }: MemberFormProps) {
   const selectedUnitId = form.watch("unitId");
 
   useEffect(() => {
-    // This effect should only run on the client after mount to avoid hydration errors.
-    if (!member && selectedUnitId) {
-      const allMembersString = localStorage.getItem('members');
-      const allMembers = allMembersString ? JSON.parse(allMembersString) : [];
-      const unit = units.find(u => u.id === selectedUnitId);
-      if (unit) {
-        const nextSerial = getNextSerialNumber(selectedUnitId, allMembers);
-        const datePart = format(new Date(), 'MMyy'); // Format as MMYY
-        setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
+    if (typeof window !== 'undefined') {
+      if (!member && selectedUnitId) {
+        const allMembersString = localStorage.getItem('members');
+        const allMembers = allMembersString ? JSON.parse(allMembersString) : [];
+        const unit = units.find(u => u.id === selectedUnitId);
+        if (unit) {
+          const nextSerial = getNextSerialNumber(selectedUnitId, allMembers);
+          const datePart = format(new Date(), 'MMyy');
+          setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
+        }
+      } else if (member) {
+        setGeneratedCode(member.membershipCode);
       }
-    } else if (member) {
-      setGeneratedCode(member.membershipCode);
     }
-  }, [selectedUnitId, member]);
+  }, [selectedUnitId, member, units]);
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -496,7 +498,8 @@ export function MemberForm({ member }: MemberFormProps) {
                         )}
                       />
                       <FormField control={form.control} name={`nominees.${index}.relation`} render={({ field }) => (
-                          <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage /></FormItem>
+                          <FormItem><FormLabel>Relation</FormLabel><FormControl><Input placeholder="Spouse" {...field} /></FormControl><FormMessage />
+                          </FormItem>
                         )}
                       />
                       <FormField control={form.control} name={`nominees.${index}.age`} render={({ field }) => (

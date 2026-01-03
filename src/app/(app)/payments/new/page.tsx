@@ -1,12 +1,13 @@
 'use client';
 
 import { PaymentForm } from "../components/payment-form";
-import { units } from "@/lib/data";
+import { units as defaultUnits } from "@/lib/data";
 import { Suspense, useEffect, useState } from "react";
-import type { Member } from "@/lib/types";
+import type { Member, Unit } from "@/lib/types";
 
 function PaymentFormLoader() {
     const [members, setMembers] = useState<Member[]>([]);
+    const [units, setUnits] = useState<Unit[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -14,6 +15,14 @@ function PaymentFormLoader() {
         if (storedMembers) {
             setMembers(JSON.parse(storedMembers));
         }
+
+        const storedUnits = localStorage.getItem('units');
+        if (storedUnits) {
+            setUnits(JSON.parse(storedUnits));
+        } else {
+            setUnits(defaultUnits);
+        }
+
         setLoading(false);
     }, []);
 

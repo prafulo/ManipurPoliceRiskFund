@@ -12,10 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { units } from '@/lib/data';
+import { units as defaultUnits } from '@/lib/data';
+import Link from 'next/link';
+import type { Unit } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // This would come from a database in a real app
-const defaultSerialNumbers = units.reduce((acc, unit) => {
+const initialSerialNumbers = defaultUnits.reduce((acc, unit) => {
   acc[unit.id] = 31000; // Default starting number
   return acc;
 }, {} as Record<string, number>);
@@ -23,19 +26,36 @@ const defaultSerialNumbers = units.reduce((acc, unit) => {
 
 export default function SettingsPage() {
   const [amount, setAmount] = useState(100); // Default amount
-  const [serialNumbers, setSerialNumbers] = useState(defaultSerialNumbers);
+  const [serialNumbers, setSerialNumbers] = useState<Record<string, number>>({});
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [loadingUnits, setLoadingUnits] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load units from localStorage
+    const storedUnits = localStorage.getItem('units');
+    const unitsData = storedUnits ? JSON.parse(storedUnits) : defaultUnits;
+    setUnits(unitsData);
+    setLoadingUnits(false);
+
+    // Initialize serial numbers based on loaded units
+    const storedSerials = localStorage.getItem('settings-serial');
+    if (storedSerials) {
+      setSerialNumbers(JSON.parse(storedSerials));
+    } else {
+       const defaultSerials = unitsData.reduce((acc: Record<string, number>, unit: Unit) => {
+        acc[unit.id] = 31000;
+        return acc;
+      }, {});
+      setSerialNumbers(defaultSerials);
+    }
+    
+    // Load subscription amount
     const storedAmount = localStorage.getItem('settings-subscription-amount');
     if (storedAmount) {
       setAmount(Number(storedAmount));
     }
 
-    const storedSerials = localStorage.getItem('settings-serial');
-    if (storedSerials) {
-      setSerialNumbers(JSON.parse(storedSerials));
-    }
   }, []);
 
   const handleSubscriptionSave = () => {
@@ -68,6 +88,21 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage application-wide settings.</p>
       </div>
 
+       <Card>
+        <CardHeader>
+          <CardTitle>Manage Units</CardTitle>
+          <CardDescription>Add, edit, or remove membership units for the organization.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Use the dedicated units management page to update organizational units.</p>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
+          <Link href="/settings/units">
+            <Button variant="outline">Manage Units</Button>
+          </Link>
+        </CardFooter>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Subscription Amount</CardTitle>
@@ -93,9 +128,16 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Membership Code Serial Numbers</CardTitle>
-          <CardDescription>Set the starting serial number for new members in each unit. The system will auto-increment from the last used number for that unit.</CardDescription>
+          <CardDescription>Set the starting serial number for new members in each unit. This is only used if no members exist for a unit yet.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+           {loadingUnits ? (
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+             </div>
+           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {units.map(unit => (
                 <div key={unit.id} className="grid w-full items-center gap-1.5">
@@ -109,6 +151,7 @@ export default function SettingsPage() {
                 </div>
               ))}
             </div>
+           )}
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
           <Button onClick={handleSerialSave}>Save Serial Number Settings</Button>

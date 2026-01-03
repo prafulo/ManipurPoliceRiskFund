@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Card,
   CardContent,
@@ -5,16 +7,36 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Users, UserCheck, UserX, Landmark } from 'lucide-react';
-import { members } from '@/lib/data';
-
-const stats = {
-  totalMembers: members.length,
-  activeMembers: members.filter(m => m.status === 'Opened' && !m.isDoubling).length,
-  closedMembers: members.filter(m => m.status === 'Closed').length,
-  totalUnits: new Set(members.map(m => m.unitId)).size
-};
+import { members as initialMembers, units as initialUnits } from '@/lib/data';
+import { useEffect, useState } from 'react';
+import type { Member, Unit } from '@/lib/types';
 
 export default function Dashboard() {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const storedMembers = localStorage.getItem('members');
+    setMembers(storedMembers ? JSON.parse(storedMembers) : initialMembers);
+
+    const storedUnits = localStorage.getItem('units');
+    setUnits(storedUnits ? JSON.parse(storedUnits) : initialUnits);
+
+    setLoading(false);
+  }, []);
+
+  const stats = {
+    totalMembers: members.length,
+    activeMembers: members.filter(m => m.status === 'Opened' && !m.isDoubling).length,
+    closedMembers: members.filter(m => m.status === 'Closed').length,
+    totalUnits: units.length,
+  };
+
+  if (loading) {
+    return <div>Loading dashboard...</div>;
+  }
+
   return (
     <div className="flex-1 space-y-4">
        <h2 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h2>

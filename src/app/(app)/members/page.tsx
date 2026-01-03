@@ -6,19 +6,20 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { MemberTable } from "./components/member-table";
-import { members as initialMembers, units } from "@/lib/data";
+import { members as initialMembers, units as defaultUnits } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Member } from '@/lib/types';
+import type { Member, Unit } from '@/lib/types';
 
 export default function MembersPage() {
   const [members, setMembers] = React.useState<Member[]>([]);
+  const [units, setUnits] = React.useState<Unit[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
+    // Load members
     const storedMembers = localStorage.getItem('members');
     let memberData;
     if (storedMembers) {
-      // Dates will be strings from JSON, so we need to convert them back to Date objects
       memberData = JSON.parse(storedMembers).map((m: any) => ({
         ...m,
         dateOfBirth: new Date(m.dateOfBirth),
@@ -35,6 +36,16 @@ export default function MembersPage() {
       localStorage.setItem('members', JSON.stringify(initialMembers));
     }
     setMembers(memberData);
+
+    // Load units
+    const storedUnits = localStorage.getItem('units');
+    if (storedUnits) {
+      setUnits(JSON.parse(storedUnits));
+    } else {
+      localStorage.setItem('units', JSON.stringify(defaultUnits));
+      setUnits(defaultUnits);
+    }
+
     setIsLoading(false);
   }, []);
 
