@@ -53,8 +53,14 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   }, [data, role, unit]);
 
   const filteredAndSortedData = React.useMemo(() => {
+    const lowercasedFilter = filter.toLowerCase();
     let result = roleFilteredData.filter(member =>
-      !member.isDoubling && member.name.toLowerCase().includes(filter.toLowerCase())
+      !member.isDoubling && 
+      (
+        member.name.toLowerCase().includes(lowercasedFilter) ||
+        member.membershipCode.toLowerCase().includes(lowercasedFilter) ||
+        member.unitName.toLowerCase().includes(lowercasedFilter)
+      )
     );
 
     if (sortKey) {
@@ -102,7 +108,7 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
       <CardContent className="p-0">
         <div className="p-4">
           <Input
-            placeholder="Filter by name..."
+            placeholder="Filter by code, name, or unit..."
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
