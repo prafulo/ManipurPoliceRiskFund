@@ -82,10 +82,10 @@ export default function MembersPage() {
           <TabsTrigger value="closed">Closed</TabsTrigger>
         </TabsList>
         <TabsContent value="opened" className="mt-4">
-          <MemberTable data={openMembers} />
+          <MemberTable data={openMembers} listType="opened" />
         </TabsContent>
         <TabsContent value="closed" className="mt-4">
-          <MemberTable data={closedMembers} />
+          <MemberTable data={closedMembers} listType="closed" />
         </TabsContent>
       </Tabs>
     </div>

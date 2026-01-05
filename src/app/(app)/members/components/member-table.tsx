@@ -32,9 +32,10 @@ type SortDirection = 'asc' | 'desc';
 
 interface MemberTableProps {
   data: EnrichedMember[];
+  listType?: 'opened' | 'closed';
 }
 
-export function MemberTable({ data }: MemberTableProps) {
+export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   const { role, unit } = useAuth();
   const router = useRouter();
 
@@ -92,6 +93,10 @@ export function MemberTable({ data }: MemberTableProps) {
     { key: 'status', label: 'Status' },
   ];
 
+  if (listType === 'closed') {
+    headers.push({ key: 'closureReason', label: 'Reason for Closure' });
+  }
+
   return (
     <Card>
       <CardContent className="p-0">
@@ -133,6 +138,9 @@ export function MemberTable({ data }: MemberTableProps) {
                         {member.status}
                       </Badge>
                     </TableCell>
+                    {listType === 'closed' && (
+                        <TableCell>{member.closureReason}</TableCell>
+                    )}
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
