@@ -17,7 +17,7 @@ import { CalendarIcon, Printer } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, startOfMonth, endOfMonth, differenceInMonths, eachMonthOfInterval } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, numberToWords } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
 
 interface ReportRow {
@@ -242,6 +242,9 @@ export default function ConsolidatedStatementPage() {
                 </Table>
             </CardContent>
         </Card>
+        <div className="mt-4 text-right pr-4 font-semibold print:block hidden">
+            <p>INR {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
+        </div>
         <div className="text-right mt-12 print:block hidden">
             <p>(Ningshen Worngam), IPS</p>
             <p>Dy. IG of Police (Telecom),</p>
