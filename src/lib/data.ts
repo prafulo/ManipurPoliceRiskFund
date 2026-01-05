@@ -1,5 +1,5 @@
 
-import type { Unit, Member, Payment } from './types';
+import type { Unit, Member, Payment, Transfer } from './types';
 
 export const units: Unit[] = [
   { id: '1', name: '1MR' },
@@ -148,3 +148,5 @@ export const payments: Payment[] = [
         paymentDate: new Date('2024-07-03'),
     }
 ];
+
+export const transfers: Transfer[] = [];

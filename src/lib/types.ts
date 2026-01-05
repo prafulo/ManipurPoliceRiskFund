@@ -68,6 +68,7 @@ export type Payment = {
 export type Transfer = {
   id: string;
   memberId: string;
+  memberName: string;
   fromUnitId: string;
   toUnitId: string;
   transferDate: Date;

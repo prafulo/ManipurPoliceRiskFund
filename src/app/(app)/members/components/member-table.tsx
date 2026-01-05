@@ -146,7 +146,12 @@ export function MemberTable({ data }: MemberTableProps) {
                           <DropdownMenuItem onClick={() => router.push(`/members/${member.id}`)}>
                             View/Edit Profile
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => router.push(`/payments/new?memberId=${member.id}`)}>Add Payment</DropdownMenuItem>
+                          {member.status === 'Opened' && (
+                            <>
+                              <DropdownMenuItem onClick={() => router.push(`/payments/new?memberId=${member.id}`)}>Add Payment</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => router.push(`/transfers/new?memberId=${member.id}`)}>Transfer Unit</DropdownMenuItem>
+                            </>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">Delete Member</DropdownMenuItem>
                         </DropdownMenuContent>

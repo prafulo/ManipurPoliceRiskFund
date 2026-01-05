@@ -1,12 +1,10 @@
 'use client';
 
-import { PaymentForm } from "../components/payment-form";
-import { units as defaultUnits } from "@/lib/data";
+import { TransferForm } from "../components/transfer-form";
 import { Suspense, useEffect, useState } from "react";
 import type { Member, Unit } from "@/lib/types";
-import { members as initialMembers } from "@/lib/data";
 
-function PaymentFormLoader() {
+function TransferFormLoader() {
     const [members, setMembers] = useState<Member[]>([]);
     const [units, setUnits] = useState<Unit[]>([]);
     const [loading, setLoading] = useState(true);
@@ -15,15 +13,11 @@ function PaymentFormLoader() {
         const storedMembers = localStorage.getItem('members');
         if (storedMembers) {
             setMembers(JSON.parse(storedMembers));
-        } else {
-            setMembers(initialMembers)
         }
 
         const storedUnits = localStorage.getItem('units');
         if (storedUnits) {
             setUnits(JSON.parse(storedUnits));
-        } else {
-            setUnits(defaultUnits);
         }
 
         setLoading(false);
@@ -33,18 +27,18 @@ function PaymentFormLoader() {
         return <div>Loading form...</div>
     }
 
-    return <PaymentForm members={members} units={units} />
+    return <TransferForm members={members} units={units} />
 }
 
-export default function NewPaymentPage() {
+export default function NewTransferPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">New Subscription Payment</h2>
-        <p className="text-muted-foreground">Record a new payment for a member.</p>
+        <h2 className="text-3xl font-bold tracking-tight font-headline">New Member Transfer</h2>
+        <p className="text-muted-foreground">Record a member's transfer from one unit to another.</p>
       </div>
       <Suspense fallback={<div>Loading form...</div>}>
-         <PaymentFormLoader />
+         <TransferFormLoader />
       </Suspense>
     </div>
   );

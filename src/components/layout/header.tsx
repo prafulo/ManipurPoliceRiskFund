@@ -9,7 +9,8 @@ import {
   Users,
   FileText,
   Settings,
-  CreditCard
+  CreditCard,
+  ArrowRightLeft
 } from 'lucide-react';
 import {
   Sheet,
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/members', label: 'Members', icon: Users },
   { href: '/payments', label: 'Payments', icon: CreditCard },
+  { href: '/transfers', label: 'Transfers', icon: ArrowRightLeft },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
