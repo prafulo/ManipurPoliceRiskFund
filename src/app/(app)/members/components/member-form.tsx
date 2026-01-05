@@ -59,6 +59,7 @@ const formSchema = z.object({
   nominees: z.array(nomineeSchema).min(1, 'At least one nominee is required.'),
   closureReason: z.enum(["", "Retirement", "Death", "Doubling", "Expelled"]),
   closureNotes: z.string().optional(),
+  dateOfDischarge: z.date().optional(),
   badgeNumber: z.string().min(1, "Badge number is required."),
   bloodGroup: z.string().min(1, "Blood group is required."),
   memberPostType: z.enum(["Officiating", "Temporary", "Substantive"]),
@@ -80,6 +81,14 @@ const formSchema = z.object({
 }, {
   message: "Reason for closure is required when status is 'Closed'.",
   path: ["closureReason"],
+}).refine(data => {
+  if (data.status === 'Closed') {
+    return !!data.dateOfDischarge;
+  }
+  return true;
+}, {
+  message: "Date of discharge is required when status is 'Closed'.",
+  path: ["dateOfDischarge"],
 }).refine(data => {
   if (data.nominees.length > 0) {
     const totalShare = data.nominees.reduce((sum, nominee) => sum + nominee.share, 0);
@@ -139,6 +148,7 @@ export function MemberForm({ member }: MemberFormProps) {
       dateApplied: typeof member.dateApplied === 'string' ? new Date(member.dateApplied) : member.dateApplied,
       receiptDate: typeof member.receiptDate === 'string' ? new Date(member.receiptDate) : member.receiptDate,
       allotmentDate: typeof member.allotmentDate === 'string' ? new Date(member.allotmentDate) : member.allotmentDate,
+      dateOfDischarge: member.dateOfDischarge ? (typeof member.dateOfDischarge === 'string' ? new Date(member.dateOfDischarge) : member.dateOfDischarge) : undefined,
       closureReason: member.closureReason || '',
       closureNotes: member.closureNotes || '',
       parentDepartment: member.parentDepartment || '',
@@ -424,7 +434,7 @@ export function MemberForm({ member }: MemberFormProps) {
                   )}
                 />
                 {status === 'Closed' && (
-                  <div className="col-span-3 grid md:grid-cols-2 gap-8">
+                  <div className="col-span-3 grid md:grid-cols-3 gap-8">
                     <FormField control={form.control} name="closureReason" render={({ field }) => (
                         <FormItem><FormLabel>Reason for Closure</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -436,6 +446,23 @@ export function MemberForm({ member }: MemberFormProps) {
                               <SelectItem value="Expelled">Expelled</SelectItem>
                             </SelectContent>
                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField control={form.control} name="dateOfDischarge" render={({ field }) => (
+                        <FormItem className="flex flex-col"><FormLabel>Date of Discharge</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild><FormControl>
+                                <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
+                                  {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl></PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}

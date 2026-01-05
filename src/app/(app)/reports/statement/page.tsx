@@ -11,9 +11,15 @@ import {
   TableRow,
   TableFooter
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Printer } from 'lucide-react';
+import { CalendarIcon, Printer } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { addDays, format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import type { DateRange } from 'react-day-picker';
+import { Label } from '@/components/ui/label';
 
 interface ReportRow {
   unitName: string;
@@ -27,6 +33,10 @@ interface ReportRow {
 export default function StatementReportPage() {
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(2024, 0, 1),
+    to: new Date(),
+  });
   const [totals, setTotals] = useState({
     retired: 0,
     expired: 0,
@@ -35,14 +45,22 @@ export default function StatementReportPage() {
     newEnrolled: 0,
   });
 
-  useEffect(() => {
+  const generateReport = () => {
+    setLoading(true);
     const membersString = localStorage.getItem('members');
     const unitsString = localStorage.getItem('units');
     const members: Member[] = membersString ? JSON.parse(membersString) : [];
     const units: Unit[] = unitsString ? JSON.parse(unitsString) : [];
 
-    const startDate = new Date('2025-07-01');
-    const endDate = new Date('2025-09-30');
+    const startDate = dateRange?.from;
+    const endDate = dateRange?.to;
+
+    if (!startDate || !endDate) {
+      setReportData([]);
+      setTotals({ retired: 0, expired: 0, doubling: 0, totalDeleted: 0, newEnrolled: 0 });
+      setLoading(false);
+      return;
+    }
 
     const data: ReportRow[] = units.map(unit => {
       const unitMembers = members.filter(m => m.unitId === unit.id);
@@ -86,9 +104,13 @@ export default function StatementReportPage() {
     setReportData(data);
     setTotals(totalRow);
     setLoading(false);
-  }, []);
+  }
 
-  if (loading) {
+  useEffect(() => {
+    generateReport();
+  }, []); // Run on initial load
+
+  if (loading && reportData.length === 0) {
     return <div>Generating report...</div>;
   }
   
@@ -96,22 +118,65 @@ export default function StatementReportPage() {
     window.print();
   }
 
+  const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'LLL d, y')} to ${format(dateRange.to, 'LLL d, y')}` : 'a selected period';
+
   return (
     <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Membership Statement</h2>
-                <p className="text-muted-foreground">Statement of data entered and deleted during July, August & September, 2025</p>
+                <p className="text-muted-foreground">Statement of data entered and deleted during {dateRangeString}</p>
             </div>
-            <Button onClick={handlePrint} variant="outline" className="print:hidden">
-                <Printer className="mr-2 h-4 w-4" />
-                Print Report
-            </Button>
+            <div className="flex items-center gap-2">
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                        "w-[300px] justify-start text-left font-normal",
+                        !dateRange && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                        dateRange.to ? (
+                            <>
+                            {format(dateRange.from, "LLL dd, y")} -{" "}
+                            {format(dateRange.to, "LLL dd, y")}
+                            </>
+                        ) : (
+                            format(dateRange.from, "LLL dd, y")
+                        )
+                        ) : (
+                        <span>Pick a date</span>
+                        )}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                    />
+                    </PopoverContent>
+                </Popover>
+                 <Button onClick={generateReport} disabled={loading}>
+                    {loading ? 'Generating...' : 'Generate Report'}
+                 </Button>
+                 <Button onClick={handlePrint} variant="outline">
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print
+                </Button>
+            </div>
         </div>
         <Card>
             <CardContent className="p-0">
                  <div className="text-center p-4 print:block hidden">
-                    <h2 className="text-xl font-bold">Statement of data entered and deleted during July, August & September, 2025.</h2>
+                    <h2 className="text-xl font-bold">Statement of data entered and deleted during {dateRangeString}.</h2>
                 </div>
                 <Table>
                     <TableHeader>
@@ -133,17 +198,31 @@ export default function StatementReportPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {reportData.map((row, index) => (
-                            <TableRow key={index}>
-                                <TableCell>{index + 1}</TableCell>
-                                <TableCell>{row.unitName}</TableCell>
-                                <TableCell className="text-center">{row.retired || ''}</TableCell>
-                                <TableCell className="text-center">{row.expired || ''}</TableCell>
-                                <TableCell className="text-center">{row.doubling || ''}</TableCell>
-                                <TableCell className="text-center font-semibold">{row.totalDeleted || ''}</TableCell>
-                                <TableCell className="text-center">{row.newEnrolled || ''}</TableCell>
+                        {loading ? (
+                             <TableRow>
+                                <TableCell colSpan={7} className="h-24 text-center">
+                                    Generating report...
+                                </TableCell>
                             </TableRow>
-                        ))}
+                        ) : reportData.length > 0 ? (
+                            reportData.map((row, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{row.unitName}</TableCell>
+                                    <TableCell className="text-center">{row.retired || ''}</TableCell>
+                                    <TableCell className="text-center">{row.expired || ''}</TableCell>
+                                    <TableCell className="text-center">{row.doubling || ''}</TableCell>
+                                    <TableCell className="text-center font-semibold">{row.totalDeleted || ''}</TableCell>
+                                    <TableCell className="text-center">{row.newEnrolled || ''}</TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={7} className="h-24 text-center">
+                                    No data found for the selected period.
+                                </TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                     <TableFooter>
                          <TableRow className="font-bold bg-muted/50">
