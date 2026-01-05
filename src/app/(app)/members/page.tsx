@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -9,6 +8,7 @@ import { MemberTable } from "./components/member-table";
 import { members as initialMembers, units as defaultUnits } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Member, Unit } from '@/lib/types';
+import { isPast } from 'date-fns';
 
 export default function MembersPage() {
   const [members, setMembers] = React.useState<Member[]>([]);
@@ -20,7 +20,33 @@ export default function MembersPage() {
     const storedMembers = localStorage.getItem('members');
     let memberData;
     if (storedMembers) {
-      memberData = JSON.parse(storedMembers).map((m: any) => ({
+      memberData = JSON.parse(storedMembers);
+    } else {
+      memberData = initialMembers;
+    }
+
+    // Auto-close superannuated members
+    let wasUpdated = false;
+    const today = new Date();
+    const updatedMemberData = memberData.map((m: any) => {
+        const superannuationDate = new Date(m.superannuationDate);
+        if (m.status === 'Opened' && isPast(superannuationDate)) {
+            wasUpdated = true;
+            return {
+                ...m,
+                status: 'Closed',
+                closureReason: 'Retirement',
+                dateOfDischarge: m.superannuationDate,
+            };
+        }
+        return m;
+    });
+
+    if (wasUpdated) {
+        localStorage.setItem('members', JSON.stringify(updatedMemberData));
+    }
+    
+    const finalMemberData = updatedMemberData.map((m: any) => ({
         ...m,
         dateOfBirth: new Date(m.dateOfBirth),
         dateOfEnrollment: new Date(m.dateOfEnrollment),
@@ -30,12 +56,9 @@ export default function MembersPage() {
         receiptDate: new Date(m.receiptDate),
         allotmentDate: new Date(m.allotmentDate),
         dateOfDischarge: m.dateOfDischarge ? new Date(m.dateOfDischarge) : undefined,
-      }));
-    } else {
-      memberData = initialMembers;
-      localStorage.setItem('members', JSON.stringify(initialMembers));
-    }
-    setMembers(memberData);
+    }));
+    
+    setMembers(finalMemberData);
 
     // Load units
     const storedUnits = localStorage.getItem('units');

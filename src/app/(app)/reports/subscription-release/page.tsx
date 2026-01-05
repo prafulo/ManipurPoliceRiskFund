@@ -1,0 +1,161 @@
+'use client';
+
+import { useEffect, useState, useMemo } from 'react';
+import type { Member, Payment } from '@/lib/types';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Printer } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface ReportRow {
+  memberCode: string;
+  rank: string;
+  name: string;
+  closureDate: Date;
+  totalMonthsPaid: number;
+  totalAmountPaid: number;
+  remark: string;
+}
+
+export default function SubscriptionReleaseReportPage() {
+  const [reportData, setReportData] = useState<ReportRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    setLoading(true);
+    // Load all necessary data from localStorage
+    const membersString = localStorage.getItem('members');
+    const paymentsString = localStorage.getItem('payments');
+    
+    const allMembers: Member[] = membersString ? JSON.parse(membersString) : [];
+    const allPayments: Payment[] = paymentsString ? JSON.parse(paymentsString) : [];
+
+    // Filter for members closed due to Retirement or Death
+    const closedMembers = allMembers.filter(
+      m => m.status === 'Closed' && (m.closureReason === 'Retirement' || m.closureReason === 'Death')
+    );
+
+    const data: ReportRow[] = closedMembers.map(member => {
+      const memberPayments = allPayments.filter(p => p.memberId === member.id);
+
+      const totalAmountPaid = memberPayments.reduce((sum, p) => sum + p.amount, 0);
+
+      const totalMonthsPaid = memberPayments.reduce((sum, p) => {
+        // Ensure p.months is an array before trying to access length
+        return sum + (Array.isArray(p.months) ? p.months.length : 0);
+      }, 0);
+
+
+      return {
+        memberCode: member.membershipCode,
+        rank: member.rank,
+        name: member.name,
+        closureDate: new Date(member.dateOfDischarge!),
+        totalMonthsPaid,
+        totalAmountPaid,
+        remark: member.closureReason || 'N/A',
+      };
+    });
+
+    setReportData(data);
+    setLoading(false);
+  }, []);
+
+  const totals = useMemo(() => {
+    return reportData.reduce((acc, row) => ({
+      totalAmountPaid: acc.totalAmountPaid + row.totalAmountPaid,
+    }), { totalAmountPaid: 0 });
+  }, [reportData]);
+
+  const handlePrint = () => {
+    window.print();
+  }
+
+  return (
+    <div>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
+            <div>
+                <h2 className="text-3xl font-bold tracking-tight font-headline">Member Subscription Release</h2>
+                <p className="text-muted-foreground">Report of total subscriptions for retired or expired members.</p>
+            </div>
+            <div className="flex items-center gap-2">
+                 <Button onClick={handlePrint} variant="outline">
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print
+                </Button>
+            </div>
+        </div>
+        <Card>
+            <CardContent className="p-0">
+                 <div className="text-center p-4 print:block hidden">
+                    <h2 className="text-xl font-bold">Member Subscription Payment Release Statement</h2>
+                    <h3 className="text-lg">For Retired / Expired Members</h3>
+                </div>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[60px]">Sl. No.</TableHead>
+                            <TableHead>Mem. Code</TableHead>
+                            <TableHead>Rank</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Date of Retirement/Expiry</TableHead>
+                            <TableHead className="text-right">Total Months Paid</TableHead>
+                            <TableHead className="text-right">Total Refundable Amount</TableHead>
+                            <TableHead>Remark</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                             <TableRow>
+                                <TableCell colSpan={8} className="h-24 text-center">
+                                    Generating report...
+                                </TableCell>
+                            </TableRow>
+                        ) : reportData.length > 0 ? (
+                            reportData.map((row, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{row.memberCode}</TableCell>
+                                    <TableCell>{row.rank}</TableCell>
+                                    <TableCell>{row.name}</TableCell>
+                                    <TableCell>{format(row.closureDate, 'PP')}</TableCell>
+                                    <TableCell className="text-right">{row.totalMonthsPaid}</TableCell>
+                                    <TableCell className="text-right font-semibold">{row.totalAmountPaid.toFixed(2)}</TableCell>
+                                    <TableCell>{row.remark}</TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={8} className="h-24 text-center">
+                                    No retired or expired members found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                    <TableFooter>
+                         <TableRow className="font-bold bg-muted/50">
+                            <TableCell colSpan={6} className="text-right">GRAND TOTAL</TableCell>
+                            <TableCell className="text-right">{totals.totalAmountPaid.toFixed(2)}</TableCell>
+                            <TableCell></TableCell>
+                         </TableRow>
+                    </TableFooter>
+                </Table>
+            </CardContent>
+        </Card>
+        <div className="text-right mt-12 print:block hidden">
+            <p>(Ningshen Worngam), IPS</p>
+            <p>Dy. IG of Police (Telecom),</p>
+            <p>Manipur, Imphal.</p>
+        </div>
+    </div>
+  );
+}

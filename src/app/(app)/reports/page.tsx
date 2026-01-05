@@ -51,6 +51,22 @@ export default function ReportsPage() {
             </Link>
           </CardFooter>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Subscription Release</CardTitle>
+            <CardDescription>Refundable subscription amount for retired or expired members.</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
+              <p className="text-sm text-center text-muted-foreground">Generates a statement showing total subscription paid by members closed due to retirement or death.</p>
+            </div>
+          </CardContent>
+           <CardFooter>
+            <Link href="/reports/subscription-release">
+              <Button>Generate Report</Button>
+            </Link>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
