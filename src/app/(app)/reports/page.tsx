@@ -37,14 +37,19 @@ export default function ReportsPage() {
         </Card>
          <Card>
           <CardHeader>
-            <CardTitle>More Reports</CardTitle>
-            <CardDescription>Additional report types will be available here.</CardDescription>
+            <CardTitle>Payment History</CardTitle>
+            <CardDescription>Member-wise payment history, arrears, and totals for a selected period.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
-              <p className="text-sm text-muted-foreground">Coming Soon</p>
+             <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
+              <p className="text-sm text-center text-muted-foreground">Generates a detailed breakdown of subscriptions, arrears, payments, and balances for each member.</p>
             </div>
           </CardContent>
+           <CardFooter>
+            <Link href="/reports/payment-history">
+              <Button>Generate Report</Button>
+            </Link>
+          </CardFooter>
         </Card>
       </div>
     </div>
