@@ -25,7 +25,7 @@ interface ReportRow {
   rank: string;
   name: string;
   closureDate: Date;
-  totalMonthsPaid: number;
+  totalMonthsPaid: number | string;
   totalAmountPaid: number;
   remark: string;
 }
@@ -43,9 +43,11 @@ export default function SubscriptionReleaseReportPage() {
     // Load all necessary data from localStorage
     const membersString = localStorage.getItem('members');
     const paymentsString = localStorage.getItem('payments');
+    const expiredAmountString = localStorage.getItem('settings-expired-release-amount');
     
     const allMembers: Member[] = membersString ? JSON.parse(membersString) : [];
     const allPayments: Payment[] = paymentsString ? JSON.parse(paymentsString) : [];
+    const expiredReleaseAmount = expiredAmountString ? Number(expiredAmountString) : 50000;
 
     const startDate = dateRange?.from;
     const endDate = dateRange?.to;
@@ -61,14 +63,19 @@ export default function SubscriptionReleaseReportPage() {
     });
 
     const data: ReportRow[] = closedMembers.map(member => {
-      const memberPayments = allPayments.filter(p => p.memberId === member.id);
+      let totalAmountPaid: number;
+      let totalMonthsPaid: number | string;
 
-      const totalAmountPaid = memberPayments.reduce((sum, p) => sum + p.amount, 0);
-
-      const totalMonthsPaid = memberPayments.reduce((sum, p) => {
-        return sum + (Array.isArray(p.months) ? p.months.length : 0);
-      }, 0);
-
+      if (member.closureReason === 'Death') {
+        totalAmountPaid = expiredReleaseAmount;
+        totalMonthsPaid = 'N/A';
+      } else {
+        const memberPayments = allPayments.filter(p => p.memberId === member.id);
+        totalAmountPaid = memberPayments.reduce((sum, p) => sum + p.amount, 0);
+        totalMonthsPaid = memberPayments.reduce((sum, p) => {
+          return sum + (Array.isArray(p.months) ? p.months.length : 0);
+        }, 0);
+      }
 
       return {
         memberCode: member.membershipCode,
@@ -87,6 +94,7 @@ export default function SubscriptionReleaseReportPage() {
 
   useEffect(() => {
     generateReport();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totals = useMemo(() => {

@@ -26,6 +26,7 @@ const initialSerialNumbers = defaultUnits.reduce((acc, unit) => {
 
 export default function SettingsPage() {
   const [amount, setAmount] = useState(100); // Default amount
+  const [expiredReleaseAmount, setExpiredReleaseAmount] = useState(50000); // Default amount
   const [serialNumbers, setSerialNumbers] = useState<Record<string, number>>({});
   const [units, setUnits] = useState<Unit[]>([]);
   const [loadingUnits, setLoadingUnits] = useState(true);
@@ -55,6 +56,12 @@ export default function SettingsPage() {
     if (storedAmount) {
       setAmount(Number(storedAmount));
     }
+    
+    // Load expired release amount
+    const storedExpiredAmount = localStorage.getItem('settings-expired-release-amount');
+    if (storedExpiredAmount) {
+      setExpiredReleaseAmount(Number(storedExpiredAmount));
+    }
 
   }, []);
 
@@ -63,6 +70,14 @@ export default function SettingsPage() {
     toast({
       title: "Settings Saved",
       description: `The monthly subscription amount has been updated to $${amount}.`,
+    });
+  }
+
+  const handleExpiredReleaseSave = () => {
+    localStorage.setItem('settings-expired-release-amount', String(expiredReleaseAmount));
+    toast({
+      title: "Settings Saved",
+      description: `The fixed release amount for expired members has been updated to $${expiredReleaseAmount}.`,
     });
   }
 
@@ -122,6 +137,28 @@ export default function SettingsPage() {
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
           <Button onClick={handleSubscriptionSave}>Save Subscription Settings</Button>
+        </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Expired Member Release Amount</CardTitle>
+          <CardDescription>Set the fixed, one-time amount released when a member's account is closed due to death.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label htmlFor="expired-amount">Fixed Release Amount ($)</Label>
+            <Input 
+              type="number" 
+              id="expired-amount" 
+              placeholder="50000" 
+              value={expiredReleaseAmount} 
+              onChange={(e) => setExpiredReleaseAmount(Number(e.target.value))}
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
+          <Button onClick={handleExpiredReleaseSave}>Save Release Amount</Button>
         </CardFooter>
       </Card>
       
