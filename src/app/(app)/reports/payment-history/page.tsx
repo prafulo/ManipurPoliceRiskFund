@@ -17,7 +17,8 @@ import { CalendarIcon, Printer } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, startOfMonth, differenceInMonths, endOfMonth } from 'date-fns';
-import { cn, numberToWords } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { numberToWords } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -113,10 +114,10 @@ export default function PaymentHistoryReportPage() {
   };
   
   useEffect(() => {
-    if (!loading) {
+    if (allMembers.length > 0) { // Only generate if data is loaded
        generateReport();
     }
-  }, [reportMonth, selectedUnit, loading]); // Re-generate report when filters change
+  }, [reportMonth, selectedUnit, allMembers, allPayments, subscriptionAmount]); // Re-run when dependencies change
 
 
   const totals = useMemo(() => {
@@ -135,7 +136,7 @@ export default function PaymentHistoryReportPage() {
 
   const reportDateString = format(reportMonth, 'MMMM yyyy');
 
-  if (loading && reportData.length === 0) {
+  if (loading && allMembers.length === 0) {
     return <div>Loading data...</div>;
   }
 
@@ -173,10 +174,12 @@ export default function PaymentHistoryReportPage() {
                     <Calendar
                         mode="single"
                         month={reportMonth}
-                        onMonthChange={setReportMonth}
-                        components={{
-                            Day: () => null // We only want month selection
+                        onMonthChange={(month) => {
+                            if (month) setReportMonth(month);
                         }}
+                        captionLayout="dropdown-buttons"
+                        fromYear={2020}
+                        toYear={new Date().getFullYear() + 5}
                     />
                     </PopoverContent>
                 </Popover>
@@ -262,3 +265,5 @@ export default function PaymentHistoryReportPage() {
     </div>
   );
 }
+
+    
