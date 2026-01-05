@@ -83,6 +83,22 @@ export default function ReportsPage() {
             </Link>
           </CardFooter>
         </Card>
+         <Card>
+          <CardHeader>
+            <CardTitle>Comparative Statement</CardTitle>
+            <CardDescription>Unit-wise total IN and OUT members for a selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
+              <p className="text-sm text-center text-muted-foreground">Generates a comparative table of member movements, including new, transferred, and closed members.</p>
+            </div>
+          </CardContent>
+           <CardFooter>
+            <Link href="/reports/comparative-statement">
+              <Button>Generate Report</Button>
+            </Link>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
