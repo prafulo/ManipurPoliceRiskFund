@@ -55,7 +55,6 @@ const formSchema = z.object({
   phone: z.string().min(10, "A valid phone number is required."),
   unitId: z.string({ required_error: "Unit is required." }),
   status: z.enum(["Opened", "Closed"]),
-  isDoubling: z.boolean().default(false),
   nominees: z.array(nomineeSchema).min(1, 'At least one nominee is required.'),
   closureReason: z.enum(["", "Retirement", "Death", "Doubling", "Expelled"]),
   closureNotes: z.string().optional(),
@@ -166,7 +165,6 @@ export function MemberForm({ member }: MemberFormProps) {
       phone: '',
       unitId: '',
       status: 'Opened',
-      isDoubling: false,
       nominees: [{ name: '', relation: '', age: 0, share: 100 }],
       closureReason: '',
       closureNotes: '',
@@ -479,16 +477,6 @@ export function MemberForm({ member }: MemberFormProps) {
                     />
                   </div>
                 )}
-                <FormField control={form.control} name="isDoubling" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-muted/50 col-span-3">
-                      <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange}/></FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Membership Doubling</FormLabel>
-                        <FormDescription>If checked, this member will not appear in lists or reports.</FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
               </div>
             </div>
             

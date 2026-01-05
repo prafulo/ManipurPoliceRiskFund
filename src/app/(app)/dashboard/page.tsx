@@ -28,7 +28,7 @@ export default function Dashboard() {
 
   const stats = {
     totalMembers: members.length,
-    activeMembers: members.filter(m => m.status === 'Opened' && !m.isDoubling).length,
+    activeMembers: members.filter(m => m.status === 'Opened').length,
     closedMembers: members.filter(m => m.status === 'Closed').length,
     totalUnits: units.length,
   };

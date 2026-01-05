@@ -37,7 +37,6 @@ export type Member = {
   status: MembershipStatus;
   closureReason?: ClosureReason;
   closureNotes?: string;
-  isDoubling: boolean;
   subscriptionStartDate: Date;
   nominees: Nominee[];
   firstWitness: {

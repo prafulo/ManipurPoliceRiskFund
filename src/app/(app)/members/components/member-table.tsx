@@ -55,7 +55,6 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   const filteredAndSortedData = React.useMemo(() => {
     const lowercasedFilter = filter.toLowerCase();
     let result = roleFilteredData.filter(member =>
-      !member.isDoubling && 
       (
         member.name.toLowerCase().includes(lowercasedFilter) ||
         member.membershipCode.toLowerCase().includes(lowercasedFilter) ||
