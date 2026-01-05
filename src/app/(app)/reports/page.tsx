@@ -18,7 +18,7 @@ export default function ReportsPage() {
         <h2 className="text-3xl font-bold tracking-tight font-headline">Reports</h2>
         <p className="text-muted-foreground">View and generate reports for your organization.</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle>Membership Statement</CardTitle>
@@ -63,6 +63,22 @@ export default function ReportsPage() {
           </CardContent>
            <CardFooter>
             <Link href="/reports/subscription-release">
+              <Button>Generate Report</Button>
+            </Link>
+          </CardFooter>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Consolidated Statement</CardTitle>
+            <CardDescription>Unit-wise demand notes showing subscriptions, arrears, and total payable amount.</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
+              <p className="text-sm text-center text-muted-foreground">Generates a consolidated financial statement for all units for a selected period.</p>
+            </div>
+          </CardContent>
+           <CardFooter>
+            <Link href="/reports/consolidated-statement">
               <Button>Generate Report</Button>
             </Link>
           </CardFooter>
