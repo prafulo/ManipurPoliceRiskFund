@@ -114,10 +114,10 @@ export default function PaymentHistoryReportPage() {
   };
   
   useEffect(() => {
-    if (allMembers.length > 0) { // Only generate if data is loaded
+    if (!loading) { 
        generateReport();
     }
-  }, [reportMonth, selectedUnit, allMembers, allPayments, subscriptionAmount]); // Re-run when dependencies change
+  }, [reportMonth, selectedUnit, allMembers, allPayments, subscriptionAmount, loading]); 
 
 
   const totals = useMemo(() => {
@@ -175,7 +175,8 @@ export default function PaymentHistoryReportPage() {
                         mode="single"
                         month={reportMonth}
                         onMonthChange={(month) => {
-                            if (month) setReportMonth(month);
+                            const newMonth = month || startOfMonth(new Date());
+                            setReportMonth(startOfMonth(newMonth));
                         }}
                         captionLayout="dropdown-buttons"
                         fromYear={2020}
@@ -255,7 +256,7 @@ export default function PaymentHistoryReportPage() {
             </CardContent>
         </Card>
         <div className="mt-4 text-right pr-4 font-semibold print:block hidden">
-            <p>(Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
+            <p>INR {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
         </div>
         <div className="text-right mt-12 print:block hidden">
             <p>(Ningshen Worngam), IPS</p>
@@ -265,5 +266,3 @@ export default function PaymentHistoryReportPage() {
     </div>
   );
 }
-
-    
