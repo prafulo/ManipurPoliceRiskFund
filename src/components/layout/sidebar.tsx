@@ -23,7 +23,10 @@ export function Sidebar() {
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3">
           <Logo className="w-8 h-8" />
-          <h1 className="text-xl font-bold font-headline text-primary">Manipur Police Risk Fund</h1>
+          <div className="text-xl font-bold font-headline text-primary leading-tight">
+            <div>Manipur Police</div>
+            <div>Risk Fund</div>
+          </div>
         </Link>
       </div>
       <nav className="flex-1 px-4 space-y-2">
