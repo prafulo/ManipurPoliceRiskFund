@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -21,7 +20,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import type { Payment } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -47,7 +45,6 @@ interface PaymentTableProps {
 }
 
 export function PaymentTable({ data, onDelete }: PaymentTableProps) {
-  const router = useRouter();
 
   const [filter, setFilter] = React.useState('');
   const [sortKey, setSortKey] = React.useState<SortKey>('paymentDate');
@@ -65,8 +62,8 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
         const valA = a[sortKey];
         const valB = b[sortKey];
 
-        if (valA instanceof Date && valB instanceof Date) {
-            return sortDirection === 'asc' ? valA.getTime() - valB.getTime() : valB.getTime() - valA.getTime();
+        if (valA && typeof valA === 'object' && 'toDate' in valA && valB && typeof valB === 'object' && 'toDate' in valB) {
+            return sortDirection === 'asc' ? valA.toDate().getTime() - valB.toDate().getTime() : valB.toDate().getTime() - valA.toDate().getTime();
         }
 
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
@@ -101,6 +98,13 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
     { key: 'paymentDate', label: 'Payment Date' },
     { key: 'amount', label: 'Amount' },
   ];
+
+  const toDate = (timestamp: any): Date => {
+      if (timestamp && typeof timestamp.toDate === 'function') {
+          return timestamp.toDate();
+      }
+      return new Date(timestamp);
+  }
 
   return (
     <Card>
@@ -139,9 +143,9 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
                     <TableCell className="font-medium">{payment.memberName}</TableCell>
                     <TableCell>{payment.membershipCode}</TableCell>
                     <TableCell>{payment.unitName}</TableCell>
-                    <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
+                    <TableCell>{format(toDate(payment.paymentDate), 'PP')}</TableCell>
                     <TableCell>${payment.amount.toFixed(2)}</TableCell>
-                    <TableCell>{payment.months.map(m => format(new Date(m), 'MMM yyyy')).join(', ')}</TableCell>
+                    <TableCell>{payment.months.map(m => format(toDate(m), 'MMM yyyy')).join(', ')}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>
                         <DropdownMenu>
@@ -217,4 +221,3 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
     </Card>
   );
 }
-

@@ -25,6 +25,20 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import type { Member } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useFirestore } from '@/firebase/hooks';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 type EnrichedMember = Member & { unitName: string };
 type SortKey = keyof EnrichedMember | '';
@@ -38,12 +52,32 @@ interface MemberTableProps {
 export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   const { role, unit } = useAuth();
   const router = useRouter();
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
   const [filter, setFilter] = React.useState('');
   const [sortKey, setSortKey] = React.useState<SortKey>('name');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = React.useState(1);
   const rowsPerPage = 10;
+  
+  const handleDeleteMember = async (memberId: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'members', memberId));
+      toast({
+        title: "Member Deleted",
+        description: "The member has been permanently removed.",
+      });
+    } catch (error) {
+      console.error("Error deleting member: ", error);
+      toast({
+        variant: 'destructive',
+        title: "Error",
+        description: "Could not delete member.",
+      });
+    }
+  };
 
   const roleFilteredData = React.useMemo(() => {
     if (role === 'Unit Admin' && unit) {
@@ -147,28 +181,46 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
                         <TableCell>{member.closureReason}</TableCell>
                     )}
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => router.push(`/members/${member.id}`)}>
-                            View/Edit Profile
-                          </DropdownMenuItem>
-                          {member.status === 'Opened' && (
-                            <>
-                              <DropdownMenuItem onClick={() => router.push(`/payments/new?memberId=${member.id}`)}>Add Payment</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => router.push(`/transfers/new?memberId=${member.id}`)}>Transfer Unit</DropdownMenuItem>
-                            </>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">Delete Member</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                       <AlertDialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => router.push(`/members/${member.id}`)}>
+                              View/Edit Profile
+                            </DropdownMenuItem>
+                            {member.status === 'Opened' && (
+                              <>
+                                <DropdownMenuItem onClick={() => router.push(`/payments/new?memberId=${member.id}`)}>Add Payment</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/transfers/new?memberId=${member.id}`)}>Transfer Unit</DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuSeparator />
+                             <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">Delete Member</DropdownMenuItem>
+                            </AlertDialogTrigger>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the profile for <strong>{member.name}</strong>.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteMember(member.id)}>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                         </AlertDialogContent>
+                       </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))

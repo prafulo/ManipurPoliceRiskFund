@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,8 +29,11 @@ import { format, eachMonthOfInterval, startOfMonth } from 'date-fns';
 import type { Member, Unit, Payment } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { useFirestore, useCollection, useDoc } from '@/firebase/hooks';
+import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const formSchema = z.object({
   memberId: z.string({ required_error: "Please select a member." }),
@@ -41,27 +43,27 @@ const formSchema = z.object({
   }),
 });
 
-type PaymentFormProps = {
-  members: Member[];
-  units: Unit[];
-};
+type PaymentFormProps = {};
 
-
-export function PaymentForm({ members, units }: PaymentFormProps) {
+export function PaymentForm({}: PaymentFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedMemberId = searchParams.get('memberId');
+  const firestore = useFirestore();
 
-  const [monthlySubscriptionAmount, setMonthlySubscriptionAmount] = useState(100);
+  const { data: members, loading: membersLoading } = useCollection<Member>(
+      firestore ? collection(firestore, 'members') : null
+  );
+  const { data: units, loading: unitsLoading } = useCollection<Unit>(
+      firestore ? collection(firestore, 'units') : null
+  );
+  const { data: settings, loading: settingsLoading } = useDoc(
+      firestore ? doc(firestore, 'settings', 'global') : null
+  );
 
-  useEffect(() => {
-    const storedAmount = localStorage.getItem('settings-subscription-amount');
-    if (storedAmount) {
-      setMonthlySubscriptionAmount(Number(storedAmount));
-    }
-  }, []);
-
+  const monthlySubscriptionAmount = settings?.subscriptionAmount ?? 100;
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -94,7 +96,12 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
       }
   }, [monthRange, monthlySubscriptionAmount]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore || !members || !units) {
+      toast({ variant: "destructive", title: "Error", description: "Database not ready." });
+      return;
+    }
+
     const member = members.find(m => m.id === values.memberId);
     if (!member || !values.monthRange.from || !values.monthRange.to) {
         toast({
@@ -105,31 +112,57 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
         return;
     }
 
-    const newPayment: Payment = {
-        id: new Date().getTime().toString(), // Unique ID
+    const newPayment: Omit<Payment, 'id'> = {
         memberId: member.id,
         memberName: member.name,
         membershipCode: member.membershipCode,
         unitName: units.find(u => u.id === member.unitId)?.name || 'N/A',
         amount: totalAmount,
         months: eachMonthOfInterval({ start: values.monthRange.from, end: values.monthRange.to }),
-        paymentDate: new Date(),
+        paymentDate: serverTimestamp(),
     };
     
-    const existingPaymentsString = localStorage.getItem('payments');
-    const existingPayments = existingPaymentsString ? JSON.parse(existingPaymentsString) : [];
-    existingPayments.push(newPayment);
-    localStorage.setItem('payments', JSON.stringify(existingPayments));
-
-    toast({
-      title: "Payment Recorded",
-      description: `Payment of $${totalAmount.toFixed(2)} for ${member?.name} has been saved.`,
-    });
-    router.push('/payments');
+    try {
+        await addDoc(collection(firestore, 'payments'), newPayment);
+        toast({
+        title: "Payment Recorded",
+        description: `Payment of $${totalAmount.toFixed(2)} for ${member?.name} has been saved.`,
+        });
+        router.push('/payments');
+    } catch (error) {
+        console.error("Error saving payment: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error saving payment",
+            description: "An unexpected error occurred.",
+        });
+    }
   }
 
   const selectedMemberId = form.watch('memberId');
-  const selectedMember = members.find(m => m.id === selectedMemberId);
+  const selectedMember = useMemo(() => members?.find(m => m.id === selectedMemberId), [members, selectedMemberId]);
+
+  const loading = membersLoading || unitsLoading || settingsLoading;
+
+  if (loading) {
+    return (
+        <Card className="shadow-lg">
+            <CardContent className="p-6 md:p-8 space-y-8">
+                <div className="grid md:grid-cols-2 gap-8 items-start">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                </div>
+                <div className="grid md:grid-cols-2 gap-8 items-start">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </div>
+            </CardContent>
+             <CardFooter className="flex justify-end pt-4 border-t p-6">
+                <Skeleton className="h-10 w-32" />
+            </CardFooter>
+        </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg">
@@ -150,7 +183,7 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {members.filter(m => m.status === 'Opened').map(member => (
+                        {members?.filter(m => m.status === 'Opened').map(member => (
                           <SelectItem key={member.id} value={member.id}>
                             {member.name} ({member.membershipCode})
                           </SelectItem>
@@ -165,7 +198,7 @@ export function PaymentForm({ members, units }: PaymentFormProps) {
                 <div className="p-3 bg-muted/50 rounded-lg border space-y-1">
                   <p className="text-sm font-medium">Member Details</p>
                   <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold">{selectedMember.name}</span>, {units.find(u=>u.id === selectedMember.unitId)?.name}
+                    <span className="font-semibold">{selectedMember.name}</span>, {units?.find(u=>u.id === selectedMember.unitId)?.name}
                   </p>
                   <p className="text-sm text-muted-foreground">Code: {selectedMember.membershipCode}</p>
                 </div>

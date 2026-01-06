@@ -16,10 +16,11 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon, Printer } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { addDays, format } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { Label } from '@/components/ui/label';
+import { useCollection, useFirestore } from '@/firebase/hooks';
+import { collection } from 'firebase/firestore';
 
 interface ReportRow {
   unitName: string;
@@ -31,8 +32,12 @@ interface ReportRow {
 }
 
 export default function StatementReportPage() {
+  const firestore = useFirestore();
+  const { data: members, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
+  const { data: units, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
+
   const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(2024, 0, 1),
     to: new Date(),
@@ -46,11 +51,13 @@ export default function StatementReportPage() {
   });
 
   const generateReport = () => {
-    setLoading(true);
-    const membersString = localStorage.getItem('members');
-    const unitsString = localStorage.getItem('units');
-    const members: Member[] = membersString ? JSON.parse(membersString) : [];
-    const units: Unit[] = unitsString ? JSON.parse(unitsString) : [];
+    if (!members || !units) {
+        setReportData([]);
+        setTotals({ retired: 0, expired: 0, doubling: 0, totalDeleted: 0, newEnrolled: 0 });
+        setReportLoading(false);
+        return;
+    };
+    setReportLoading(true);
 
     const startDate = dateRange?.from;
     const endDate = dateRange?.to;
@@ -58,27 +65,29 @@ export default function StatementReportPage() {
     if (!startDate || !endDate) {
       setReportData([]);
       setTotals({ retired: 0, expired: 0, doubling: 0, totalDeleted: 0, newEnrolled: 0 });
-      setLoading(false);
+      setReportLoading(false);
       return;
     }
+    
+    const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
 
     const data: ReportRow[] = units.map(unit => {
       const unitMembers = members.filter(m => m.unitId === unit.id);
 
       const retired = unitMembers.filter(m => 
-        m.status === 'Closed' && m.closureReason === 'Retirement' && m.dateOfDischarge && new Date(m.dateOfDischarge) >= startDate && new Date(m.dateOfDischarge) <= endDate
+        m.status === 'Closed' && m.closureReason === 'Retirement' && m.dateOfDischarge && toDate(m.dateOfDischarge) >= startDate && toDate(m.dateOfDischarge) <= endDate
       ).length;
 
       const expired = unitMembers.filter(m => 
-        m.status === 'Closed' && m.closureReason === 'Death' && m.dateOfDischarge && new Date(m.dateOfDischarge) >= startDate && new Date(m.dateOfDischarge) <= endDate
+        m.status === 'Closed' && m.closureReason === 'Death' && m.dateOfDischarge && toDate(m.dateOfDischarge) >= startDate && toDate(m.dateOfDischarge) <= endDate
       ).length;
 
       const doubling = unitMembers.filter(m => 
-        m.status === 'Closed' && m.closureReason === 'Doubling' && m.dateOfDischarge && new Date(m.dateOfDischarge) >= startDate && new Date(m.dateOfDischarge) <= endDate
+        m.status === 'Closed' && m.closureReason === 'Doubling' && m.dateOfDischarge && toDate(m.dateOfDischarge) >= startDate && toDate(m.dateOfDischarge) <= endDate
       ).length;
       
       const newEnrolled = unitMembers.filter(m => 
-        m.status === 'Opened' && new Date(m.allotmentDate) >= startDate && new Date(m.allotmentDate) <= endDate
+        m.status === 'Opened' && toDate(m.allotmentDate) >= startDate && toDate(m.allotmentDate) <= endDate
       ).length;
 
       const totalDeleted = retired + expired + doubling;
@@ -103,15 +112,20 @@ export default function StatementReportPage() {
 
     setReportData(data);
     setTotals(totalRow);
-    setLoading(false);
+    setReportLoading(false);
   }
 
   useEffect(() => {
-    generateReport();
-  }, []); // Run on initial load
+    if (!membersLoading && !unitsLoading) {
+      generateReport();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange, members, units]);
 
-  if (loading && reportData.length === 0) {
-    return <div>Generating report...</div>;
+  const loading = membersLoading || unitsLoading;
+
+  if (loading) {
+    return <div>Loading data...</div>;
   }
   
   const handlePrint = () => {
@@ -164,8 +178,8 @@ export default function StatementReportPage() {
                     />
                     </PopoverContent>
                 </Popover>
-                 <Button onClick={generateReport} disabled={loading}>
-                    {loading ? 'Generating...' : 'Generate Report'}
+                 <Button onClick={generateReport} disabled={reportLoading}>
+                    {reportLoading ? 'Generating...' : 'Generate Report'}
                  </Button>
                  <Button onClick={handlePrint} variant="outline">
                     <Printer className="mr-2 h-4 w-4" />
@@ -198,7 +212,7 @@ export default function StatementReportPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
+                        {reportLoading ? (
                              <TableRow>
                                 <TableCell colSpan={7} className="h-24 text-center">
                                     Generating report...

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,13 +21,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Save, ArrowRightLeft } from 'lucide-react';
+import { CalendarIcon, ArrowRightLeft } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Member, Unit, Transfer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useFirestore, useCollection } from '@/firebase/hooks';
+import { collection, doc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useEffect } from 'react';
+
 
 const formSchema = z.object({
   memberId: z.string({ required_error: "Please select a member." }),
@@ -43,28 +46,40 @@ const formSchema = z.object({
 });
 
 type TransferFormProps = {
-  members: Member[];
-  units: Unit[];
 };
 
-export function TransferForm({ members, units }: TransferFormProps) {
+export function TransferForm({}: TransferFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedMemberId = searchParams.get('memberId');
+  const firestore = useFirestore();
+
+  const { data: members, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
+  const { data: units, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      memberId: '',
+      memberId: preselectedMemberId || '',
       toUnitId: '',
       transferDate: new Date(),
     },
   });
 
-  const selectedMemberId = form.watch('memberId');
-  const selectedMember = members.find(m => m.id === selectedMemberId);
-  const fromUnit = units.find(u => u.id === selectedMember?.unitId);
+  useEffect(() => {
+    if (preselectedMemberId) {
+      form.setValue('memberId', preselectedMemberId);
+    }
+  }, [preselectedMemberId, form]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const selectedMemberId = form.watch('memberId');
+  const selectedMember = members?.find(m => m.id === selectedMemberId);
+  const fromUnit = units?.find(u => u.id === selectedMember?.unitId);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore || !members || !units) return;
+
     const member = members.find(m => m.id === values.memberId);
     if (!member || !fromUnit) {
         toast({ variant: "destructive", title: "Error", description: "Selected member is not valid." });
@@ -75,34 +90,36 @@ export function TransferForm({ members, units }: TransferFormProps) {
         return;
     }
 
-    // 1. Create the transfer record
-    const newTransfer: Transfer = {
-        id: new Date().getTime().toString(),
-        memberId: member.id,
-        memberName: member.name,
-        fromUnitId: member.unitId,
-        toUnitId: values.toUnitId,
-        transferDate: values.transferDate,
-    };
-    
-    const existingTransfersString = localStorage.getItem('transfers');
-    const existingTransfers = existingTransfersString ? JSON.parse(existingTransfersString) : [];
-    existingTransfers.push(newTransfer);
-    localStorage.setItem('transfers', JSON.stringify(existingTransfers));
-    
-    // 2. Update the member's unitId
-    const updatedMembers = members.map(m => 
-        m.id === values.memberId ? { ...m, unitId: values.toUnitId } : m
-    );
-    localStorage.setItem('members', JSON.stringify(updatedMembers));
+    try {
+        // 1. Create the transfer record
+        const newTransfer: Omit<Transfer, 'id'> = {
+            memberId: member.id,
+            memberName: member.name,
+            fromUnitId: member.unitId,
+            toUnitId: values.toUnitId,
+            transferDate: values.transferDate,
+            createdAt: serverTimestamp()
+        };
+        await addDoc(collection(firestore, 'transfers'), newTransfer);
+        
+        // 2. Update the member's unitId
+        const memberRef = doc(firestore, 'members', member.id);
+        await updateDoc(memberRef, { unitId: values.toUnitId });
 
-
-    toast({
-      title: "Transfer Recorded",
-      description: `Transfer for ${member.name} has been processed successfully.`,
-    });
-    router.push('/transfers');
-    router.refresh();
+        toast({
+        title: "Transfer Recorded",
+        description: `Transfer for ${member.name} has been processed successfully.`,
+        });
+        router.push('/transfers');
+        router.refresh();
+    } catch(e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not process transfer.' });
+    }
+  }
+  
+  if (membersLoading || unitsLoading) {
+      return <div>Loading form...</div>
   }
 
   return (
@@ -127,7 +144,7 @@ export function TransferForm({ members, units }: TransferFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {members.filter(m => m.status === 'Opened').map(member => (
+                        {members?.filter(m => m.status === 'Opened').map(member => (
                           <SelectItem key={member.id} value={member.id}>
                             {member.name} ({member.membershipCode})
                           </SelectItem>
@@ -160,7 +177,7 @@ export function TransferForm({ members, units }: TransferFormProps) {
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {units.filter(u => u.id !== fromUnit?.id).map(unit => (
+                            {units?.filter(u => u.id !== fromUnit?.id).map(unit => (
                             <SelectItem key={unit.id} value={unit.id}>
                                 {unit.name}
                             </SelectItem>

@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type MembershipStatus = "Opened" | "Closed";
 export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "";
 export type UserRole = "Super Admin" | "Unit Admin";
@@ -27,17 +29,17 @@ export type Member = {
   bloodGroup: string;
   memberPostType: MemberPostType;
   joiningRank: string;
-  dateOfBirth: Date;
-  dateOfEnrollment: Date;
-  superannuationDate: Date;
-  dateOfDischarge?: Date;
+  dateOfBirth: Timestamp;
+  dateOfEnrollment: Timestamp;
+  superannuationDate: Timestamp;
+  dateOfDischarge?: Timestamp;
   address: string;
   phone: string;
   unitId: string;
   status: MembershipStatus;
   closureReason?: ClosureReason;
   closureNotes?: string;
-  subscriptionStartDate: Date;
+  subscriptionStartDate: Timestamp;
   nominees: Nominee[];
   firstWitness: {
     name: string;
@@ -48,9 +50,11 @@ export type Member = {
     address: string;
   };
   parentDepartment?: string;
-  dateApplied: Date;
-  receiptDate: Date;
-  allotmentDate: Date;
+  dateApplied: Timestamp;
+  receiptDate: Timestamp;
+  allotmentDate: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 };
 
 export type Payment = {
@@ -60,8 +64,8 @@ export type Payment = {
   membershipCode: string;
   unitName: string;
   amount: number;
-  months: Date[]; // Represents the months paid for, e.g. [new Date('2024-07-01'), new Date('2024-08-01')]
-  paymentDate: Date;
+  months: (Date | Timestamp)[]; 
+  paymentDate: Timestamp;
 };
 
 export type Transfer = {
@@ -70,5 +74,6 @@ export type Transfer = {
   memberName: string;
   fromUnitId: string;
   toUnitId: string;
-  transferDate: Date;
+  transferDate: Date | Timestamp;
+  createdAt?: Timestamp;
 };

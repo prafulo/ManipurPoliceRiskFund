@@ -18,6 +18,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
+import { useCollection, useFirestore } from '@/firebase/hooks';
+import { collection } from 'firebase/firestore';
 
 interface ReportRow {
     unitName: string;
@@ -33,91 +35,85 @@ interface ReportRow {
 }
 
 export default function ComparativeStatementPage() {
+  const firestore = useFirestore();
+  const { data: allMembers, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
+  const { data: allTransfers, loading: transfersLoading } = useCollection<Transfer>(firestore ? collection(firestore, 'transfers') : null);
+  const { data: allUnits, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
+
   const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date(),
   });
 
-  const [allMembers, setAllMembers] = useState<Member[]>([]);
-  const [allTransfers, setAllTransfers] = useState<Transfer[]>([]);
-  const [allUnits, setAllUnits] = useState<Unit[]>([]);
-
-  useEffect(() => {
-    // Load all necessary data from localStorage
-    const membersString = localStorage.getItem('members');
-    const transfersString = localStorage.getItem('transfers');
-    const unitsString = localStorage.getItem('units');
-
-    setAllMembers(membersString ? JSON.parse(membersString).map((m: any) => ({ ...m, allotmentDate: new Date(m.allotmentDate), dateOfDischarge: m.dateOfDischarge ? new Date(m.dateOfDischarge) : undefined })) : []);
-    setAllTransfers(transfersString ? JSON.parse(transfersString).map((t: any) => ({...t, transferDate: new Date(t.transferDate)})) : []);
-    setAllUnits(unitsString ? JSON.parse(unitsString) : []);
-    
-    setLoading(false);
-  }, []);
-
   const generateReport = () => {
-    setLoading(true);
+    if (!allMembers || !allTransfers || !allUnits) {
+        return;
+    }
+    setReportLoading(true);
 
     const startDate = dateRange?.from ? startOfDay(dateRange.from) : startOfDay(new Date());
     const endDate = dateRange?.to ? endOfDay(dateRange.to) : endOfDay(new Date());
 
+    const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+    
     const data: ReportRow[] = allUnits.map(unit => {
-        // Previous Members: Active members before the start date
+        
         const previousMembers = allMembers.filter(m => {
-            if (m.allotmentDate >= startDate) return false; // Enrolled after period started
+            const allotmentDate = toDate(m.allotmentDate);
+            if (allotmentDate >= startDate) return false;
 
-            // Was the member in this unit before the start date?
             const transfersBefore = allTransfers
-                .filter(t => t.memberId === m.id && t.transferDate < startDate)
-                .sort((a, b) => b.transferDate.getTime() - a.transferDate.getTime());
+                .filter(t => t.memberId === m.id && toDate(t.transferDate) < startDate)
+                .sort((a, b) => toDate(b.transferDate).getTime() - toDate(a.transferDate).getTime());
 
             const lastUnitIdBefore = transfersBefore.length > 0 ? transfersBefore[0].toUnitId : m.unitId;
             if(lastUnitIdBefore !== unit.id) return false;
             
-            // Were they closed before start date?
-            if (m.status === 'Closed' && m.dateOfDischarge && m.dateOfDischarge < startDate) {
+            const dischargeDate = m.dateOfDischarge ? toDate(m.dateOfDischarge) : null;
+            if (m.status === 'Closed' && dischargeDate && dischargeDate < startDate) {
                 return false;
             }
 
             return true;
         }).length;
         
-        // New Members: Enrolled during the period
-        const newMembers = allMembers.filter(m => m.unitId === unit.id && m.allotmentDate >= startDate && m.allotmentDate <= endDate).length;
+        const newMembers = allMembers.filter(m => {
+            const allotmentDate = toDate(m.allotmentDate);
+            return m.unitId === unit.id && allotmentDate >= startDate && allotmentDate <= endDate
+        }).length;
 
-        // Transfers In: Transferred to this unit during the period
-        const transferredIn = allTransfers.filter(t => t.toUnitId === unit.id && t.transferDate >= startDate && t.transferDate <= endDate).length;
+        const transferredIn = allTransfers.filter(t => {
+            const transferDate = toDate(t.transferDate);
+            return t.toUnitId === unit.id && transferDate >= startDate && transferDate <= endDate
+        }).length;
         
-        // Transfers Out: Transferred from this unit during the period
-        const transferredOut = allTransfers.filter(t => t.fromUnitId === unit.id && t.transferDate >= startDate && t.transferDate <= endDate).length;
-
-        // Closed Members: Closed during the period
-        const closedExpiredRetired = allMembers.filter(m => {
-            const lastUnitBeforeClosure = allTransfers
-                .filter(t => t.memberId === m.id && m.dateOfDischarge && t.transferDate < m.dateOfDischarge)
-                .sort((a,b) => b.transferDate.getTime() - a.transferDate.getTime());
-            const unitAtClosure = lastUnitBeforeClosure.length > 0 ? lastUnitBeforeClosure[0].toUnitId : m.unitId;
-
-            return unitAtClosure === unit.id && 
-                   m.status === 'Closed' &&
-                   m.dateOfDischarge && m.dateOfDischarge >= startDate && m.dateOfDischarge <= endDate &&
-                   (m.closureReason === 'Retirement' || m.closureReason === 'Death' || m.closureReason === 'Expelled')
+        const transferredOut = allTransfers.filter(t => {
+            const transferDate = toDate(t.transferDate);
+            return t.fromUnitId === unit.id && transferDate >= startDate && transferDate <= endDate
         }).length;
 
-        const closedDoubling = allMembers.filter(m => {
-             const lastUnitBeforeClosure = allTransfers
-                .filter(t => t.memberId === m.id && m.dateOfDischarge && t.transferDate < m.dateOfDischarge)
-                .sort((a,b) => b.transferDate.getTime() - a.transferDate.getTime());
-            const unitAtClosure = lastUnitBeforeClosure.length > 0 ? lastUnitBeforeClosure[0].toUnitId : m.unitId;
+        const closedDuringPeriod = allMembers.filter(m => {
+            const dischargeDate = m.dateOfDischarge ? toDate(m.dateOfDischarge) : null;
+            if (m.status !== 'Closed' || !dischargeDate || dischargeDate < startDate || dischargeDate > endDate) {
+                return false;
+            }
+
+            const transfersBeforeClosure = allTransfers
+                .filter(t => t.memberId === m.id && toDate(t.transferDate) < dischargeDate)
+                .sort((a,b) => toDate(b.transferDate).getTime() - toDate(a.transferDate).getTime());
             
-            return unitAtClosure === unit.id &&
-                   m.status === 'Closed' &&
-                   m.dateOfDischarge && m.dateOfDischarge >= startDate && m.dateOfDischarge <= endDate &&
-                   m.closureReason === 'Doubling'
-        }).length;
+            const unitAtClosure = transfersBeforeClosure.length > 0 ? transfersBeforeClosure[0].toUnitId : m.unitId;
+            
+            return unitAtClosure === unit.id;
+        });
 
+        const closedExpiredRetired = closedDuringPeriod.filter(m => 
+            m.closureReason === 'Retirement' || m.closureReason === 'Death' || m.closureReason === 'Expelled'
+        ).length;
+
+        const closedDoubling = closedDuringPeriod.filter(m => m.closureReason === 'Doubling').length;
 
         const totalIn = previousMembers + newMembers + transferredIn;
         const totalOut = transferredOut + closedExpiredRetired + closedDoubling;
@@ -138,14 +134,15 @@ export default function ComparativeStatementPage() {
     });
 
     setReportData(data);
-    setLoading(false);
+    setReportLoading(false);
   };
   
   useEffect(() => {
-    if (!loading) { 
+    if (!membersLoading && !transfersLoading && !unitsLoading) { 
        generateReport();
     }
-  }, [dateRange, allMembers, allTransfers, allUnits, loading]); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange, allMembers, allTransfers, allUnits]); 
 
 
   const handlePrint = () => {
@@ -154,7 +151,9 @@ export default function ComparativeStatementPage() {
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'LLL d, y')} to ${format(dateRange.to, 'LLL d, y')}` : 'a selected period';
 
-  if (loading && allMembers.length === 0) {
+  const loading = membersLoading || transfersLoading || unitsLoading;
+
+  if (loading) {
     return <div>Loading data...</div>;
   }
 
@@ -202,8 +201,8 @@ export default function ComparativeStatementPage() {
                     />
                     </PopoverContent>
                 </Popover>
-                 <Button onClick={generateReport} disabled={loading}>
-                    {loading ? 'Generating...' : 'Generate'}
+                 <Button onClick={generateReport} disabled={reportLoading}>
+                    {reportLoading ? 'Generating...' : 'Generate'}
                  </Button>
                  <Button onClick={handlePrint} variant="outline">
                     <Printer className="mr-2 h-4 w-4" />
@@ -215,7 +214,7 @@ export default function ComparativeStatementPage() {
             <h2 className="text-xl font-bold">COMPARATIVE TABLES FOR THE MONTH(S) OF {dateRangeString.toUpperCase()}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {loading ? (
+            {reportLoading ? (
                 <p>Generating Report...</p>
             ) : reportData.length > 0 ? (
                 reportData.map((row, index) => (

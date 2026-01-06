@@ -26,6 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useCollection, useDoc, useFirestore } from '@/firebase/hooks';
+import { collection, doc } from 'firebase/firestore';
 
 interface ReportRow {
   memberCode: string;
@@ -39,35 +41,28 @@ interface ReportRow {
 }
 
 export default function PaymentHistoryReportPage() {
+  const firestore = useFirestore();
+  const { data: allMembers, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
+  const { data: allPayments, loading: paymentsLoading } = useCollection<Payment>(firestore ? collection(firestore, 'payments') : null);
+  const { data: allUnits, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
+  const { data: settings, loading: settingsLoading } = useDoc(firestore ? doc(firestore, 'settings', 'global') : null);
+
   const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(true);
   const [reportMonth, setReportMonth] = useState<Date>(startOfMonth(new Date()));
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
   
-  const [allMembers, setAllMembers] = useState<Member[]>([]);
-  const [allPayments, setAllPayments] = useState<Payment[]>([]);
-  const [allUnits, setAllUnits] = useState<Unit[]>([]);
-  const [subscriptionAmount, setSubscriptionAmount] = useState(100);
-
-  useEffect(() => {
-    // Load all necessary data from localStorage
-    const membersString = localStorage.getItem('members');
-    const paymentsString = localStorage.getItem('payments');
-    const unitsString = localStorage.getItem('units');
-    const subAmountString = localStorage.getItem('settings-subscription-amount');
-
-    setAllMembers(membersString ? JSON.parse(membersString).map((m: any) => ({ ...m, subscriptionStartDate: new Date(m.subscriptionStartDate) })) : []);
-    setAllPayments(paymentsString ? JSON.parse(paymentsString).map((p: any) => ({ ...p, paymentDate: new Date(p.paymentDate) })) : []);
-    setAllUnits(unitsString ? JSON.parse(unitsString) : []);
-    setSubscriptionAmount(subAmountString ? Number(subAmountString) : 100);
-    
-    setLoading(false);
-  }, []);
+  const subscriptionAmount = settings?.subscriptionAmount || 100;
 
   const generateReport = () => {
-    setLoading(true);
+    if (!allMembers || !allPayments) {
+        return;
+    }
+    setReportLoading(true);
 
     const reportEndDate = endOfMonth(reportMonth);
+    
+    const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
 
     const filteredMembers = selectedUnit === 'all'
       ? allMembers.filter(m => m.status === 'Opened')
@@ -75,19 +70,20 @@ export default function PaymentHistoryReportPage() {
 
     const data: ReportRow[] = filteredMembers.map(member => {
       const memberPayments = allPayments.filter(p => p.memberId === member.id);
+      const subscriptionStartDate = toDate(member.subscriptionStartDate);
 
-      // Total expected payment from start until the end of the report month
-      const monthsSinceSubscriptionStart = differenceInMonths(reportEndDate, startOfMonth(member.subscriptionStartDate)) + 1;
+      const monthsSinceSubscriptionStart = differenceInMonths(reportEndDate, startOfMonth(subscriptionStartDate)) + 1;
       const totalExpected = monthsSinceSubscriptionStart > 0 ? monthsSinceSubscriptionStart * subscriptionAmount : 0;
 
-      // Total received until the end of the report month
       const totalReceivedToDate = memberPayments
-        .filter(p => p.paymentDate <= reportEndDate)
+        .filter(p => toDate(p.paymentDate) <= reportEndDate)
         .reduce((sum, p) => sum + p.amount, 0);
 
-      // Amount received just in the report month
       const receivedThisMonth = memberPayments
-        .filter(p => p.paymentDate >= startOfMonth(reportMonth) && p.paymentDate <= reportEndDate)
+        .filter(p => {
+            const paymentDate = toDate(p.paymentDate);
+            return paymentDate >= startOfMonth(reportMonth) && paymentDate <= reportEndDate;
+        })
         .reduce((sum, p) => sum + p.amount, 0);
       
       const balanceAtStartOfMonth = totalExpected - subscriptionAmount - totalReceivedToDate + receivedThisMonth;
@@ -110,14 +106,15 @@ export default function PaymentHistoryReportPage() {
     });
 
     setReportData(data);
-    setLoading(false);
+    setReportLoading(false);
   };
   
   useEffect(() => {
-    if (!loading) { 
+    if (!membersLoading && !paymentsLoading && !unitsLoading && !settingsLoading) { 
        generateReport();
     }
-  }, [reportMonth, selectedUnit, allMembers, allPayments, subscriptionAmount, loading]); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportMonth, selectedUnit, allMembers, allPayments, subscriptionAmount]); 
 
 
   const totals = useMemo(() => {
@@ -136,7 +133,8 @@ export default function PaymentHistoryReportPage() {
 
   const reportDateString = format(reportMonth, 'MMMM yyyy');
 
-  if (loading && allMembers.length === 0) {
+  const loading = membersLoading || paymentsLoading || unitsLoading || settingsLoading;
+  if (loading) {
     return <div>Loading data...</div>;
   }
 
@@ -145,7 +143,7 @@ export default function PaymentHistoryReportPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Member Payment History</h2>
-                <p className="text-muted-foreground">Report for {reportDateString} for unit: {allUnits.find(u => u.id === selectedUnit)?.name || 'All Units'}</p>
+                <p className="text-muted-foreground">Report for {reportDateString} for unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</p>
             </div>
             <div className="flex items-center gap-2">
                  <Select value={selectedUnit} onValueChange={setSelectedUnit}>
@@ -154,7 +152,7 @@ export default function PaymentHistoryReportPage() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Units</SelectItem>
-                        {allUnits.map(unit => (
+                        {allUnits?.map(unit => (
                             <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
                         ))}
                     </SelectContent>
@@ -184,8 +182,8 @@ export default function PaymentHistoryReportPage() {
                     />
                     </PopoverContent>
                 </Popover>
-                 <Button onClick={generateReport} disabled={loading}>
-                    {loading ? 'Generating...' : 'Generate Report'}
+                 <Button onClick={generateReport} disabled={reportLoading}>
+                    {reportLoading ? 'Generating...' : 'Generate Report'}
                  </Button>
                  <Button onClick={handlePrint} variant="outline">
                     <Printer className="mr-2 h-4 w-4" />
@@ -197,7 +195,7 @@ export default function PaymentHistoryReportPage() {
             <CardContent className="p-0">
                  <div className="text-center p-4 print:block hidden">
                     <h2 className="text-xl font-bold">Member Payment History for {reportDateString}</h2>
-                    <h3 className="text-lg">Unit: {allUnits.find(u => u.id === selectedUnit)?.name || 'All Units'}</h3>
+                    <h3 className="text-lg">Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</h3>
                 </div>
                 <Table>
                     <TableHeader>
@@ -214,7 +212,7 @@ export default function PaymentHistoryReportPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
+                        {reportLoading ? (
                              <TableRow>
                                 <TableCell colSpan={9} className="h-24 text-center">
                                     Generating report...

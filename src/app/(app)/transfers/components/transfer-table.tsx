@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -42,8 +41,8 @@ export function TransferTable({ data }: TransferTableProps) {
         const valA = a[sortKey];
         const valB = b[sortKey];
 
-        if (valA instanceof Date && valB instanceof Date) {
-            return sortDirection === 'asc' ? valA.getTime() - valB.getTime() : valB.getTime() - valA.getTime();
+        if (valA && typeof valA === 'object' && 'toDate' in valA && valB && typeof valB === 'object' && 'toDate' in valB) {
+            return sortDirection === 'asc' ? valA.toDate().getTime() - valB.toDate().getTime() : valB.toDate().getTime() - valA.toDate().getTime();
         }
 
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
@@ -77,6 +76,13 @@ export function TransferTable({ data }: TransferTableProps) {
     { key: 'toUnitName', label: 'To Unit' },
     { key: 'transferDate', label: 'Transfer Date' },
   ];
+
+  const toDate = (timestamp: any): Date => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate();
+    }
+    return new Date(timestamp);
+  }
 
   return (
     <Card>
@@ -113,7 +119,7 @@ export function TransferTable({ data }: TransferTableProps) {
                     <TableCell className="font-medium">{transfer.memberName}</TableCell>
                     <TableCell>{transfer.fromUnitName}</TableCell>
                     <TableCell>{transfer.toUnitName}</TableCell>
-                    <TableCell>{format(new Date(transfer.transferDate), 'PP')}</TableCell>
+                    <TableCell>{format(toDate(transfer.transferDate), 'PP')}</TableCell>
                   </TableRow>
                 ))
               ) : (

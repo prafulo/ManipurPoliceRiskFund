@@ -7,34 +7,117 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Users, UserCheck, UserX, Landmark } from 'lucide-react';
-import { members as initialMembers, units as initialUnits } from '@/lib/data';
-import { useEffect, useState } from 'react';
+import { useCollection, useFirestore } from '@/firebase/hooks';
 import type { Member, Unit } from '@/lib/types';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useEffect, useState }from 'react';
 
 export default function Dashboard() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+  const { data: members, loading: membersLoading } = useCollection<Member>(
+    firestore ? collection(firestore, 'members') : null
+  );
+  const { data: units, loading: unitsLoading } = useCollection<Unit>(
+    firestore ? collection(firestore, 'units') : null
+  );
+  
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   useEffect(() => {
-    const storedMembers = localStorage.getItem('members');
-    setMembers(storedMembers ? JSON.parse(storedMembers) : initialMembers);
+    async function fetchRecentActivity() {
+      if (!firestore) return;
+      try {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const storedUnits = localStorage.getItem('units');
-    setUnits(storedUnits ? JSON.parse(storedUnits) : initialUnits);
+        const recentMembersQuery = query(
+          collection(firestore, 'members'),
+          where('allotmentDate', '>=', sevenDaysAgo)
+        );
+        const recentMembersSnapshot = await getDocs(recentMembersQuery);
+        const newMembers = recentMembersSnapshot.docs.map(doc => ({
+            type: 'New member added',
+            description: `${doc.data().name} (${doc.data().membershipCode})`,
+            date: doc.data().allotmentDate.toDate(),
+        }));
 
-    setLoading(false);
-  }, []);
+        const recentClosedQuery = query(
+          collection(firestore, 'members'),
+          where('status', '==', 'Closed'),
+          where('dateOfDischarge', '>=', sevenDaysAgo)
+        );
+        const recentClosedSnapshot = await getDocs(recentClosedQuery);
+        const closedMembers = recentClosedSnapshot.docs.map(doc => ({
+            type: 'Membership closed',
+            description: `${doc.data().name} (${doc.data().membershipCode})`,
+            date: doc.data().dateOfDischarge.toDate(),
+        }));
+        
+        const recentPaymentsQuery = query(
+          collection(firestore, 'payments'),
+          where('paymentDate', '>=', sevenDaysAgo)
+        );
+        const recentPaymentsSnapshot = await getDocs(recentPaymentsQuery);
+        const newPayments = recentPaymentsSnapshot.docs.map(doc => ({
+            type: 'Subscription payment',
+            description: `${doc.data().memberName} (${doc.data().membershipCode})`,
+            date: doc.data().paymentDate.toDate(),
+        }));
+
+
+        const allActivity = [...newMembers, ...closedMembers, ...newPayments];
+        allActivity.sort((a,b) => b.date.getTime() - a.date.getTime());
+        setRecentActivity(allActivity.slice(0, 5));
+
+      } catch (error) {
+        console.error("Error fetching recent activity:", error);
+      } finally {
+        setActivityLoading(false);
+      }
+    }
+
+    fetchRecentActivity();
+
+  }, [firestore]);
+
 
   const stats = {
-    totalMembers: members.length,
-    activeMembers: members.filter(m => m.status === 'Opened').length,
-    closedMembers: members.filter(m => m.status === 'Closed').length,
-    totalUnits: units.length,
+    totalMembers: members?.length ?? 0,
+    activeMembers: members?.filter(m => m.status === 'Opened').length ?? 0,
+    closedMembers: members?.filter(m => m.status === 'Closed').length ?? 0,
+    totalUnits: units?.length ?? 0,
   };
+
+  const loading = membersLoading || unitsLoading;
 
   if (loading) {
     return <div>Loading dashboard...</div>;
+  }
+  
+  function timeAgo(date: Date) {
+    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) {
+      return Math.floor(interval) + " years ago";
+    }
+    interval = seconds / 2592000;
+    if (interval > 1) {
+      return Math.floor(interval) + " months ago";
+    }
+    interval = seconds / 86400;
+    if (interval > 1) {
+      return Math.floor(interval) + " days ago";
+    }
+    interval = seconds / 3600;
+    if (interval > 1) {
+      return Math.floor(interval) + " hours ago";
+    }
+    interval = seconds / 60;
+    if (interval > 1) {
+      return Math.floor(interval) + " minutes ago";
+    }
+    return Math.floor(seconds) + " seconds ago";
   }
 
   return (
@@ -90,27 +173,23 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="pl-6">
             <div className="space-y-4">
-              <div className="flex items-center">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">New member added</p>
-                  <p className="text-sm text-muted-foreground">John Doe (1MR-31000-0724)</p>
-                </div>
-                <div className="ml-auto font-medium text-sm text-muted-foreground">1 day ago</div>
-              </div>
-              <div className="flex items-center">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Membership closed</p>
-                  <p className="text-sm text-muted-foreground">Mary Smith (1MR-31002-0624)</p>
-                </div>
-                <div className="ml-auto font-medium text-sm text-muted-foreground">2 days ago</div>
-              </div>
-               <div className="flex items-center">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">Subscription payment</p>
-                  <p className="text-sm text-muted-foreground">Peter Jones (2MR-31001-0724)</p>
-                </div>
-                <div className="ml-auto font-medium text-sm text-muted-foreground">3 days ago</div>
-              </div>
+             {activityLoading ? (
+                <p>Loading activity...</p>
+              ) : recentActivity.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No recent activity.</p>
+              ) : (
+                recentActivity.map((activity, index) => (
+                  <div className="flex items-center" key={index}>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">{activity.type}</p>
+                      <p className="text-sm text-muted-foreground">{activity.description}</p>
+                    </div>
+                    <div className="ml-auto font-medium text-sm text-muted-foreground">
+                      {timeAgo(activity.date)}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

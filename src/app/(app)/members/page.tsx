@@ -5,76 +5,69 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { MemberTable } from "./components/member-table";
-import { members as initialMembers, units as defaultUnits } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Member, Unit } from '@/lib/types';
 import { isPast } from 'date-fns';
+import { useCollection, useFirestore } from '@/firebase/hooks';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 
 export default function MembersPage() {
-  const [members, setMembers] = React.useState<Member[]>([]);
-  const [units, setUnits] = React.useState<Unit[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const firestore = useFirestore();
+  
+  const { data: membersData, loading: membersLoading, error: membersError } = useCollection<Member>(
+    firestore ? collection(firestore, 'members') : null
+  );
+
+  const { data: unitsData, loading: unitsLoading } = useCollection<Unit>(
+    firestore ? collection(firestore, 'units') : null
+  );
 
   React.useEffect(() => {
-    // Load members
-    const storedMembers = localStorage.getItem('members');
-    let memberData;
-    if (storedMembers) {
-      memberData = JSON.parse(storedMembers);
-    } else {
-      memberData = initialMembers;
-    }
+    async function autoCloseSuperannuated() {
+      if (!firestore || !membersData || membersData.length === 0) return;
 
-    // Auto-close superannuated members
-    let wasUpdated = false;
-    const today = new Date();
-    const updatedMemberData = memberData.map((m: any) => {
-        const superannuationDate = new Date(m.superannuationDate);
-        if (m.status === 'Opened' && isPast(superannuationDate)) {
-            wasUpdated = true;
-            return {
-                ...m,
-                status: 'Closed',
-                closureReason: 'Retirement',
-                dateOfDischarge: m.superannuationDate,
-            };
+      const batch = writeBatch(firestore);
+      const today = new Date();
+      let wasUpdated = false;
+
+      membersData.forEach(member => {
+        if (member.status === 'Opened' && member.superannuationDate && isPast(member.superannuationDate.toDate())) {
+          const memberRef = doc(firestore, 'members', member.id);
+          batch.update(memberRef, {
+            status: 'Closed',
+            closureReason: 'Retirement',
+            dateOfDischarge: member.superannuationDate,
+          });
+          wasUpdated = true;
         }
-        return m;
-    });
+      });
 
-    if (wasUpdated) {
-        localStorage.setItem('members', JSON.stringify(updatedMemberData));
-    }
-    
-    const finalMemberData = updatedMemberData.map((m: any) => ({
-        ...m,
-        dateOfBirth: new Date(m.dateOfBirth),
-        dateOfEnrollment: new Date(m.dateOfEnrollment),
-        superannuationDate: new Date(m.superannuationDate),
-        subscriptionStartDate: new Date(m.subscriptionStartDate),
-        dateApplied: new Date(m.dateApplied),
-        receiptDate: new Date(m.receiptDate),
-        allotmentDate: new Date(m.allotmentDate),
-        dateOfDischarge: m.dateOfDischarge ? new Date(m.dateOfDischarge) : undefined,
-    }));
-    
-    setMembers(finalMemberData);
-
-    // Load units
-    const storedUnits = localStorage.getItem('units');
-    if (storedUnits) {
-      setUnits(JSON.parse(storedUnits));
-    } else {
-      localStorage.setItem('units', JSON.stringify(defaultUnits));
-      setUnits(defaultUnits);
+      if (wasUpdated) {
+        try {
+          await batch.commit();
+          console.log("Automatically closed superannuated members.");
+          // Data will be re-fetched automatically by useCollection hook
+        } catch (error) {
+          console.error("Error auto-closing members:", error);
+        }
+      }
     }
 
-    setIsLoading(false);
-  }, []);
+    autoCloseSuperannuated();
+  }, [firestore, membersData]);
+
+  const isLoading = membersLoading || unitsLoading;
 
   if (isLoading) {
-    return <div>Loading members...</div>
+    return <div>Loading members...</div>;
   }
+
+  if (membersError) {
+    return <div>Error loading members: {membersError.message}</div>;
+  }
+
+  const members = membersData || [];
+  const units = unitsData || [];
 
   const enrichedMembers = members.map(member => ({
     ...member,

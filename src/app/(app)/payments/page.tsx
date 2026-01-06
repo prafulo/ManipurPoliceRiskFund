@@ -1,44 +1,47 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { payments as initialPayments } from "@/lib/data";
 import { PaymentTable } from "./components/payment-table";
 import type { Payment } from "@/lib/types";
-import { useEffect, useState } from "react";
+import React from "react";
+import { useCollection, useFirestore } from '@/firebase/hooks';
+import { collection, deleteDoc, doc } from 'firebase/firestore';
+import { useToast } from "@/hooks/use-toast";
 
 export default function PaymentsPage() {
-  const [paymentData, setPaymentData] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  
+  const { data: paymentData, loading: isLoading, error } = useCollection<Payment>(
+    firestore ? collection(firestore, 'payments') : null
+  );
 
-  useEffect(() => {
-    // Client-side only
-    const storedPayments = localStorage.getItem('payments');
-    if (storedPayments) {
-      // Parse dates correctly from string
-      const parsedPayments = JSON.parse(storedPayments).map((p: any) => ({
-        ...p,
-        paymentDate: new Date(p.paymentDate),
-        months: p.months.map((m: string) => new Date(m)),
-      }));
-      setPaymentData(parsedPayments);
-    } else {
-      localStorage.setItem('payments', JSON.stringify(initialPayments));
-      setPaymentData(initialPayments);
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, "payments", paymentId));
+      toast({
+        title: "Payment Deleted",
+        description: "The payment record has been successfully deleted.",
+      });
+    } catch (e) {
+      console.error("Error deleting payment: ", e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not delete the payment record.",
+      });
     }
-    setIsLoading(false);
-  }, []);
-
-  const handleDeletePayment = (paymentId: string) => {
-    const updatedPayments = paymentData.filter(p => p.id !== paymentId);
-    setPaymentData(updatedPayments);
-    localStorage.setItem('payments', JSON.stringify(updatedPayments));
   };
 
   if (isLoading) {
     return <div>Loading payments...</div>;
+  }
+  
+  if (error) {
+    return <div>Error: {error.message}</div>;
   }
 
   return (
@@ -55,7 +58,7 @@ export default function PaymentsPage() {
           </Button>
         </Link>
       </div>
-      <PaymentTable data={paymentData} onDelete={handleDeletePayment} />
+      <PaymentTable data={paymentData || []} onDelete={handleDeletePayment} />
     </div>
   );
 }

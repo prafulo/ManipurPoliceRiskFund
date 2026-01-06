@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -32,77 +31,70 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { units as defaultUnits } from '@/lib/data';
-import type { Unit } from '@/lib/types';
+import type { Unit, Member } from '@/lib/types';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
+import { useFirestore, useCollection } from '@/firebase/hooks';
+import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
+
 
 export default function ManageUnitsPage() {
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
+  const { data: units, loading: isLoading, error } = useCollection<Unit>(
+    firestore ? collection(firestore, 'units') : null
+  );
+
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [unitName, setUnitName] = useState('');
   const { toast } = useToast();
 
-  useEffect(() => {
-    const storedUnits = localStorage.getItem('units');
-    if (storedUnits) {
-      setUnits(JSON.parse(storedUnits));
-    } else {
-      localStorage.setItem('units', JSON.stringify(defaultUnits));
-      setUnits(defaultUnits);
-    }
-    setIsLoading(false);
-  }, []);
-
-  const saveUnits = (updatedUnits: Unit[]) => {
-    setUnits(updatedUnits);
-    localStorage.setItem('units', JSON.stringify(updatedUnits));
-  };
-
-  const handleAddOrUpdateUnit = () => {
-    if (!unitName.trim()) {
+  const handleAddOrUpdateUnit = async () => {
+    if (!firestore || !unitName.trim()) {
       toast({ variant: 'destructive', title: 'Error', description: 'Unit name cannot be empty.' });
       return;
     }
 
-    if (editingUnit) {
-      // Update
-      const updatedUnits = units.map(u => u.id === editingUnit.id ? { ...u, name: unitName.trim() } : u);
-      saveUnits(updatedUnits);
-      toast({ title: 'Unit Updated', description: `Unit "${unitName}" has been updated.` });
-    } else {
-      // Add
-      const newUnit: Unit = {
-        id: new Date().getTime().toString(),
-        name: unitName.trim(),
-      };
-      const updatedUnits = [...units, newUnit];
-      saveUnits(updatedUnits);
-      toast({ title: 'Unit Added', description: `Unit "${unitName}" has been added.` });
+    try {
+        if (editingUnit) {
+          // Update
+          const unitRef = doc(firestore, 'units', editingUnit.id);
+          await updateDoc(unitRef, { name: unitName.trim() });
+          toast({ title: 'Unit Updated', description: `Unit "${unitName}" has been updated.` });
+        } else {
+          // Add
+          await addDoc(collection(firestore, 'units'), { name: unitName.trim() });
+          toast({ title: 'Unit Added', description: `Unit "${unitName}" has been added.` });
+        }
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not save the unit.' });
     }
 
     setUnitName('');
     setEditingUnit(null);
   };
 
-  const handleDeleteUnit = (unitId: string) => {
-    // Check if unit is in use by members
-    const membersString = localStorage.getItem('members');
-    const members = membersString ? JSON.parse(membersString) : [];
-    const isUnitInUse = members.some((m: any) => m.unitId === unitId);
+  const handleDeleteUnit = async (unitId: string, unitName: string) => {
+    if (!firestore) return;
 
-    if (isUnitInUse) {
+    // Check if unit is in use by members
+    const membersRef = collection(firestore, 'members');
+    const q = query(membersRef, where('unitId', '==', unitId));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
       toast({
         variant: 'destructive',
         title: 'Cannot Delete Unit',
-        description: 'This unit is currently assigned to one or more members.',
+        description: `This unit is currently assigned to ${querySnapshot.size} member(s).`,
       });
       return;
     }
-
-    const updatedUnits = units.filter(u => u.id !== unitId);
-    saveUnits(updatedUnits);
-    toast({ title: 'Unit Deleted', description: 'The unit has been removed.' });
+    
+    try {
+        await deleteDoc(doc(firestore, 'units', unitId));
+        toast({ title: 'Unit Deleted', description: `The unit "${unitName}" has been removed.` });
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the unit.' });
+    }
   };
 
   const startEditing = (unit: Unit) => {
@@ -117,6 +109,10 @@ export default function ManageUnitsPage() {
   
   if (isLoading) {
     return <div>Loading units...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading units: {error.message}</div>;
   }
 
   return (
@@ -165,8 +161,8 @@ export default function ManageUnitsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {units.length > 0 ? (
-                units.map(unit => (
+              {(units || []).length > 0 ? (
+                units!.map(unit => (
                   <TableRow key={unit.id}>
                     <TableCell className="font-medium">{unit.name}</TableCell>
                     <TableCell className="text-right">
@@ -189,7 +185,7 @@ export default function ManageUnitsPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteUnit(unit.id)}>
+                              <AlertDialogAction onClick={() => handleDeleteUnit(unit.id, unit.name)}>
                                 Continue
                               </AlertDialogAction>
                             </AlertDialogFooter>

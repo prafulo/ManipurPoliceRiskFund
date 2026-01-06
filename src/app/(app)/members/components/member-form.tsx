@@ -22,19 +22,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Save, Trash2, PlusCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { units as defaultUnits } from '@/lib/data';
 import type { Member, Unit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { useFirestore, useCollection } from '@/firebase/hooks';
+import { collection, doc, addDoc, updateDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 
 const nomineeSchema = z.object({
   name: z.string().min(2, 'Nominee name is required.'),
@@ -101,61 +101,68 @@ const formSchema = z.object({
 
 
 type MemberFormProps = {
-  member?: Member;
+  member?: Member | null;
 };
 
-const initialSerialNumbers: Record<string, number> = defaultUnits.reduce((acc, unit) => {
-    acc[unit.id] = 31000;
-    return acc;
-}, {} as Record<string, number>);
+async function getNextSerialNumber(firestore: any, unitId: string): Promise<number> {
+    const membersRef = collection(firestore, 'members');
+    const q = query(membersRef, where('unitId', '==', unitId));
+    const querySnapshot = await getDocs(q);
 
-function getNextSerialNumber(unitId: string, allMembers: Member[]): number {
-  const membersOfUnit = allMembers.filter(m => m.unitId === unitId);
-  if (membersOfUnit.length === 0) {
-    const settingsString = typeof window !== 'undefined' ? localStorage.getItem('settings-serial') : null;
-    const serialSettings = settingsString ? JSON.parse(settingsString) : initialSerialNumbers;
-    return serialSettings[unitId] || 10000;
-  }
-  const lastMember = membersOfUnit.reduce((latest, current) => {
-    const latestNum = parseInt(latest.membershipCode.split('-')[1], 10);
-    const currentNum = parseInt(current.membershipCode.split('-')[1], 10);
-    return currentNum > latestNum ? current : latest;
-  });
-  const lastSerialNumber = parseInt(lastMember.membershipCode.split('-')[1], 10);
-  return lastSerialNumber + 1;
+    if (querySnapshot.empty) {
+        // In a real app, this should come from a server-side config or a dedicated document in Firestore
+        // For now, we'll hardcode a starting point.
+        return 31000;
+    }
+
+    let lastSerialNumber = 0;
+    querySnapshot.forEach(doc => {
+        const member = doc.data() as Member;
+        const serialPart = member.membershipCode.split('-')[1];
+        const serialNum = parseInt(serialPart, 10);
+        if (serialNum > lastSerialNumber) {
+            lastSerialNumber = serialNum;
+        }
+    });
+
+    return lastSerialNumber + 1;
+}
+
+// Convert Firestore Timestamps to JS Dates
+function memberToForm(member: Member): any {
+    const formValues: any = { ...member };
+    for (const key in formValues) {
+        if (formValues[key]?.toDate) { // Check if it's a Firestore Timestamp
+            formValues[key] = formValues[key].toDate();
+        }
+    }
+    // Handle nested witness objects
+    if (member.firstWitness) {
+        formValues.firstWitnessName = member.firstWitness.name;
+        formValues.firstWitnessAddress = member.firstWitness.address;
+    }
+    if (member.secondWitness) {
+        formValues.secondWitnessName = member.secondWitness.name;
+        formValues.secondWitnessAddress = member.secondWitness.address;
+    }
+    return formValues;
 }
 
 
 export function MemberForm({ member }: MemberFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [units, setUnits] = useState<Unit[]>([]);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    const storedUnits = localStorage.getItem('units');
-    setUnits(storedUnits ? JSON.parse(storedUnits) : defaultUnits);
-  }, []);
+  const { data: units, loading: unitsLoading } = useCollection<Unit>(
+    firestore ? collection(firestore, 'units') : null
+  );
+
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: member ? {
-      ...member,
-      dateOfBirth: typeof member.dateOfBirth === 'string' ? new Date(member.dateOfBirth) : member.dateOfBirth,
-      dateOfEnrollment: typeof member.dateOfEnrollment === 'string' ? new Date(member.dateOfEnrollment) : member.dateOfEnrollment,
-      superannuationDate: typeof member.superannuationDate === 'string' ? new Date(member.superannuationDate) : member.superannuationDate,
-      dateApplied: typeof member.dateApplied === 'string' ? new Date(member.dateApplied) : member.dateApplied,
-      receiptDate: typeof member.receiptDate === 'string' ? new Date(member.receiptDate) : member.receiptDate,
-      allotmentDate: typeof member.allotmentDate === 'string' ? new Date(member.allotmentDate) : member.allotmentDate,
-      dateOfDischarge: member.dateOfDischarge ? (typeof member.dateOfDischarge === 'string' ? new Date(member.dateOfDischarge) : member.dateOfDischarge) : undefined,
-      closureReason: member.closureReason || '',
-      closureNotes: member.closureNotes || '',
-      parentDepartment: member.parentDepartment || '',
-      firstWitnessName: member.firstWitness.name,
-      firstWitnessAddress: member.firstWitness.address,
-      secondWitnessName: member.secondWitness.name,
-      secondWitnessAddress: member.secondWitness.address,
-    } : {
+    defaultValues: member ? memberToForm(member) : {
       name: '',
       fatherName: '',
       rank: '',
@@ -188,72 +195,82 @@ export function MemberForm({ member }: MemberFormProps) {
   const selectedUnitId = form.watch("unitId");
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (!member && selectedUnitId) {
-        const allMembersString = localStorage.getItem('members');
-        const allMembers = allMembersString ? JSON.parse(allMembersString) : [];
-        const unit = units.find(u => u.id === selectedUnitId);
-        if (unit) {
-          const nextSerial = getNextSerialNumber(selectedUnitId, allMembers);
-          const datePart = format(new Date(), 'MMyy');
-          setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
+    async function generateCode() {
+        if (firestore && !member && selectedUnitId) {
+            const unit = units?.find(u => u.id === selectedUnitId);
+            if (unit) {
+                const nextSerial = await getNextSerialNumber(firestore, selectedUnitId);
+                const datePart = format(new Date(), 'MMyy');
+                setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
+            }
+        } else if (member) {
+            setGeneratedCode(member.membershipCode);
         }
-      } else if (member) {
-        setGeneratedCode(member.membershipCode);
-      }
     }
-  }, [selectedUnitId, member, units]);
+    generateCode();
+  }, [selectedUnitId, member, firestore, units]);
 
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const allMembersString = localStorage.getItem('members');
-    let allMembers = allMembersString ? JSON.parse(allMembersString) : [];
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Database connection not available.",
+        });
+        return;
+    }
 
-    if (member) {
-      // Editing existing member
-      const memberIndex = allMembers.findIndex((m: Member) => m.id === member.id);
-      if (memberIndex !== -1) {
-        const updatedMember = {
-          ...allMembers[memberIndex],
-          ...values,
-          firstWitness: {
-              name: values.firstWitnessName,
-              address: values.firstWitnessAddress
-          },
-          secondWitness: {
-              name: values.secondWitnessName,
-              address: values.secondWitnessAddress
-          }
-        };
-        allMembers[memberIndex] = updatedMember;
-      }
-    } else {
-      // Creating new member
-      const newMember: Member = {
+    const dataToSave = {
         ...values,
-        id: new Date().getTime().toString(),
-        membershipCode: generatedCode!,
-        subscriptionStartDate: new Date(), // Set a default
-         firstWitness: {
-              name: values.firstWitnessName,
-              address: values.firstWitnessAddress
-          },
-          secondWitness: {
-              name: values.secondWitnessName,
-              address: values.secondWitnessAddress
-          }
-      };
-      allMembers.push(newMember);
+        firstWitness: {
+            name: values.firstWitnessName,
+            address: values.firstWitnessAddress
+        },
+        secondWitness: {
+            name: values.secondWitnessName,
+            address: values.secondWitnessAddress
+        }
+    };
+    // Remove the flat witness properties
+    delete (dataToSave as any).firstWitnessName;
+    delete (dataToSave as any).firstWitnessAddress;
+    delete (dataToSave as any).secondWitnessName;
+    delete (dataToSave as any).secondWitnessAddress;
+
+    try {
+        if (member) {
+            // Editing existing member
+            const memberRef = doc(firestore, 'members', member.id);
+            await updateDoc(memberRef, {
+                ...dataToSave,
+                updatedAt: serverTimestamp()
+            });
+        } else {
+            // Creating new member
+            const collectionRef = collection(firestore, 'members');
+            await addDoc(collectionRef, {
+                ...dataToSave,
+                membershipCode: generatedCode,
+                subscriptionStartDate: new Date(),
+                createdAt: serverTimestamp()
+            });
+        }
+
+        toast({
+            title: member ? "Member Updated" : "Member Created",
+            description: `Profile for ${values.name} has been saved successfully.`,
+        });
+        router.push('/members');
+        router.refresh();
+    } catch (error) {
+        console.error("Error saving member: ", error);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Could not save the member profile.",
+        });
     }
-
-    localStorage.setItem('members', JSON.stringify(allMembers));
-
-    toast({
-      title: member ? "Member Updated" : "Member Created",
-      description: `Profile for ${values.name} has been saved successfully.`,
-    });
-    router.push('/members');
-    router.refresh(); // Force a refresh to reflect changes
   }
 
   const status = form.watch("status");
@@ -412,7 +429,7 @@ export function MemberForm({ member }: MemberFormProps) {
                     <FormItem><FormLabel>Unit</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!member}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select a unit" /></SelectTrigger></FormControl>
-                        <SelectContent>{units.map(unit => (<SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>))}</SelectContent>
+                        <SelectContent>{(units || []).map(unit => (<SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>))}</SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>

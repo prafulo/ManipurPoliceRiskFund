@@ -19,6 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
+import { useCollection, useDoc, useFirestore } from '@/firebase/hooks';
+import { collection, doc } from 'firebase/firestore';
 
 interface ReportRow {
   memberCode: string;
@@ -31,30 +33,31 @@ interface ReportRow {
 }
 
 export default function SubscriptionReleaseReportPage() {
+  const firestore = useFirestore();
+  const { data: allMembers, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
+  const { data: allPayments, loading: paymentsLoading } = useCollection<Payment>(firestore ? collection(firestore, 'payments') : null);
+  const { data: settings, loading: settingsLoading } = useDoc(firestore ? doc(firestore, 'settings', 'global') : null);
+  
   const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().getFullYear(), 0, 1),
     to: new Date(),
   });
   
-  const generateReport = () => {
-    setLoading(true);
-    // Load all necessary data from localStorage
-    const membersString = localStorage.getItem('members');
-    const paymentsString = localStorage.getItem('payments');
-    const expiredAmountString = localStorage.getItem('settings-expired-release-amount');
-    
-    const allMembers: Member[] = membersString ? JSON.parse(membersString) : [];
-    const allPayments: Payment[] = paymentsString ? JSON.parse(paymentsString) : [];
-    const expiredReleaseAmount = expiredAmountString ? Number(expiredAmountString) : 50000;
+  const expiredReleaseAmount = settings?.expiredReleaseAmount || 50000;
 
+  const generateReport = () => {
+    if (!allMembers || !allPayments) return;
+    setReportLoading(true);
+    
     const startDate = dateRange?.from;
     const endDate = dateRange?.to;
 
-    // Filter for members closed due to Retirement or Death within the date range
+    const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+
     const closedMembers = allMembers.filter(m => {
-        const dischargeDate = m.dateOfDischarge ? new Date(m.dateOfDischarge) : null;
+        const dischargeDate = m.dateOfDischarge ? toDate(m.dateOfDischarge) : null;
         return m.status === 'Closed' &&
                (m.closureReason === 'Retirement' || m.closureReason === 'Death') &&
                dischargeDate &&
@@ -81,7 +84,7 @@ export default function SubscriptionReleaseReportPage() {
         memberCode: member.membershipCode,
         rank: member.rank,
         name: member.name,
-        closureDate: new Date(member.dateOfDischarge!),
+        closureDate: toDate(member.dateOfDischarge!),
         totalMonthsPaid,
         totalAmountPaid,
         remark: member.closureReason || 'N/A',
@@ -89,13 +92,15 @@ export default function SubscriptionReleaseReportPage() {
     });
 
     setReportData(data);
-    setLoading(false);
+    setReportLoading(false);
   }
 
   useEffect(() => {
-    generateReport();
+    if (!membersLoading && !paymentsLoading && !settingsLoading) {
+      generateReport();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dateRange, allMembers, allPayments, expiredReleaseAmount]);
 
   const totals = useMemo(() => {
     return reportData.reduce((acc, row) => ({
@@ -108,6 +113,11 @@ export default function SubscriptionReleaseReportPage() {
   }
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'LLL d, y')} to ${format(dateRange.to, 'LLL d, y')}` : 'for all time';
+
+  const loading = membersLoading || paymentsLoading || settingsLoading;
+  if (loading) {
+      return <div>Loading data...</div>
+  }
 
   return (
     <div>
@@ -153,8 +163,8 @@ export default function SubscriptionReleaseReportPage() {
                     />
                     </PopoverContent>
                 </Popover>
-                 <Button onClick={generateReport} disabled={loading}>
-                    {loading ? 'Generating...' : 'Generate Report'}
+                 <Button onClick={generateReport} disabled={reportLoading}>
+                    {reportLoading ? 'Generating...' : 'Generate Report'}
                  </Button>
                  <Button onClick={handlePrint} variant="outline">
                     <Printer className="mr-2 h-4 w-4" />
@@ -182,7 +192,7 @@ export default function SubscriptionReleaseReportPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
+                        {reportLoading ? (
                              <TableRow>
                                 <TableCell colSpan={8} className="h-24 text-center">
                                     Generating report...

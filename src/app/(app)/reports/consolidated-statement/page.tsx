@@ -19,6 +19,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfMonth, endOfMonth, differenceInMonths, eachMonthOfInterval } from 'date-fns';
 import { cn, numberToWords } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
+import { useCollection, useDoc, useFirestore } from '@/firebase/hooks';
+import { collection, doc } from 'firebase/firestore';
 
 interface ReportRow {
   unitName: string;
@@ -29,63 +31,54 @@ interface ReportRow {
 }
 
 export default function ConsolidatedStatementPage() {
+  const firestore = useFirestore();
+  const { data: allMembers, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
+  const { data: allPayments, loading: paymentsLoading } = useCollection<Payment>(firestore ? collection(firestore, 'payments') : null);
+  const { data: allUnits, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
+  const { data: settings, loading: settingsLoading } = useDoc(firestore ? doc(firestore, 'settings', 'global') : null);
+  
   const [reportData, setReportData] = useState<ReportRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
 
-  const [allMembers, setAllMembers] = useState<Member[]>([]);
-  const [allPayments, setAllPayments] = useState<Payment[]>([]);
-  const [allUnits, setAllUnits] = useState<Unit[]>([]);
-  const [subscriptionAmount, setSubscriptionAmount] = useState(100);
-
-  useEffect(() => {
-    // Load all necessary data from localStorage
-    const membersString = localStorage.getItem('members');
-    const paymentsString = localStorage.getItem('payments');
-    const unitsString = localStorage.getItem('units');
-    const subAmountString = localStorage.getItem('settings-subscription-amount');
-
-    setAllMembers(membersString ? JSON.parse(membersString).map((m: any) => ({ ...m, subscriptionStartDate: new Date(m.subscriptionStartDate), allotmentDate: new Date(m.allotmentDate) })) : []);
-    setAllPayments(paymentsString ? JSON.parse(paymentsString).map((p: any) => ({ ...p, paymentDate: new Date(p.paymentDate) })) : []);
-    setAllUnits(unitsString ? JSON.parse(unitsString) : []);
-    setSubscriptionAmount(subAmountString ? Number(subAmountString) : 100);
-    
-    setLoading(false);
-  }, []);
-
+  const subscriptionAmount = settings?.subscriptionAmount || 100;
+  
   const generateReport = () => {
-    setLoading(true);
+    if (!allMembers || !allPayments || !allUnits) return;
+    setReportLoading(true);
 
     const reportStartDate = dateRange?.from ? startOfMonth(dateRange.from) : startOfMonth(new Date());
     const reportEndDate = dateRange?.to ? endOfMonth(dateRange.to) : endOfMonth(new Date());
 
-    const monthsInPeriod = eachMonthOfInterval({ start: reportStartDate, end: reportEndDate });
-    const periodLengthInMonths = monthsInPeriod.length;
-
+    const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+    
     const data: ReportRow[] = allUnits.map(unit => {
-      const unitMembers = allMembers.filter(m => m.unitId === unit.id && m.status === 'Opened' && startOfMonth(m.allotmentDate) <= reportEndDate);
+      const unitMembers = allMembers.filter(m => {
+          const allotmentDate = toDate(m.allotmentDate);
+          return m.unitId === unit.id && m.status === 'Opened' && startOfMonth(allotmentDate) <= reportEndDate;
+      });
 
       let totalSubscription = 0;
       let totalArrears = 0;
 
       unitMembers.forEach(member => {
-        // Calculate subscription for the period
+        const subscriptionStartDate = toDate(member.subscriptionStartDate);
+        
         const memberMonthsInPeriod = eachMonthOfInterval({
             start: reportStartDate,
             end: reportEndDate
-        }).filter(month => month >= startOfMonth(member.subscriptionStartDate)).length;
+        }).filter(month => month >= startOfMonth(subscriptionStartDate)).length;
 
         totalSubscription += memberMonthsInPeriod * subscriptionAmount;
 
-        // Calculate arrears at the START of the period
-        const monthsDueBeforePeriod = differenceInMonths(reportStartDate, startOfMonth(member.subscriptionStartDate));
+        const monthsDueBeforePeriod = differenceInMonths(reportStartDate, startOfMonth(subscriptionStartDate));
         if (monthsDueBeforePeriod > 0) {
             const expectedBeforePeriod = monthsDueBeforePeriod * subscriptionAmount;
             const paidBeforePeriod = allPayments
-                .filter(p => p.memberId === member.id && p.paymentDate < reportStartDate)
+                .filter(p => p.memberId === member.id && toDate(p.paymentDate) < reportStartDate)
                 .reduce((sum, p) => sum + p.amount, 0);
             
             const arrearForMember = expectedBeforePeriod - paidBeforePeriod;
@@ -105,14 +98,15 @@ export default function ConsolidatedStatementPage() {
     });
 
     setReportData(data);
-    setLoading(false);
+    setReportLoading(false);
   };
   
   useEffect(() => {
-    if (!loading) { 
+    if (!membersLoading && !paymentsLoading && !unitsLoading && !settingsLoading) { 
        generateReport();
     }
-  }, [dateRange, allMembers, allPayments, allUnits, subscriptionAmount, loading]); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange, allMembers, allPayments, allUnits, subscriptionAmount]); 
 
 
   const totals = useMemo(() => {
@@ -130,7 +124,8 @@ export default function ConsolidatedStatementPage() {
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'MMMM yyyy')} to ${format(dateRange.to, 'MMMM yyyy')}` : 'a selected period';
 
-  if (loading && allMembers.length === 0) {
+  const loading = membersLoading || paymentsLoading || unitsLoading || settingsLoading;
+  if (loading) {
     return <div>Loading data...</div>;
   }
 
@@ -178,8 +173,8 @@ export default function ConsolidatedStatementPage() {
                     />
                     </PopoverContent>
                 </Popover>
-                 <Button onClick={generateReport} disabled={loading}>
-                    {loading ? 'Generating...' : 'Generate Report'}
+                 <Button onClick={generateReport} disabled={reportLoading}>
+                    {reportLoading ? 'Generating...' : 'Generate Report'}
                  </Button>
                  <Button onClick={handlePrint} variant="outline">
                     <Printer className="mr-2 h-4 w-4" />
@@ -205,7 +200,7 @@ export default function ConsolidatedStatementPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
+                        {reportLoading ? (
                              <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
                                     Generating report...

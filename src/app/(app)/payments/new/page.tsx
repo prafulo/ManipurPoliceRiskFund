@@ -1,40 +1,7 @@
 'use client';
 
 import { PaymentForm } from "../components/payment-form";
-import { units as defaultUnits } from "@/lib/data";
-import { Suspense, useEffect, useState } from "react";
-import type { Member, Unit } from "@/lib/types";
-import { members as initialMembers } from "@/lib/data";
-
-function PaymentFormLoader() {
-    const [members, setMembers] = useState<Member[]>([]);
-    const [units, setUnits] = useState<Unit[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const storedMembers = localStorage.getItem('members');
-        if (storedMembers) {
-            setMembers(JSON.parse(storedMembers));
-        } else {
-            setMembers(initialMembers)
-        }
-
-        const storedUnits = localStorage.getItem('units');
-        if (storedUnits) {
-            setUnits(JSON.parse(storedUnits));
-        } else {
-            setUnits(defaultUnits);
-        }
-
-        setLoading(false);
-    }, []);
-
-    if (loading) {
-        return <div>Loading form...</div>
-    }
-
-    return <PaymentForm members={members} units={units} />
-}
+import { Suspense } from "react";
 
 export default function NewPaymentPage() {
   return (
@@ -44,7 +11,7 @@ export default function NewPaymentPage() {
         <p className="text-muted-foreground">Record a new payment for a member.</p>
       </div>
       <Suspense fallback={<div>Loading form...</div>}>
-         <PaymentFormLoader />
+         <PaymentForm />
       </Suspense>
     </div>
   );

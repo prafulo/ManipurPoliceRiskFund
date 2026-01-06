@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -7,37 +6,26 @@ import Link from "next/link";
 import { TransferTable } from "./components/transfer-table";
 import type { Transfer, Unit } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { transfers as initialTransfers } from "@/lib/data";
+import { useCollection, useFirestore } from "@/firebase/hooks";
+import { collection } from 'firebase/firestore';
 
 export default function TransfersPage() {
-  const [transferData, setTransferData] = useState<Transfer[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    // Load units
-    const storedUnits = localStorage.getItem('units');
-    setUnits(storedUnits ? JSON.parse(storedUnits) : []);
+  const { data: transferData, loading: transfersLoading } = useCollection<Transfer>(
+    firestore ? collection(firestore, 'transfers') : null
+  );
 
-    // Load transfers
-    const storedTransfers = localStorage.getItem('transfers');
-    if (storedTransfers) {
-      const parsedTransfers = JSON.parse(storedTransfers).map((t: any) => ({
-        ...t,
-        transferDate: new Date(t.transferDate),
-      }));
-      setTransferData(parsedTransfers);
-    } else {
-      localStorage.setItem('transfers', JSON.stringify(initialTransfers));
-      setTransferData(initialTransfers);
-    }
-    setIsLoading(false);
-  }, []);
+  const { data: units, loading: unitsLoading } = useCollection<Unit>(
+    firestore ? collection(firestore, 'units') : null
+  );
+  
+  const isLoading = transfersLoading || unitsLoading;
 
-  const enrichedTransfers = transferData.map(transfer => ({
+  const enrichedTransfers = (transferData || []).map(transfer => ({
       ...transfer,
-      fromUnitName: units.find(u => u.id === transfer.fromUnitId)?.name || 'N/A',
-      toUnitName: units.find(u => u.id === transfer.toUnitId)?.name || 'N/A',
+      fromUnitName: units?.find(u => u.id === transfer.fromUnitId)?.name || 'N/A',
+      toUnitName: units?.find(u => u.id === transfer.toUnitId)?.name || 'N/A',
   }));
 
   if (isLoading) {
