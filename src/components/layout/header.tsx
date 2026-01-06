@@ -30,6 +30,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import { Logo } from '../logo';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -56,7 +57,7 @@ export function Header() {
         <SheetContent side="left" className="flex flex-col">
           <nav className="grid gap-4 text-base font-medium">
             <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
-              <GanttChartSquare className="h-6 w-6 text-primary" />
+              <Logo className="h-6 w-6" />
               <span className="text-primary font-headline">Unitrax</span>
             </Link>
             {navItems.map((item) => {

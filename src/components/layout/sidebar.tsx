@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Users, Settings, FileText, GanttChartSquare, CreditCard, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from '../logo';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -21,7 +22,7 @@ export function Sidebar() {
     <aside className="hidden md:flex w-64 flex-col bg-card border-r">
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <GanttChartSquare className="w-8 h-8 text-primary" />
+          <Logo className="w-8 h-8" />
           <h1 className="text-2xl font-bold font-headline text-primary">Unitrax</h1>
         </Link>
       </div>
