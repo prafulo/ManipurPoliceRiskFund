@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverComponentsExternalPackages: ['mysql2'],
+  },
 };
 
 export default nextConfig;

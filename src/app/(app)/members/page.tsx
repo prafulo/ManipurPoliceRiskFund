@@ -8,71 +8,40 @@ import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Member, Unit } from '@/lib/types';
 import { isPast } from 'date-fns';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection, writeBatch, doc } from 'firebase/firestore';
 
 export default function MembersPage() {
-  const firestore = useFirestore();
-  
-  const { data: membersData, loading: membersLoading, error: membersError } = useCollection<Member>(
-    firestore ? collection(firestore, 'members') : null
-  );
-
-  const { data: unitsData, loading: unitsLoading } = useCollection<Unit>(
-    firestore ? collection(firestore, 'units') : null
-  );
+  const [enrichedMembers, setEnrichedMembers] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
 
   React.useEffect(() => {
-    async function autoCloseSuperannuated() {
-      if (!firestore || !membersData || membersData.length === 0) return;
-
-      const batch = writeBatch(firestore);
-      const today = new Date();
-      let wasUpdated = false;
-
-      membersData.forEach(member => {
-        if (member.status === 'Opened' && member.superannuationDate && isPast(member.superannuationDate.toDate())) {
-          const memberRef = doc(firestore, 'members', member.id);
-          batch.update(memberRef, {
-            status: 'Closed',
-            closureReason: 'Retirement',
-            dateOfDischarge: member.superannuationDate,
-          });
-          wasUpdated = true;
+    async function fetchMembers() {
+      try {
+        const response = await fetch('/api/members');
+        if (!response.ok) {
+          throw new Error('Failed to fetch members');
         }
-      });
-
-      if (wasUpdated) {
-        try {
-          await batch.commit();
-          console.log("Automatically closed superannuated members.");
-          // Data will be re-fetched automatically by useCollection hook
-        } catch (error) {
-          console.error("Error auto-closing members:", error);
-        }
+        const data = await response.json();
+        
+        // TODO: Auto-closing superannuated members needs to be re-implemented via an API endpoint
+        setEnrichedMembers(data.members || []);
+      } catch (err: any) {
+        setError(err);
+      } finally {
+        setIsLoading(false);
       }
     }
+    fetchMembers();
+  }, []);
 
-    autoCloseSuperannuated();
-  }, [firestore, membersData]);
-
-  const isLoading = membersLoading || unitsLoading;
 
   if (isLoading) {
     return <div>Loading members...</div>;
   }
 
-  if (membersError) {
-    return <div>Error loading members: {membersError.message}</div>;
+  if (error) {
+    return <div>Error loading members: {error.message}</div>;
   }
-
-  const members = membersData || [];
-  const units = unitsData || [];
-
-  const enrichedMembers = members.map(member => ({
-    ...member,
-    unitName: units.find(u => u.id === member.unitId)?.name || 'N/A'
-  }));
 
   const openMembers = enrichedMembers.filter(m => m.status === 'Opened');
   const closedMembers = enrichedMembers.filter(m => m.status === 'Closed');

@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore';
 
 export type MembershipStatus = "Opened" | "Closed";
 export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "";
@@ -17,6 +16,8 @@ export type Nominee = {
   share: number;
 };
 
+// This type represents the data structure as used in the components.
+// It will differ slightly from the direct database schema (e.g., Timestamps vs. Dates/Strings).
 export type Member = {
   id: string;
   membershipCode: string;
@@ -29,17 +30,17 @@ export type Member = {
   bloodGroup: string;
   memberPostType: MemberPostType;
   joiningRank: string;
-  dateOfBirth: Timestamp;
-  dateOfEnrollment: Timestamp;
-  superannuationDate: Timestamp;
-  dateOfDischarge?: Timestamp;
+  dateOfBirth: Date | string;
+  dateOfEnrollment: Date | string;
+  superannuationDate: Date | string;
+  dateOfDischarge?: Date | string;
   address: string;
   phone: string;
   unitId: string;
   status: MembershipStatus;
   closureReason?: ClosureReason;
   closureNotes?: string;
-  subscriptionStartDate: Timestamp;
+  subscriptionStartDate: Date | string;
   nominees: Nominee[];
   firstWitness: {
     name: string;
@@ -50,11 +51,11 @@ export type Member = {
     address: string;
   };
   parentDepartment?: string;
-  dateApplied: Timestamp;
-  receiptDate: Timestamp;
-  allotmentDate: Timestamp;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  dateApplied: Date | string;
+  receiptDate: Date | string;
+  allotmentDate: Date | string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 };
 
 export type Payment = {
@@ -64,8 +65,8 @@ export type Payment = {
   membershipCode: string;
   unitName: string;
   amount: number;
-  months: (Date | Timestamp)[]; 
-  paymentDate: Timestamp;
+  months: (Date | string)[]; 
+  paymentDate: Date | string;
 };
 
 export type Transfer = {
@@ -74,6 +75,6 @@ export type Transfer = {
   memberName: string;
   fromUnitId: string;
   toUnitId: string;
-  transferDate: Date | Timestamp;
-  createdAt?: Timestamp;
+  transferDate: Date | string;
+  createdAt?: Date | string;
 };
