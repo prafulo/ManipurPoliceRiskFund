@@ -33,7 +33,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Unit, Member } from '@/lib/types';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
-import { useFirestore, useCollection } from '@/firebase/hooks';
+import { useFirestore, useCollection } from '@/firebase';
 import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
 
 

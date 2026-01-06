@@ -4,7 +4,7 @@ import { ClientOnlyMemberForm } from "../components/client-only-member-form";
 import { notFound } from "next/navigation";
 import { use, useMemo } from "react";
 import type { Member } from "@/lib/types";
-import { useDoc, useFirestore } from "@/firebase/hooks";
+import { useDoc, useFirestore } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 export default function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {

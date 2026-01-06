@@ -18,7 +18,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { useCollection, useFirestore } from '@/firebase/hooks';
+import { useCollection, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 interface ReportRow {

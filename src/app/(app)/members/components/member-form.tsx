@@ -33,7 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { useFirestore, useCollection } from '@/firebase/hooks';
+import { useFirestore, useCollection } from '@/firebase';
 import { collection, doc, addDoc, updateDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 
 const nomineeSchema = z.object({

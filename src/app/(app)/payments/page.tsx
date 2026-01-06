@@ -6,7 +6,7 @@ import Link from "next/link";
 import { PaymentTable } from "./components/payment-table";
 import type { Payment } from "@/lib/types";
 import React from "react";
-import { useCollection, useFirestore } from '@/firebase/hooks';
+import { useCollection, useFirestore } from '@/firebase';
 import { collection, deleteDoc, doc } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
 

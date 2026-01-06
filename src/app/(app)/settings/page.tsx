@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import type { Unit } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useFirestore, useCollection, useDoc } from '@/firebase/hooks';
+import { useFirestore, useCollection, useDoc } from '@/firebase';
 import { doc, setDoc, getDoc, collection } from 'firebase/firestore';
 
 

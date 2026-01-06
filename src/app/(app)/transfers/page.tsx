@@ -6,7 +6,7 @@ import Link from "next/link";
 import { TransferTable } from "./components/transfer-table";
 import type { Transfer, Unit } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { useCollection, useFirestore } from "@/firebase/hooks";
+import { useCollection, useFirestore } from "@/firebase";
 import { collection } from 'firebase/firestore';
 
 export default function TransfersPage() {

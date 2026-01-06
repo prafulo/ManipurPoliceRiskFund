@@ -31,7 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
-import { useFirestore, useCollection, useDoc } from '@/firebase/hooks';
+import { useFirestore, useCollection, useDoc } from '@/firebase';
 import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 

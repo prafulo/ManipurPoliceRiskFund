@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCollection, useDoc, useFirestore } from '@/firebase/hooks';
+import { useCollection, useDoc, useFirestore } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 
 interface ReportRow {

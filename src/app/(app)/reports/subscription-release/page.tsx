@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { useCollection, useDoc, useFirestore } from '@/firebase/hooks';
+import { useCollection, useDoc, useFirestore } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 
 interface ReportRow {

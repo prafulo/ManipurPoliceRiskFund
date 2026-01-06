@@ -8,7 +8,7 @@ import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Member, Unit } from '@/lib/types';
 import { isPast } from 'date-fns';
-import { useCollection, useFirestore } from '@/firebase/hooks';
+import { useCollection, useFirestore } from '@/firebase';
 import { collection, writeBatch, doc } from 'firebase/firestore';
 
 export default function MembersPage() {

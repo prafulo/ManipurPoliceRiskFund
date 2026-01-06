@@ -4,9 +4,10 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 // Re-export hooks and providers
-export * from './hooks';
 export * from './provider';
-export * from './client-provider';
+export * from './hooks/use-collection';
+export * from './hooks/use-doc';
+export * from './hooks/use-auth-user';
 
 
 const firebaseConfig: FirebaseOptions = {

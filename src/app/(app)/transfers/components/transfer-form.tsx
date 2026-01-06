@@ -28,7 +28,7 @@ import { format } from 'date-fns';
 import type { Member, Unit, Transfer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useFirestore, useCollection } from '@/firebase/hooks';
+import { useFirestore, useCollection } from '@/firebase';
 import { collection, doc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useEffect } from 'react';
 

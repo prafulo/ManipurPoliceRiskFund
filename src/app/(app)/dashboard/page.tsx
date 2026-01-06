@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Users, UserCheck, UserX, Landmark } from 'lucide-react';
-import { useCollection, useFirestore } from '@/firebase/hooks';
+import { useCollection, useFirestore } from '@/firebase';
 import type { Member, Unit } from '@/lib/types';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useEffect, useState }from 'react';
