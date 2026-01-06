@@ -58,7 +58,7 @@ export function Header() {
           <nav className="grid gap-4 text-base font-medium">
             <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
               <Logo className="h-6 w-6" />
-              <span className="text-primary font-headline">Unitrax</span>
+              <span className="text-primary font-headline">Manipur Police Risk Fund</span>
             </Link>
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);

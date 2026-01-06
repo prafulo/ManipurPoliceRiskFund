@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Unitrax',
+  title: 'Manipur Police Risk Fund',
   description: 'Membership Subscription Software',
 };
 
