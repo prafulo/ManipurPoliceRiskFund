@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -34,7 +35,7 @@ enum ClosureReason {
 //
 
 model Unit {
-  id    String   @id @default(uuid()) @db.VarChar(255)
+  id    String   @id @db.VarChar(255)
   name  String   @unique @db.VarChar(255)
 
   membersFrom Member[] @relation("UnitMembers")
