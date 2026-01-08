@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon, Printer } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
 
@@ -33,10 +33,13 @@ interface ReportRow {
     actualMembers: number;
 }
 
+const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+
 export default function ComparativeStatementPage() {
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [allTransfers, setAllTransfers] = useState<Transfer[]>([]);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
@@ -47,25 +50,32 @@ export default function ComparativeStatementPage() {
 
   useEffect(() => {
     async function loadData() {
-        const [membersRes, transfersRes, unitsRes] = await Promise.all([
-            fetch('/api/members'),
-            fetch('/api/transfers'),
-            fetch('/api/units')
-        ]);
-        const [membersData, transfersData, unitsData] = await Promise.all([
-            membersRes.json(),
-            transfersRes.json(),
-            unitsRes.json()
-        ]);
-        setAllMembers(membersData.members);
-        setAllTransfers(transfersData.transfers);
-        setAllUnits(unitsData.units);
+        setInitialLoading(true);
+        try {
+            const [membersRes, transfersRes, unitsRes] = await Promise.all([
+                fetch('/api/members'),
+                fetch('/api/transfers'),
+                fetch('/api/units')
+            ]);
+            const [membersData, transfersData, unitsData] = await Promise.all([
+                membersRes.json(),
+                unitsRes.json(),
+                transfersRes.json()
+            ]);
+            setAllMembers(membersData.members);
+            setAllTransfers(transfersData.transfers);
+            setAllUnits(unitsData.units);
+        } catch (error) {
+            console.error("Failed to load initial data", error);
+        } finally {
+            setInitialLoading(false);
+        }
     }
     loadData();
   }, []);
 
   const generateReport = () => {
-    if (!allMembers || !allTransfers || !allUnits) {
+    if (initialLoading || !allMembers.length || !allUnits.length) {
         return;
     }
     setReportLoading(true);
@@ -73,65 +83,60 @@ export default function ComparativeStatementPage() {
     const startDate = dateRange?.from ? startOfDay(dateRange.from) : startOfDay(new Date());
     const endDate = dateRange?.to ? endOfDay(dateRange.to) : endOfDay(new Date());
 
-    const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-    
     const data: ReportRow[] = allUnits.map(unit => {
-        
-        const previousMembers = allMembers.filter(m => {
-            const allotmentDate = toDate(m.allotmentDate);
-            if (allotmentDate >= startDate) return false;
+        let previousMembers = 0;
+        let newMembers = 0;
+        let transferredIn = 0;
+        let transferredOut = 0;
+        let closedExpiredRetired = 0;
+        let closedDoubling = 0;
 
-            const transfersBefore = allTransfers
-                .filter(t => t.memberId === m.id && toDate(t.transferDate) < startDate)
+        // Calculate transfers within the period
+        const transfersInPeriod = allTransfers.filter(t => 
+            isWithinInterval(toDate(t.transferDate), { start: startDate, end: endDate })
+        );
+        transferredIn = transfersInPeriod.filter(t => t.toUnitId === unit.id).length;
+        transferredOut = transfersInPeriod.filter(t => t.fromUnitId === unit.id).length;
+
+        allMembers.forEach(member => {
+            const allotmentDate = toDate(member.allotmentDate);
+            const dischargeDate = member.dateOfDischarge ? toDate(member.dateOfDischarge) : null;
+            
+            // Determine the member's unit *before* the start date
+            const transfersBeforePeriod = allTransfers
+                .filter(t => t.memberId === member.id && toDate(t.transferDate) < startDate)
                 .sort((a, b) => toDate(b.transferDate).getTime() - toDate(a.transferDate).getTime());
-
-            const lastUnitIdBefore = transfersBefore.length > 0 ? transfersBefore[0].toUnitId : m.unitId;
-            if(lastUnitIdBefore !== unit.id) return false;
             
-            const dischargeDate = m.dateOfDischarge ? toDate(m.dateOfDischarge) : null;
-            if (m.status === 'Closed' && dischargeDate && dischargeDate < startDate) {
-                return false;
+            const unitBeforePeriod = transfersBeforePeriod.length > 0 ? transfersBeforePeriod[0].toUnitId : member.unitId;
+
+            // Is the member part of the "Previous Members" count for this unit?
+            if (unitBeforePeriod === unit.id && allotmentDate < startDate && (!dischargeDate || dischargeDate >= startDate)) {
+                previousMembers++;
             }
 
-            return true;
-        }).length;
-        
-        const newMembers = allMembers.filter(m => {
-            const allotmentDate = toDate(m.allotmentDate);
-            return m.unitId === unit.id && allotmentDate >= startDate && allotmentDate <= endDate
-        }).length;
-
-        const transferredIn = allTransfers.filter(t => {
-            const transferDate = toDate(t.transferDate);
-            return t.toUnitId === unit.id && transferDate >= startDate && transferDate <= endDate
-        }).length;
-        
-        const transferredOut = allTransfers.filter(t => {
-            const transferDate = toDate(t.transferDate);
-            return t.fromUnitId === unit.id && transferDate >= startDate && transferDate <= endDate
-        }).length;
-
-        const closedDuringPeriod = allMembers.filter(m => {
-            const dischargeDate = m.dateOfDischarge ? toDate(m.dateOfDischarge) : null;
-            if (m.status !== 'Closed' || !dischargeDate || dischargeDate < startDate || dischargeDate > endDate) {
-                return false;
+            // Is the member a "New Member" for this unit during the period?
+            if (member.unitId === unit.id && isWithinInterval(allotmentDate, { start: startDate, end: endDate })) {
+                newMembers++;
             }
 
-            const transfersBeforeClosure = allTransfers
-                .filter(t => t.memberId === m.id && toDate(t.transferDate) < dischargeDate)
-                .sort((a,b) => toDate(b.transferDate).getTime() - toDate(a.transferDate).getTime());
+            // Was the member closed in this unit during this period?
+            if (dischargeDate && isWithinInterval(dischargeDate, { start: startDate, end: endDate })) {
+                 const transfersBeforeClosure = allTransfers
+                    .filter(t => t.memberId === member.id && toDate(t.transferDate) <= dischargeDate)
+                    .sort((a,b) => toDate(b.transferDate).getTime() - toDate(a.transferDate).getTime());
             
-            const unitAtClosure = transfersBeforeClosure.length > 0 ? transfersBeforeClosure[0].toUnitId : m.unitId;
-            
-            return unitAtClosure === unit.id;
+                const unitAtClosure = transfersBeforeClosure.length > 0 ? transfersBeforeClosure[0].toUnitId : member.unitId;
+
+                if (unitAtClosure === unit.id) {
+                    if (member.closureReason === 'Retirement' || member.closureReason === 'Death' || member.closureReason === 'Expelled') {
+                        closedExpiredRetired++;
+                    } else if (member.closureReason === 'Doubling') {
+                        closedDoubling++;
+                    }
+                }
+            }
         });
-
-        const closedExpiredRetired = closedDuringPeriod.filter(m => 
-            m.closureReason === 'Retirement' || m.closureReason === 'Death' || m.closureReason === 'Expelled'
-        ).length;
-
-        const closedDoubling = closedDuringPeriod.filter(m => m.closureReason === 'Doubling').length;
-
+        
         const totalIn = previousMembers + newMembers + transferredIn;
         const totalOut = transferredOut + closedExpiredRetired + closedDoubling;
         const actualMembers = totalIn - totalOut;
@@ -155,11 +160,9 @@ export default function ComparativeStatementPage() {
   };
   
   useEffect(() => {
-    if (allMembers.length > 0 && allUnits.length > 0 && allTransfers.length > 0) { 
-       generateReport();
-    }
+    generateReport();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange, allMembers, allTransfers, allUnits]); 
+  }, [dateRange, allMembers, allTransfers, allUnits, initialLoading]); 
 
 
   const handlePrint = () => {
@@ -168,9 +171,7 @@ export default function ComparativeStatementPage() {
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'LLL d, y')} to ${format(dateRange.to, 'LLL d, y')}` : 'a selected period';
 
-  const loading = !allMembers.length || !allUnits.length;
-
-  if (loading) {
+  if (initialLoading) {
     return <div>Loading data...</div>;
   }
 
