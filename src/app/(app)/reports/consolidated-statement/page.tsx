@@ -19,7 +19,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfMonth, endOfMonth, differenceInMonths, eachMonthOfInterval } from 'date-fns';
 import { cn, numberToWords } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { members as allMembersData, payments as allPaymentsData, units as allUnitsData } from '@/lib/data';
 
 interface ReportRow {
   unitName: string;
@@ -40,13 +39,35 @@ export default function ConsolidatedStatementPage() {
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
+  const [subscriptionAmount, setSubscriptionAmount] = useState(100);
 
-  const subscriptionAmount = 100; // Mocked
-  
   useEffect(() => {
-    setAllMembers(allMembersData);
-    setAllPayments(allPaymentsData);
-    setAllUnits(allUnitsData);
+    async function loadData() {
+      try {
+        const [membersRes, paymentsRes, unitsRes, settingsRes] = await Promise.all([
+          fetch('/api/members'),
+          fetch('/api/payments'),
+          fetch('/api/units'),
+          fetch('/api/settings'),
+        ]);
+        const [membersData, paymentsData, unitsData, settingsData] = await Promise.all([
+          membersRes.json(),
+          paymentsRes.json(),
+          unitsRes.json(),
+          settingsRes.json()
+        ]);
+        setAllMembers(membersData.members);
+        setAllPayments(paymentsData.payments);
+        setAllUnits(unitsData.units);
+        
+        const subAmount = settingsData.find((s:any) => s.key === 'subscriptionAmount');
+        if (subAmount) setSubscriptionAmount(Number(subAmount.value));
+
+      } catch (error) {
+        console.error("Failed to load report data", error);
+      }
+    }
+    loadData();
   }, []);
 
   const generateReport = () => {
@@ -80,6 +101,7 @@ export default function ConsolidatedStatementPage() {
         const monthsDueBeforePeriod = differenceInMonths(reportStartDate, startOfMonth(subscriptionStartDate));
         if (monthsDueBeforePeriod > 0) {
             const expectedBeforePeriod = monthsDueBeforePeriod * subscriptionAmount;
+            
             const paidBeforePeriod = allPayments
                 .filter(p => p.memberId === member.id && toDate(p.paymentDate) < reportStartDate)
                 .reduce((sum, p) => sum + p.amount, 0);

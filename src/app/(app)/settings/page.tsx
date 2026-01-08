@@ -19,16 +19,71 @@ import { Wifi, WifiOff } from 'lucide-react';
 export default function SettingsPage() {
   const { toast } = useToast();
 
-  const [subscriptionAmount, setSubscriptionAmount] = useState<number | ''>(100);
-  const [expiredReleaseAmount, setExpiredReleaseAmount] = useState<number | ''>(50000);
-  const [loading, setLoading] = useState(false);
+  const [subscriptionAmount, setSubscriptionAmount] = useState<number | ''>('');
+  const [expiredReleaseAmount, setExpiredReleaseAmount] = useState<number | ''>('');
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isTestingDb, setIsTestingDb] = useState(false);
 
+  useEffect(() => {
+    async function fetchSettings() {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) throw new Error('Failed to fetch settings');
+        const settings = await res.json();
+        
+        const subAmount = settings.find((s: any) => s.key === 'subscriptionAmount');
+        if (subAmount) setSubscriptionAmount(Number(subAmount.value));
+
+        const expiredAmount = settings.find((s: any) => s.key === 'expiredReleaseAmount');
+        if (expiredAmount) setExpiredReleaseAmount(Number(expiredAmount.value));
+
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message,
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSettings();
+  }, [toast]);
+
+
   const handleSave = async () => {
-    toast({
-      title: "Settings Saved",
-      description: `Settings have been updated successfully (local mode).`,
-    });
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionAmount,
+          expiredReleaseAmount,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to save settings.');
+      }
+
+      toast({
+        title: "Settings Saved",
+        description: `Settings have been updated successfully.`,
+      });
+
+    } catch (error: any) {
+       toast({
+        variant: 'destructive',
+        title: 'Error Saving Settings',
+        description: error.message,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   const handleTestConnection = async () => {
@@ -104,8 +159,15 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           {loading ? (
              <div className="space-y-6">
-                <Skeleton className="h-16 w-1/2" />
-                <Skeleton className="h-16 w-1/2" />
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                 <div className="grid w-full max-w-sm items-center gap-1.5">
+                    <Skeleton className="h-5 w-64" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-4 w-full mt-1" />
+                </div>
              </div>
           ): (
             <>
@@ -135,7 +197,9 @@ export default function SettingsPage() {
           )}
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-          <Button onClick={handleSave} disabled={loading}>Save Financial Settings</Button>
+          <Button onClick={handleSave} disabled={loading || isSaving}>
+            {isSaving ? 'Saving...' : 'Save Financial Settings'}
+            </Button>
         </CardFooter>
       </Card>
       

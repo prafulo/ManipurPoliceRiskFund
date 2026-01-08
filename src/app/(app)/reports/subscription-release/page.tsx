@@ -19,7 +19,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { members as allMembersData, payments as allPaymentsData } from '@/lib/data';
 
 interface ReportRow {
   memberCode: string;
@@ -42,11 +41,34 @@ export default function SubscriptionReleaseReportPage() {
     to: new Date(),
   });
   
-  const expiredReleaseAmount = 50000; // Mocked
+  const [expiredReleaseAmount, setExpiredReleaseAmount] = useState(50000); 
 
   useEffect(() => {
-    setAllMembers(allMembersData);
-    setAllPayments(allPaymentsData);
+    async function loadData() {
+        try {
+            const [membersRes, paymentsRes, settingsRes] = await Promise.all([
+                fetch('/api/members'),
+                fetch('/api/payments'),
+                fetch('/api/settings'),
+            ]);
+            const [membersData, paymentsData, settingsData] = await Promise.all([
+                membersRes.json(),
+                paymentsRes.json(),
+                settingsRes.json(),
+            ]);
+            setAllMembers(membersData.members);
+            setAllPayments(paymentsData.payments);
+            const expiredAmount = settingsData.find((s:any) => s.key === 'expiredReleaseAmount');
+            if (expiredAmount) {
+                setExpiredReleaseAmount(Number(expiredAmount.value));
+            }
+        } catch (error) {
+            console.error("Failed to load report data", error);
+        } finally {
+            setReportLoading(false);
+        }
+    }
+    loadData();
   }, []);
 
   const generateReport = () => {
@@ -78,7 +100,11 @@ export default function SubscriptionReleaseReportPage() {
         const memberPayments = allPayments.filter(p => p.memberId === member.id);
         totalAmountPaid = memberPayments.reduce((sum, p) => sum + p.amount, 0);
         totalMonthsPaid = memberPayments.reduce((sum, p) => {
-          return sum + (Array.isArray(p.months) ? p.months.length : 0);
+          let months = p.months;
+          if (typeof months === 'string') {
+              months = JSON.parse(months);
+          }
+          return sum + (Array.isArray(months) ? months.length : 0);
         }, 0);
       }
 
@@ -116,7 +142,7 @@ export default function SubscriptionReleaseReportPage() {
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'LLL d, y')} to ${format(dateRange.to, 'LLL d, y')}` : 'for all time';
 
-  const loading = !allMembers.length;
+  const loading = !allMembers.length || reportLoading;
   if (loading) {
       return <div>Loading data...</div>
   }

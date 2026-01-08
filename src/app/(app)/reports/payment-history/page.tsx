@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { members as allMembersData, payments as allPaymentsData, units as allUnitsData } from '@/lib/data';
 
 interface ReportRow {
   memberCode: string;
@@ -48,13 +47,37 @@ export default function PaymentHistoryReportPage() {
   const [reportLoading, setReportLoading] = useState(true);
   const [reportMonth, setReportMonth] = useState<Date>(startOfMonth(new Date()));
   const [selectedUnit, setSelectedUnit] = useState<string>('all');
-  
-  const subscriptionAmount = 100; // Mocked
+  const [subscriptionAmount, setSubscriptionAmount] = useState(100); 
 
   useEffect(() => {
-    setAllMembers(allMembersData);
-    setAllPayments(allPaymentsData);
-    setAllUnits(allUnitsData);
+    async function loadData() {
+        try {
+            const [membersRes, paymentsRes, unitsRes, settingsRes] = await Promise.all([
+                fetch('/api/members'),
+                fetch('/api/payments'),
+                fetch('/api/units'),
+                fetch('/api/settings'),
+            ]);
+            const [membersData, paymentsData, unitsData, settingsData] = await Promise.all([
+                membersRes.json(),
+                paymentsRes.json(),
+                unitsRes.json(),
+                settingsRes.json(),
+            ]);
+            setAllMembers(membersData.members);
+            setAllPayments(paymentsData.payments);
+            setAllUnits(unitsData.units);
+            const subAmount = settingsData.find((s:any) => s.key === 'subscriptionAmount');
+            if (subAmount) {
+                setSubscriptionAmount(Number(subAmount.value));
+            }
+        } catch (error) {
+            console.error("Failed to load report data", error);
+        } finally {
+            setReportLoading(false);
+        }
+    }
+    loadData();
   }, []);
 
   const generateReport = () => {
@@ -136,7 +159,7 @@ export default function PaymentHistoryReportPage() {
 
   const reportDateString = format(reportMonth, 'MMMM yyyy');
 
-  const loading = !allMembers.length || !allUnits.length;
+  const loading = !allMembers.length || !allUnits.length || reportLoading;
   if (loading) {
     return <div>Loading data...</div>;
   }

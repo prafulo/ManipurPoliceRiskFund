@@ -1,6 +1,6 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -121,4 +121,11 @@ model Transfer {
   @@index([fromUnitId])
   @@index([toUnitId])
   @@map("transfers")
+}
+
+model Setting {
+  key   String @id @db.VarChar(255)
+  value String @db.VarChar(255)
+
+  @@map("settings")
 }

@@ -1,5 +1,4 @@
 -- MySQL Database Schema for the Manipur Police Risk Fund Application
-
 -- This schema is designed to match the data structures defined in `src/lib/types.ts`.
 
 --
@@ -85,3 +84,19 @@ CREATE TABLE `transfers` (
   CONSTRAINT `transfers_ibfk_2` FOREIGN KEY (`from_unit_id`) REFERENCES `units` (`id`),
   CONSTRAINT `transfers_ibfk_3` FOREIGN KEY (`to_unit_id`) REFERENCES `units` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Table structure for table `settings`
+--
+CREATE TABLE `settings` (
+  `key` varchar(255) NOT NULL,
+  `value` varchar(255) NOT NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Inserting default data for `settings`
+--
+INSERT INTO `settings` (`key`, `value`) VALUES
+('subscriptionAmount', '100'),
+('expiredReleaseAmount', '50000');

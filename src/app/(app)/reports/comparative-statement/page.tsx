@@ -18,7 +18,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { members as allMembersData, transfers as allTransfersData, units as allUnitsData } from '@/lib/data';
+
 
 interface ReportRow {
     unitName: string;
@@ -46,9 +46,22 @@ export default function ComparativeStatementPage() {
   });
 
   useEffect(() => {
-    setAllMembers(allMembersData);
-    setAllTransfers(allTransfersData);
-    setAllUnits(allUnitsData);
+    async function loadData() {
+        const [membersRes, transfersRes, unitsRes] = await Promise.all([
+            fetch('/api/members'),
+            fetch('/api/transfers'),
+            fetch('/api/units')
+        ]);
+        const [membersData, transfersData, unitsData] = await Promise.all([
+            membersRes.json(),
+            transfersRes.json(),
+            unitsRes.json()
+        ]);
+        setAllMembers(membersData.members);
+        setAllTransfers(transfersData.transfers);
+        setAllUnits(unitsData.units);
+    }
+    loadData();
   }, []);
 
   const generateReport = () => {
@@ -142,7 +155,7 @@ export default function ComparativeStatementPage() {
   };
   
   useEffect(() => {
-    if (allMembers.length > 0 && allUnits.length > 0) { 
+    if (allMembers.length > 0 && allUnits.length > 0 && allTransfers.length > 0) { 
        generateReport();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

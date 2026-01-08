@@ -1,5 +1,6 @@
-// This file is now deprecated as data is fetched from the MySQL database.
+// This file is now deprecated as data is fetched from the MySQL database via API routes.
 // It can be removed in the future.
+// It is left in place to avoid breaking any reports that may still temporarily reference it.
 
 import type { Unit, Member, Payment, Transfer } from './types';
 

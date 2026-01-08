@@ -52,22 +52,28 @@ export function PaymentForm({}: PaymentFormProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [monthlySubscriptionAmount, setMonthlySubscriptionAmount] = useState(100);
 
-  const monthlySubscriptionAmount = 100;
-  
   useEffect(() => {
     async function loadData() {
         try {
-            const [membersRes, unitsRes] = await Promise.all([
+            const [membersRes, unitsRes, settingsRes] = await Promise.all([
                 fetch('/api/members'),
-                fetch('/api/units')
+                fetch('/api/units'),
+                fetch('/api/settings')
             ]);
-            const [membersData, unitsData] = await Promise.all([
+            const [membersData, unitsData, settingsData] = await Promise.all([
                 membersRes.json(),
-                unitsRes.json()
+                unitsRes.json(),
+                settingsRes.json()
             ]);
             setMembers(membersData.members);
             setUnits(unitsData.units);
+            const subAmount = settingsData.find((s: any) => s.key === 'subscriptionAmount');
+            if (subAmount) {
+                setMonthlySubscriptionAmount(Number(subAmount.value));
+            }
+
         } catch (error) {
             console.error("Failed to load data for payment form", error);
         } finally {

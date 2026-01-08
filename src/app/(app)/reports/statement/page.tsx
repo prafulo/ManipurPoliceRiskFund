@@ -19,7 +19,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { members as allMembers, units as allUnits } from '@/lib/data';
 
 interface ReportRow {
   unitName: string;
@@ -48,8 +47,19 @@ export default function StatementReportPage() {
   });
 
   useEffect(() => {
-    setMembers(allMembers);
-    setUnits(allUnits);
+    async function loadData() {
+        const [membersRes, unitsRes] = await Promise.all([
+            fetch('/api/members'),
+            fetch('/api/units')
+        ]);
+        const [membersData, unitsData] = await Promise.all([
+            membersRes.json(),
+            unitsRes.json()
+        ]);
+        setMembers(membersData.members);
+        setUnits(unitsData.units);
+    }
+    loadData();
   }, []);
 
   const generateReport = () => {
