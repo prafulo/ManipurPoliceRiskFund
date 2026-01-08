@@ -16,6 +16,15 @@ export type Nominee = {
   share: number;
 };
 
+export type User = {
+    id: string;
+    email: string;
+    name: string;
+    role: UserRole;
+    unitId?: string | null;
+    unit?: string | null;
+};
+
 // This type represents the data structure as used in the components.
 // It will differ slightly from the direct database schema (e.g., Timestamps vs. Dates/Strings).
 export type Member = {

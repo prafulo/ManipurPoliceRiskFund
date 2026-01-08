@@ -11,9 +11,9 @@ export async function GET(request: Request) {
         // The database stores JSON, so we need to parse it for each member
         const parsedMembers = members.map(member => ({
             ...member,
-            nominees: JSON.parse(member.nominees as string),
-            firstWitness: JSON.parse(member.firstWitness as string),
-            secondWitness: JSON.parse(member.secondWitness as string),
+            nominees: member.nominees ? JSON.parse(member.nominees as string) : [],
+            firstWitness: member.firstWitness ? JSON.parse(member.firstWitness as string) : {},
+            secondWitness: member.secondWitness ? JSON.parse(member.secondWitness as string) : {},
         }));
         return NextResponse.json({ members: parsedMembers });
 

@@ -28,8 +28,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth-context';
+import { useSession, signOut } from 'next-auth/react';
 import { Logo } from '../logo';
+import type { UserRole } from '@/lib/types';
+
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -42,7 +44,16 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
-  const { user, role, unit, logout } = useAuth();
+  const { data: session } = useSession();
+
+  const user = session?.user;
+  const role = user?.role as UserRole;
+  const unit = user?.unit;
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/login' });
+  };
+
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
@@ -89,7 +100,7 @@ export function Header() {
               <Button variant="ghost" className="flex items-center gap-2 relative">
                 <UserCircle className="h-8 w-8" />
                 <div className="text-left">
-                  <p className="text-sm font-medium">{user?.displayName || role}</p>
+                  <p className="text-sm font-medium">{user?.name || role}</p>
                   {unit && <p className="text-xs text-muted-foreground">{unit} Unit</p>}
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -98,7 +109,7 @@ export function Header() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>{user?.email || 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+              <DropdownMenuItem onSelect={handleLogout} className="text-destructive focus:text-destructive">
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>

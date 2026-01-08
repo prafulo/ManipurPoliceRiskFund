@@ -1,26 +1,30 @@
 'use client';
 
 import { Sidebar } from '@/components/layout/sidebar';
-import { useAuth } from '@/contexts/auth-context';
 import { ClientOnlyHeader } from '@/components/layout/client-only-header';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+export default function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (status === 'unauthenticated') {
       router.replace('/login');
     }
-  }, [user, loading, router]);
+  }, [status, router]);
 
-  if (loading || !user) {
+  if (status === 'loading' || !session) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-            <p>Loading application...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading application...</p>
+      </div>
     );
   }
 
@@ -34,18 +38,5 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
     </div>
-  );
-}
-
-
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-      <ProtectedLayout>
-          {children}
-      </ProtectedLayout>
   );
 }
