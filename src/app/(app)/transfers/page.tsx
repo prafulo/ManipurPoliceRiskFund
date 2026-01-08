@@ -6,26 +6,23 @@ import Link from "next/link";
 import { TransferTable } from "./components/transfer-table";
 import type { Transfer, Unit } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { useCollection, useFirestore } from "@/firebase";
-import { collection } from 'firebase/firestore';
+import { transfers, units } from '@/lib/data';
 
 export default function TransfersPage() {
-  const firestore = useFirestore();
+  const [transferData, setTransferData] = useState<Transfer[]>([]);
+  const [unitData, setUnitData] = useState<Unit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: transferData, loading: transfersLoading } = useCollection<Transfer>(
-    firestore ? collection(firestore, 'transfers') : null
-  );
-
-  const { data: units, loading: unitsLoading } = useCollection<Unit>(
-    firestore ? collection(firestore, 'units') : null
-  );
-  
-  const isLoading = transfersLoading || unitsLoading;
+  useEffect(() => {
+    setTransferData(transfers);
+    setUnitData(units);
+    setIsLoading(false);
+  }, []);
 
   const enrichedTransfers = (transferData || []).map(transfer => ({
       ...transfer,
-      fromUnitName: units?.find(u => u.id === transfer.fromUnitId)?.name || 'N/A',
-      toUnitName: units?.find(u => u.id === transfer.toUnitId)?.name || 'N/A',
+      fromUnitName: unitData?.find(u => u.id === transfer.fromUnitId)?.name || 'N/A',
+      toUnitName: unitData?.find(u => u.id === transfer.toUnitId)?.name || 'N/A',
   }));
 
   if (isLoading) {

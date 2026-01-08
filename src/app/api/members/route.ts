@@ -1,27 +1,11 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/mysql';
+// import { query } from '@/lib/mysql'; // MySQL logic is commented out
 
 export async function GET(request: Request) {
     try {
-        const membersResults: any = await query('SELECT * FROM members', []);
-        const unitsResults: any = await query('SELECT * FROM units', []);
-
-        const unitsMap = new Map(unitsResults.map((unit: any) => [unit.id, unit.name]));
-
-        const enrichedMembers = membersResults.map((member: any) => ({
-            ...member,
-            // Convert numbers back to strings where appropriate from DB
-            serviceNumber: String(member.service_number),
-            badgeNumber: String(member.badge_number),
-            // Map unitId to unitName
-            unitName: unitsMap.get(member.unit_id) || 'N/A',
-            // Handle JSON fields
-            nominees: JSON.parse(member.nominees || '[]'),
-            firstWitness: JSON.parse(member.first_witness || '{}'),
-            secondWitness: JSON.parse(member.second_witness || '{}'),
-        }));
-        
-        return NextResponse.json({ members: enrichedMembers });
+        // This is a placeholder. In a real scenario, you'd fetch from a database.
+        // For now, we return an empty array as the client will use local data.
+        return NextResponse.json({ members: [] });
 
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });

@@ -31,8 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
-import { useFirestore, useCollection, useDoc } from '@/firebase';
-import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
+import { members as allMembers, units as allUnits } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const formSchema = z.object({
@@ -50,20 +49,19 @@ export function PaymentForm({}: PaymentFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedMemberId = searchParams.get('memberId');
-  const firestore = useFirestore();
 
-  const { data: members, loading: membersLoading } = useCollection<Member>(
-      firestore ? collection(firestore, 'members') : null
-  );
-  const { data: units, loading: unitsLoading } = useCollection<Unit>(
-      firestore ? collection(firestore, 'units') : null
-  );
-  const { data: settings, loading: settingsLoading } = useDoc(
-      firestore ? doc(firestore, 'settings', 'global') : null
-  );
+  const [members, setMembers] = useState<Member[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const monthlySubscriptionAmount = settings?.subscriptionAmount ?? 100;
+  const monthlySubscriptionAmount = 100; // Mocked
   
+  useEffect(() => {
+    setMembers(allMembers);
+    setUnits(allUnits);
+    setLoading(false);
+  }, []);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -97,52 +95,15 @@ export function PaymentForm({}: PaymentFormProps) {
   }, [monthRange, monthlySubscriptionAmount]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !members || !units) {
-      toast({ variant: "destructive", title: "Error", description: "Database not ready." });
-      return;
-    }
-
-    const member = members.find(m => m.id === values.memberId);
-    if (!member || !values.monthRange.from || !values.monthRange.to) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Please select a member and a valid date range.",
-        });
-        return;
-    }
-
-    const newPayment: Omit<Payment, 'id'> = {
-        memberId: member.id,
-        memberName: member.name,
-        membershipCode: member.membershipCode,
-        unitName: units.find(u => u.id === member.unitId)?.name || 'N/A',
-        amount: totalAmount,
-        months: eachMonthOfInterval({ start: values.monthRange.from, end: values.monthRange.to }),
-        paymentDate: serverTimestamp(),
-    };
-    
-    try {
-        await addDoc(collection(firestore, 'payments'), newPayment);
-        toast({
-        title: "Payment Recorded",
-        description: `Payment of $${totalAmount.toFixed(2)} for ${member?.name} has been saved.`,
-        });
-        router.push('/payments');
-    } catch (error) {
-        console.error("Error saving payment: ", error);
-        toast({
-            variant: "destructive",
-            title: "Error saving payment",
-            description: "An unexpected error occurred.",
-        });
-    }
+    toast({
+        variant: "destructive",
+        title: "Feature Disabled",
+        description: "Data modification is disabled in local data mode.",
+    });
   }
 
   const selectedMemberId = form.watch('memberId');
   const selectedMember = useMemo(() => members?.find(m => m.id === selectedMemberId), [members, selectedMemberId]);
-
-  const loading = membersLoading || unitsLoading || settingsLoading;
 
   if (loading) {
     return (

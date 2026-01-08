@@ -13,65 +13,21 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import type { Unit } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useFirestore, useCollection, useDoc } from '@/firebase';
-import { doc, setDoc, getDoc, collection } from 'firebase/firestore';
-
 
 export default function SettingsPage() {
-  const firestore = useFirestore();
   const { toast } = useToast();
 
-  const { data: units, loading: unitsLoading } = useCollection<Unit>(
-    firestore ? collection(firestore, 'units') : null
-  );
-
-  const [subscriptionAmount, setSubscriptionAmount] = useState<number | ''>('');
-  const [expiredReleaseAmount, setExpiredReleaseAmount] = useState<number | ''>('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadSettings() {
-      if (!firestore) return;
-      setLoading(true);
-      const settingsRef = doc(firestore, 'settings', 'global');
-      const settingsSnap = await getDoc(settingsRef);
-      if (settingsSnap.exists()) {
-        const data = settingsSnap.data();
-        setSubscriptionAmount(data.subscriptionAmount || '');
-        setExpiredReleaseAmount(data.expiredReleaseAmount || '');
-      } else {
-        setSubscriptionAmount(100);
-        setExpiredReleaseAmount(50000);
-      }
-      setLoading(false);
-    }
-    loadSettings();
-  }, [firestore]);
-
+  const [subscriptionAmount, setSubscriptionAmount] = useState<number | ''>(100);
+  const [expiredReleaseAmount, setExpiredReleaseAmount] = useState<number | ''>(50000);
+  const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!firestore) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
-      return;
-    }
-    try {
-      const settingsRef = doc(firestore, 'settings', 'global');
-      await setDoc(settingsRef, { 
-        subscriptionAmount: Number(subscriptionAmount),
-        expiredReleaseAmount: Number(expiredReleaseAmount)
-      }, { merge: true });
-      toast({
-        title: "Settings Saved",
-        description: `Settings have been updated successfully.`,
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not save settings.' });
-    }
+    toast({
+      title: "Settings Saved",
+      description: `Settings have been updated successfully (local mode).`,
+    });
   }
-
 
   return (
     <div className="space-y-8 max-w-4xl">

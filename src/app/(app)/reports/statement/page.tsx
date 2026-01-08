@@ -19,8 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { members as allMembers, units as allUnits } from '@/lib/data';
 
 interface ReportRow {
   unitName: string;
@@ -32,10 +31,8 @@ interface ReportRow {
 }
 
 export default function StatementReportPage() {
-  const firestore = useFirestore();
-  const { data: members, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
-  const { data: units, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
-
+  const [members, setMembers] = useState<Member[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -49,6 +46,11 @@ export default function StatementReportPage() {
     totalDeleted: 0,
     newEnrolled: 0,
   });
+
+  useEffect(() => {
+    setMembers(allMembers);
+    setUnits(allUnits);
+  }, []);
 
   const generateReport = () => {
     if (!members || !units) {
@@ -116,13 +118,13 @@ export default function StatementReportPage() {
   }
 
   useEffect(() => {
-    if (!membersLoading && !unitsLoading) {
+    if (members.length > 0 && units.length > 0) {
       generateReport();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, members, units]);
 
-  const loading = membersLoading || unitsLoading;
+  const loading = !members.length || !units.length;
 
   if (loading) {
     return <div>Loading data...</div>;

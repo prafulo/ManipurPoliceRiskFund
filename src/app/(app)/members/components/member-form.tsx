@@ -33,8 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { useFirestore, useCollection } from '@/firebase';
-import { collection, doc, addDoc, updateDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
+import { units as allUnits } from '@/lib/data';
 
 const nomineeSchema = z.object({
   name: z.string().min(2, 'Nominee name is required.'),
@@ -104,36 +103,13 @@ type MemberFormProps = {
   member?: Member | null;
 };
 
-async function getNextSerialNumber(firestore: any, unitId: string): Promise<number> {
-    const membersRef = collection(firestore, 'members');
-    const q = query(membersRef, where('unitId', '==', unitId));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-        // In a real app, this should come from a server-side config or a dedicated document in Firestore
-        // For now, we'll hardcode a starting point.
-        return 31000;
-    }
-
-    let lastSerialNumber = 0;
-    querySnapshot.forEach(doc => {
-        const member = doc.data() as Member;
-        const serialPart = member.membershipCode.split('-')[1];
-        const serialNum = parseInt(serialPart, 10);
-        if (serialNum > lastSerialNumber) {
-            lastSerialNumber = serialNum;
-        }
-    });
-
-    return lastSerialNumber + 1;
-}
-
-// Convert Firestore Timestamps to JS Dates
+// Convert Timestamps/string dates to JS Dates
 function memberToForm(member: Member): any {
     const formValues: any = { ...member };
-    for (const key in formValues) {
-        if (formValues[key]?.toDate) { // Check if it's a Firestore Timestamp
-            formValues[key] = formValues[key].toDate();
+    const dateFields = ['dateOfBirth', 'dateOfEnrollment', 'superannuationDate', 'dateOfDischarge', 'subscriptionStartDate', 'dateApplied', 'receiptDate', 'allotmentDate', 'createdAt', 'updatedAt'];
+    for (const key of dateFields) {
+        if (formValues[key] && !(formValues[key] instanceof Date)) {
+            formValues[key] = new Date(formValues[key]);
         }
     }
     // Handle nested witness objects
@@ -152,13 +128,13 @@ function memberToForm(member: Member): any {
 export function MemberForm({ member }: MemberFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const firestore = useFirestore();
-
-  const { data: units, loading: unitsLoading } = useCollection<Unit>(
-    firestore ? collection(firestore, 'units') : null
-  );
-
+  
+  const [units, setUnits] = useState<Unit[]>([]);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUnits(allUnits);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -195,11 +171,11 @@ export function MemberForm({ member }: MemberFormProps) {
   const selectedUnitId = form.watch("unitId");
 
   useEffect(() => {
-    async function generateCode() {
-        if (firestore && !member && selectedUnitId) {
+    function generateCode() {
+        if (!member && selectedUnitId) {
             const unit = units?.find(u => u.id === selectedUnitId);
             if (unit) {
-                const nextSerial = await getNextSerialNumber(firestore, selectedUnitId);
+                const nextSerial = 31000 + Math.floor(Math.random() * 1000); // Placeholder serial
                 const datePart = format(new Date(), 'MMyy');
                 setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
             }
@@ -208,69 +184,15 @@ export function MemberForm({ member }: MemberFormProps) {
         }
     }
     generateCode();
-  }, [selectedUnitId, member, firestore, units]);
+  }, [selectedUnitId, member, units]);
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Database connection not available.",
-        });
-        return;
-    }
-
-    const dataToSave = {
-        ...values,
-        firstWitness: {
-            name: values.firstWitnessName,
-            address: values.firstWitnessAddress
-        },
-        secondWitness: {
-            name: values.secondWitnessName,
-            address: values.secondWitnessAddress
-        }
-    };
-    // Remove the flat witness properties
-    delete (dataToSave as any).firstWitnessName;
-    delete (dataToSave as any).firstWitnessAddress;
-    delete (dataToSave as any).secondWitnessName;
-    delete (dataToSave as any).secondWitnessAddress;
-
-    try {
-        if (member) {
-            // Editing existing member
-            const memberRef = doc(firestore, 'members', member.id);
-            await updateDoc(memberRef, {
-                ...dataToSave,
-                updatedAt: serverTimestamp()
-            });
-        } else {
-            // Creating new member
-            const collectionRef = collection(firestore, 'members');
-            await addDoc(collectionRef, {
-                ...dataToSave,
-                membershipCode: generatedCode,
-                subscriptionStartDate: new Date(),
-                createdAt: serverTimestamp()
-            });
-        }
-
-        toast({
-            title: member ? "Member Updated" : "Member Created",
-            description: `Profile for ${values.name} has been saved successfully.`,
-        });
-        router.push('/members');
-        router.refresh();
-    } catch (error) {
-        console.error("Error saving member: ", error);
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "Could not save the member profile.",
-        });
-    }
+    toast({
+        variant: "destructive",
+        title: "Feature Disabled",
+        description: "Data modification is disabled in local data mode.",
+    });
   }
 
   const status = form.watch("status");

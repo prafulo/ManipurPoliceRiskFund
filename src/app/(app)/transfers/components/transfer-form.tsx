@@ -28,9 +28,8 @@ import { format } from 'date-fns';
 import type { Member, Unit, Transfer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useFirestore, useCollection } from '@/firebase';
-import { collection, doc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { useEffect } from 'react';
+import { members as allMembers, units as allUnits } from '@/lib/data';
+import { useEffect, useState } from 'react';
 
 
 const formSchema = z.object({
@@ -53,10 +52,16 @@ export function TransferForm({}: TransferFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedMemberId = searchParams.get('memberId');
-  const firestore = useFirestore();
+  
+  const [members, setMembers] = useState<Member[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: members, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
-  const { data: units, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
+  useEffect(() => {
+    setMembers(allMembers);
+    setUnits(allUnits);
+    setLoading(false);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -78,47 +83,10 @@ export function TransferForm({}: TransferFormProps) {
   const fromUnit = units?.find(u => u.id === selectedMember?.unitId);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !members || !units) return;
-
-    const member = members.find(m => m.id === values.memberId);
-    if (!member || !fromUnit) {
-        toast({ variant: "destructive", title: "Error", description: "Selected member is not valid." });
-        return;
-    }
-    if (member.unitId === values.toUnitId) {
-        toast({ variant: "destructive", title: "Error", description: "Member is already in the selected unit." });
-        return;
-    }
-
-    try {
-        // 1. Create the transfer record
-        const newTransfer: Omit<Transfer, 'id'> = {
-            memberId: member.id,
-            memberName: member.name,
-            fromUnitId: member.unitId,
-            toUnitId: values.toUnitId,
-            transferDate: values.transferDate,
-            createdAt: serverTimestamp()
-        };
-        await addDoc(collection(firestore, 'transfers'), newTransfer);
-        
-        // 2. Update the member's unitId
-        const memberRef = doc(firestore, 'members', member.id);
-        await updateDoc(memberRef, { unitId: values.toUnitId });
-
-        toast({
-        title: "Transfer Recorded",
-        description: `Transfer for ${member.name} has been processed successfully.`,
-        });
-        router.push('/transfers');
-        router.refresh();
-    } catch(e) {
-        console.error(e);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not process transfer.' });
-    }
+    toast({ variant: 'destructive', title: 'Error', description: 'Could not process transfer in local data mode.' });
   }
   
-  if (membersLoading || unitsLoading) {
+  if (loading) {
       return <div>Loading form...</div>
   }
 

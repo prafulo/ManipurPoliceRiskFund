@@ -7,40 +7,26 @@ import Link from "next/link";
 import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Member, Unit } from '@/lib/types';
-import { isPast } from 'date-fns';
+import { members, units } from '@/lib/data';
+
 
 export default function MembersPage() {
   const [enrichedMembers, setEnrichedMembers] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
 
   React.useEffect(() => {
-    async function fetchMembers() {
-      try {
-        const response = await fetch('/api/members');
-        if (!response.ok) {
-          throw new Error('Failed to fetch members');
-        }
-        const data = await response.json();
-        
-        // TODO: Auto-closing superannuated members needs to be re-implemented via an API endpoint
-        setEnrichedMembers(data.members || []);
-      } catch (err: any) {
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchMembers();
+    const unitsMap = new Map(units.map(unit => [unit.id, unit.name]));
+    const allMembers = members.map(member => ({
+        ...member,
+        unitName: unitsMap.get(member.unitId) || 'N/A',
+    }));
+    setEnrichedMembers(allMembers);
+    setIsLoading(false);
   }, []);
 
 
   if (isLoading) {
     return <div>Loading members...</div>;
-  }
-
-  if (error) {
-    return <div>Error loading members: {error.message}</div>;
   }
 
   const openMembers = enrichedMembers.filter(m => m.status === 'Opened');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -31,70 +31,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import type { Unit, Member } from '@/lib/types';
+import type { Unit } from '@/lib/types';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
-import { useFirestore, useCollection } from '@/firebase';
-import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
+import { units as allUnits } from '@/lib/data';
 
 
 export default function ManageUnitsPage() {
-  const firestore = useFirestore();
-  const { data: units, loading: isLoading, error } = useCollection<Unit>(
-    firestore ? collection(firestore, 'units') : null
-  );
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [unitName, setUnitName] = useState('');
   const { toast } = useToast();
 
+  useEffect(() => {
+    setUnits(allUnits);
+    setIsLoading(false);
+  }, []);
+
   const handleAddOrUpdateUnit = async () => {
-    if (!firestore || !unitName.trim()) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Unit name cannot be empty.' });
-      return;
-    }
-
-    try {
-        if (editingUnit) {
-          // Update
-          const unitRef = doc(firestore, 'units', editingUnit.id);
-          await updateDoc(unitRef, { name: unitName.trim() });
-          toast({ title: 'Unit Updated', description: `Unit "${unitName}" has been updated.` });
-        } else {
-          // Add
-          await addDoc(collection(firestore, 'units'), { name: unitName.trim() });
-          toast({ title: 'Unit Added', description: `Unit "${unitName}" has been added.` });
-        }
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not save the unit.' });
-    }
-
+    toast({
+        variant: 'destructive',
+        title: 'Feature Disabled',
+        description: 'Data modification is disabled in local data mode.',
+    });
     setUnitName('');
     setEditingUnit(null);
   };
 
   const handleDeleteUnit = async (unitId: string, unitName: string) => {
-    if (!firestore) return;
-
-    // Check if unit is in use by members
-    const membersRef = collection(firestore, 'members');
-    const q = query(membersRef, where('unitId', '==', unitId));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      toast({
+    toast({
         variant: 'destructive',
-        title: 'Cannot Delete Unit',
-        description: `This unit is currently assigned to ${querySnapshot.size} member(s).`,
-      });
-      return;
-    }
-    
-    try {
-        await deleteDoc(doc(firestore, 'units', unitId));
-        toast({ title: 'Unit Deleted', description: `The unit "${unitName}" has been removed.` });
-    } catch(e) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not delete the unit.' });
-    }
+        title: 'Feature Disabled',
+        description: 'Data modification is disabled in local data mode.',
+    });
   };
 
   const startEditing = (unit: Unit) => {
@@ -109,10 +79,6 @@ export default function ManageUnitsPage() {
   
   if (isLoading) {
     return <div>Loading units...</div>;
-  }
-
-  if (error) {
-    return <div>Error loading units: {error.message}</div>;
   }
 
   return (

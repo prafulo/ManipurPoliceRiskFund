@@ -19,8 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { useCollection, useDoc, useFirestore } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { members as allMembersData, payments as allPaymentsData } from '@/lib/data';
 
 interface ReportRow {
   memberCode: string;
@@ -33,11 +32,9 @@ interface ReportRow {
 }
 
 export default function SubscriptionReleaseReportPage() {
-  const firestore = useFirestore();
-  const { data: allMembers, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
-  const { data: allPayments, loading: paymentsLoading } = useCollection<Payment>(firestore ? collection(firestore, 'payments') : null);
-  const { data: settings, loading: settingsLoading } = useDoc(firestore ? doc(firestore, 'settings', 'global') : null);
-  
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [allPayments, setAllPayments] = useState<Payment[]>([]);
+
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -45,7 +42,12 @@ export default function SubscriptionReleaseReportPage() {
     to: new Date(),
   });
   
-  const expiredReleaseAmount = settings?.expiredReleaseAmount || 50000;
+  const expiredReleaseAmount = 50000; // Mocked
+
+  useEffect(() => {
+    setAllMembers(allMembersData);
+    setAllPayments(allPaymentsData);
+  }, []);
 
   const generateReport = () => {
     if (!allMembers || !allPayments) return;
@@ -96,7 +98,7 @@ export default function SubscriptionReleaseReportPage() {
   }
 
   useEffect(() => {
-    if (!membersLoading && !paymentsLoading && !settingsLoading) {
+    if (allMembers.length > 0) {
       generateReport();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,7 +116,7 @@ export default function SubscriptionReleaseReportPage() {
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'LLL d, y')} to ${format(dateRange.to, 'LLL d, y')}` : 'for all time';
 
-  const loading = membersLoading || paymentsLoading || settingsLoading;
+  const loading = !allMembers.length;
   if (loading) {
       return <div>Loading data...</div>
   }

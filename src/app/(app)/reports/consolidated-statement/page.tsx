@@ -19,8 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfMonth, endOfMonth, differenceInMonths, eachMonthOfInterval } from 'date-fns';
 import { cn, numberToWords } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { useCollection, useDoc, useFirestore } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { members as allMembersData, payments as allPaymentsData, units as allUnitsData } from '@/lib/data';
 
 interface ReportRow {
   unitName: string;
@@ -31,11 +30,9 @@ interface ReportRow {
 }
 
 export default function ConsolidatedStatementPage() {
-  const firestore = useFirestore();
-  const { data: allMembers, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
-  const { data: allPayments, loading: paymentsLoading } = useCollection<Payment>(firestore ? collection(firestore, 'payments') : null);
-  const { data: allUnits, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
-  const { data: settings, loading: settingsLoading } = useDoc(firestore ? doc(firestore, 'settings', 'global') : null);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [allPayments, setAllPayments] = useState<Payment[]>([]);
+  const [allUnits, setAllUnits] = useState<Unit[]>([]);
   
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
@@ -44,8 +41,14 @@ export default function ConsolidatedStatementPage() {
     to: endOfMonth(new Date()),
   });
 
-  const subscriptionAmount = settings?.subscriptionAmount || 100;
+  const subscriptionAmount = 100; // Mocked
   
+  useEffect(() => {
+    setAllMembers(allMembersData);
+    setAllPayments(allPaymentsData);
+    setAllUnits(allUnitsData);
+  }, []);
+
   const generateReport = () => {
     if (!allMembers || !allPayments || !allUnits) return;
     setReportLoading(true);
@@ -102,7 +105,7 @@ export default function ConsolidatedStatementPage() {
   };
   
   useEffect(() => {
-    if (!membersLoading && !paymentsLoading && !unitsLoading && !settingsLoading) { 
+    if (allMembers.length > 0 && allUnits.length > 0) { 
        generateReport();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -124,7 +127,7 @@ export default function ConsolidatedStatementPage() {
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'MMMM yyyy')} to ${format(dateRange.to, 'MMMM yyyy')}` : 'a selected period';
 
-  const loading = membersLoading || paymentsLoading || unitsLoading || settingsLoading;
+  const loading = !allMembers.length || !allUnits.length;
   if (loading) {
     return <div>Loading data...</div>;
   }

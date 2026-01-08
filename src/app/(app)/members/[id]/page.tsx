@@ -2,21 +2,21 @@
 
 import { ClientOnlyMemberForm } from "../components/client-only-member-form";
 import { notFound } from "next/navigation";
-import { use, useMemo } from "react";
+import { use, useEffect, useState } from "react";
 import type { Member } from "@/lib/types";
-import { useDoc, useFirestore } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { members } from "@/lib/data";
+
 
 export default function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const firestore = useFirestore();
+  const [member, setMember] = useState<Member | undefined>();
+  const [loading, setLoading] = useState(true);
 
-  const memberRef = useMemo(() => {
-    if (!firestore || !id) return null;
-    return doc(firestore, 'members', id);
-  }, [firestore, id]);
-
-  const { data: member, loading } = useDoc<Member>(memberRef);
+  useEffect(() => {
+    const foundMember = members.find(m => m.id === id);
+    setMember(foundMember);
+    setLoading(false);
+  }, [id]);
 
   if (loading) {
     return <div>Loading member data...</div>;

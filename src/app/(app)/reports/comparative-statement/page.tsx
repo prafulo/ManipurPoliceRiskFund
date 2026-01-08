@@ -18,8 +18,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { members as allMembersData, transfers as allTransfersData, units as allUnitsData } from '@/lib/data';
 
 interface ReportRow {
     unitName: string;
@@ -35,10 +34,9 @@ interface ReportRow {
 }
 
 export default function ComparativeStatementPage() {
-  const firestore = useFirestore();
-  const { data: allMembers, loading: membersLoading } = useCollection<Member>(firestore ? collection(firestore, 'members') : null);
-  const { data: allTransfers, loading: transfersLoading } = useCollection<Transfer>(firestore ? collection(firestore, 'transfers') : null);
-  const { data: allUnits, loading: unitsLoading } = useCollection<Unit>(firestore ? collection(firestore, 'units') : null);
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [allTransfers, setAllTransfers] = useState<Transfer[]>([]);
+  const [allUnits, setAllUnits] = useState<Unit[]>([]);
 
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
@@ -46,6 +44,12 @@ export default function ComparativeStatementPage() {
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date(),
   });
+
+  useEffect(() => {
+    setAllMembers(allMembersData);
+    setAllTransfers(allTransfersData);
+    setAllUnits(allUnitsData);
+  }, []);
 
   const generateReport = () => {
     if (!allMembers || !allTransfers || !allUnits) {
@@ -138,7 +142,7 @@ export default function ComparativeStatementPage() {
   };
   
   useEffect(() => {
-    if (!membersLoading && !transfersLoading && !unitsLoading) { 
+    if (allMembers.length > 0 && allUnits.length > 0) { 
        generateReport();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,7 +155,7 @@ export default function ComparativeStatementPage() {
   
   const dateRangeString = dateRange?.from && dateRange.to ? `${format(dateRange.from, 'LLL d, y')} to ${format(dateRange.to, 'LLL d, y')}` : 'a selected period';
 
-  const loading = membersLoading || transfersLoading || unitsLoading;
+  const loading = !allMembers.length || !allUnits.length;
 
   if (loading) {
     return <div>Loading data...</div>;

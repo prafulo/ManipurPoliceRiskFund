@@ -36,8 +36,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { useFirestore } from '@/firebase';
-import { deleteDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 type EnrichedMember = Member & { unitName: string };
@@ -52,7 +50,6 @@ interface MemberTableProps {
 export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   const { role, unit } = useAuth();
   const router = useRouter();
-  const firestore = useFirestore();
   const { toast } = useToast();
 
   const [filter, setFilter] = React.useState('');
@@ -62,21 +59,11 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   const rowsPerPage = 10;
   
   const handleDeleteMember = async (memberId: string) => {
-    if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'members', memberId));
-      toast({
-        title: "Member Deleted",
-        description: "The member has been permanently removed.",
-      });
-    } catch (error) {
-      console.error("Error deleting member: ", error);
-      toast({
+    toast({
         variant: 'destructive',
-        title: "Error",
-        description: "Could not delete member.",
+        title: "Feature Disabled",
+        description: "Data modification is disabled in local data mode.",
       });
-    }
   };
 
   const roleFilteredData = React.useMemo(() => {
@@ -98,8 +85,8 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
 
     if (sortKey) {
       result.sort((a, b) => {
-        const valA = a[sortKey];
-        const valB = b[sortKey];
+        const valA = a[sortKey as keyof Member] as any;
+        const valB = b[sortKey as keyof Member] as any;
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
         return 0;
@@ -156,7 +143,7 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
               <TableRow>
                 {headers.map(header => (
                   <TableHead key={header.key}>
-                    <Button variant="ghost" onClick={() => handleSort(header.key)}>
+                    <Button variant="ghost" onClick={() => handleSort(header.key as any)}>
                       {header.label}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>

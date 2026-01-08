@@ -6,42 +6,29 @@ import Link from "next/link";
 import { PaymentTable } from "./components/payment-table";
 import type { Payment } from "@/lib/types";
 import React from "react";
-import { useCollection, useFirestore } from '@/firebase';
-import { collection, deleteDoc, doc } from 'firebase/firestore';
+import { payments as paymentData } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
 
 export default function PaymentsPage() {
-  const firestore = useFirestore();
   const { toast } = useToast();
-  
-  const { data: paymentData, loading: isLoading, error } = useCollection<Payment>(
-    firestore ? collection(firestore, 'payments') : null
-  );
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [payments, setPayments] = React.useState<Payment[]>([]);
+
+  React.useEffect(() => {
+    setPayments(paymentData);
+    setIsLoading(false);
+  }, []);
 
   const handleDeletePayment = async (paymentId: string) => {
-    if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, "payments", paymentId));
-      toast({
-        title: "Payment Deleted",
-        description: "The payment record has been successfully deleted.",
-      });
-    } catch (e) {
-      console.error("Error deleting payment: ", e);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not delete the payment record.",
-      });
-    }
+    toast({
+      variant: "destructive",
+      title: "Feature Disabled",
+      description: "Data modification is disabled in local data mode.",
+    });
   };
 
   if (isLoading) {
     return <div>Loading payments...</div>;
-  }
-  
-  if (error) {
-    return <div>Error: {error.message}</div>;
   }
 
   return (
@@ -58,7 +45,7 @@ export default function PaymentsPage() {
           </Button>
         </Link>
       </div>
-      <PaymentTable data={paymentData || []} onDelete={handleDeletePayment} />
+      <PaymentTable data={payments || []} onDelete={handleDeletePayment} />
     </div>
   );
 }
