@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,112 +11,102 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
+  id        String   @id @default(uuid())
+  email     String   @unique
   name      String
-  role      UserRole  @default(UnitAdmin)
-  unitId    String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  password  String
+  role      UserRole @default(UnitAdmin)
+  unitId    String?  @map("unit_id")
+  unit      Unit?    @relation(fields: [unitId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
 }
 
 model Unit {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  members   Member[]
+  id      String    @id @default(uuid())
+  name    String    @unique
+  members Member[]
+  users   User[]
   transfersFrom Transfer[] @relation("FromUnit")
   transfersTo   Transfer[] @relation("ToUnit")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
 
   @@map("units")
 }
 
 model Member {
-  id                   String     @id @default(uuid())
-  membershipCode       String     @unique @map("membership_code")
-  name                 String
-  fatherName           String     @map("father_name")
-  rank                 String
-  trade                String
-  serviceNumber        String     @unique @map("service_number")
-  badgeNumber          String     @map("badge_number")
-  bloodGroup           String     @map("blood_group")
-  memberPostType       MemberPostType @map("member_post_type")
-  joiningRank          String     @map("joining_rank")
-  dateOfBirth          DateTime   @db.Date @map("date_of_birth")
-  dateOfEnrollment     DateTime   @db.Date @map("date_of_enrollment")
-  superannuationDate   DateTime   @db.Date @map("superannuation_date")
-  dateOfDischarge      DateTime?  @db.Date @map("date_of_discharge")
-  address              String     @db.Text
-  phone                String
-  unitId               String
-  status               MemberStatus @default(Opened)
-  closureReason        ClosureReason? @map("closure_reason")
-  closureNotes         String?    @db.Text @map("closure_notes")
-  subscriptionStartDate DateTime  @db.Date @map("subscription_start_date")
-  parentDepartment     String?    @map("parent_department")
-  dateApplied          DateTime   @db.Date @map("date_applied")
-  receiptDate          DateTime   @db.Date @map("receipt_date")
-  allotmentDate        DateTime   @db.Date @map("allotment_date")
-  firstWitness         Json       @map("first_witness")
-  secondWitness        Json       @map("second_witness")
-  nominees             Json
-  createdAt            DateTime   @default(now()) @map("created_at")
-  updatedAt            DateTime   @updatedAt @map("updated_at")
+  id                      String         @id @default(uuid())
+  membershipCode          String         @unique @map("membership_code")
+  name                    String
+  fatherName              String         @map("father_name")
+  rank                    String
+  trade                   String
+  serviceNumber           String         @map("service_number")
+  badgeNumber             String         @map("badge_number")
+  bloodGroup              String         @map("blood_group")
+  memberPostType          MemberPostType @map("member_post_type")
+  joiningRank             String         @map("joining_rank")
+  dateOfBirth             DateTime       @db.Date @map("date_of_birth")
+  dateOfEnrollment        DateTime       @db.Date @map("date_of_enrollment")
+  superannuationDate      DateTime       @db.Date @map("superannuation_date")
+  dateOfDischarge         DateTime?      @db.Date @map("date_of_discharge")
+  address                 String         @db.Text
+  phone                   String
+  unitId                  String         @map("unit_id")
+  unit                    Unit           @relation(fields: [unitId], references: [id])
+  status                  MemberStatus
+  closureReason           ClosureReason? @map("closure_reason")
+  closureNotes            String?        @db.Text @map("closure_notes")
+  subscriptionStartDate   DateTime       @db.Date @map("subscription_start_date")
+  nominees                Json
+  firstWitness            Json           @map("first_witness")
+  secondWitness           Json           @map("second_witness")
+  parentDepartment        String?        @map("parent_department")
+  dateApplied             DateTime       @db.Date @map("date_applied")
+  receiptDate             DateTime       @db.Date @map("receipt_date")
+  allotmentDate           DateTime       @db.Date @map("allotment_date")
+  createdAt               DateTime       @default(now()) @map("created_at")
+  updatedAt               DateTime       @updatedAt @map("updated_at")
+  payments                Payment[]
+  transfers               Transfer[]
 
-  unit      Unit       @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  payments  Payment[]
-  transfers Transfer[]
-
-  @@index([unitId])
   @@map("members")
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  memberId    String
+  memberId    String   @map("member_id")
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime @map("payment_date")
   months      Json
+  paymentDate DateTime @db.DateTime(0) @map("payment_date")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@index([memberId])
   @@map("payments")
 }
 
 model Transfer {
   id           String   @id @default(uuid())
-  memberId     String
-  fromUnitId   String
-  toUnitId     String
-  transferDate DateTime @map("transfer_date")
+  memberId     String   @map("member_id")
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnitId   String   @map("from_unit_id")
+  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
+  toUnitId     String   @map("to_unit_id")
+  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
+  transferDate DateTime @db.DateTime(0) @map("transfer_date")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnit Unit   @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Restrict)
-  toUnit   Unit   @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Restrict)
-
-  @@index([memberId])
-  @@index([fromUnitId])
-  @@index([toUnitId])
   @@map("transfers")
 }
 
 model Setting {
-  key       String @id
-  value     String @db.Text
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
+  id    String @id @default(uuid())
+  key   String @unique
+  value String @db.Text
+  
   @@map("settings")
 }
-
 
 enum MemberStatus {
   Opened
@@ -127,13 +120,13 @@ enum ClosureReason {
   Expelled
 }
 
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
-}
-
 enum MemberPostType {
   Officiating
   Temporary
   Substantive
+}
+
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
 }

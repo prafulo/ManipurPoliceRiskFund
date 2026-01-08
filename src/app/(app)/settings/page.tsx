@@ -14,10 +14,14 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wifi, WifiOff, Database } from 'lucide-react';
+import { Wifi, Database, Users } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import type { UserRole } from '@/lib/types';
+
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { data: session } = useSession();
 
   const [subscriptionAmount, setSubscriptionAmount] = useState<number | ''>('');
   const [expiredReleaseAmount, setExpiredReleaseAmount] = useState<number | ''>('');
@@ -25,6 +29,8 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTestingDb, setIsTestingDb] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  
+  const userRole = session?.user?.role as UserRole;
 
   useEffect(() => {
     async function fetchSettings() {
@@ -148,32 +154,34 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage application-wide settings.</p>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Database Management</CardTitle>
-          <CardDescription>Manage and verify your database connection and schema.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-           <div>
-             <h4 className="font-medium">Test Connection</h4>
-             <p className="text-sm text-muted-foreground pt-1">Verify that the application can successfully connect to the MySQL database.</p>
-           </div>
-           <div>
-             <h4 className="font-medium">Update Schema</h4>
-             <p className="text-sm text-muted-foreground pt-1">Sync your database with the current Prisma schema. This will apply any pending changes.</p>
-           </div>
-        </CardContent>
-        <CardFooter className="border-t px-6 py-4 flex gap-4">
-            <Button onClick={handleTestConnection} disabled={isTestingDb}>
-                {isTestingDb ? <WifiOff className="animate-pulse" /> : <Wifi />}
-                {isTestingDb ? 'Testing...' : 'Test Database Connection'}
-            </Button>
-            <Button onClick={handleMigrate} disabled={isMigrating} variant="outline">
-                {isMigrating ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div> : <Database />}
-                {isMigrating ? 'Updating...' : 'Setup/Update Database'}
-            </Button>
-        </CardFooter>
-      </Card>
+      {userRole === 'SuperAdmin' && (
+        <Card>
+            <CardHeader>
+                <CardTitle>Database Management</CardTitle>
+                <CardDescription>Manage and verify your database connection and schema.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+            <div>
+                <h4 className="font-medium">Test Connection</h4>
+                <p className="text-sm text-muted-foreground pt-1">Verify that the application can successfully connect to the MySQL database.</p>
+            </div>
+            <div>
+                <h4 className="font-medium">Update Schema</h4>
+                <p className="text-sm text-muted-foreground pt-1">Sync your database with the current Prisma schema. This will apply any pending changes.</p>
+            </div>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4 flex gap-4">
+                <Button onClick={handleTestConnection} disabled={isTestingDb} variant="outline">
+                    {isTestingDb ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div> : <Wifi />}
+                    {isTestingDb ? 'Testing...' : 'Test Database Connection'}
+                </Button>
+                <Button onClick={handleMigrate} disabled={isMigrating}>
+                    {isMigrating ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div> : <Database />}
+                    {isMigrating ? 'Updating...' : 'Setup/Update Database'}
+                </Button>
+            </CardFooter>
+        </Card>
+      )}
 
 
        <Card>
@@ -190,6 +198,23 @@ export default function SettingsPage() {
           </Link>
         </CardFooter>
       </Card>
+      
+      {userRole === 'SuperAdmin' && (
+         <Card>
+            <CardHeader>
+            <CardTitle>Manage Users</CardTitle>
+            <CardDescription>Add, edit, or remove user accounts and manage their roles.</CardDescription>
+            </CardHeader>
+            <CardContent>
+            <p className="text-sm text-muted-foreground">Control who can access the application and what they can do.</p>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4">
+                <Link href="/settings/users">
+                    <Button variant="outline"><Users className="mr-2"/>Manage Users</Button>
+                </Link>
+            </CardFooter>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -219,6 +244,7 @@ export default function SettingsPage() {
                   placeholder="100" 
                   value={subscriptionAmount} 
                   onChange={(e) => setSubscriptionAmount(Number(e.target.value))}
+                  disabled={userRole !== 'SuperAdmin'}
                 />
               </div>
 
@@ -230,17 +256,20 @@ export default function SettingsPage() {
                   placeholder="50000" 
                   value={expiredReleaseAmount} 
                   onChange={(e) => setExpiredReleaseAmount(Number(e.target.value))}
+                  disabled={userRole !== 'SuperAdmin'}
                 />
                  <p className="text-sm text-muted-foreground pt-1">The fixed, one-time amount released when a member's account is closed due to death.</p>
               </div>
             </>
           )}
         </CardContent>
-        <CardFooter className="border-t px-6 py-4">
-          <Button onClick={handleSave} disabled={loading || isSaving}>
-            {isSaving ? 'Saving...' : 'Save Financial Settings'}
-            </Button>
-        </CardFooter>
+        {userRole === 'SuperAdmin' && (
+            <CardFooter className="border-t px-6 py-4">
+                <Button onClick={handleSave} disabled={loading || isSaving}>
+                    {isSaving ? 'Saving...' : 'Save Financial Settings'}
+                </Button>
+            </CardFooter>
+        )}
       </Card>
       
     </div>

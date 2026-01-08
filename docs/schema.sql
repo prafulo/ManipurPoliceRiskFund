@@ -1,102 +1,113 @@
--- MySQL Database Schema for the Manipur Police Risk Fund Application
--- This schema is designed to match the data structures defined in `src/lib/types.ts`.
+-- CreateTable
+CREATE TABLE `users` (
+    `id` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NOT NULL,
+    `role` ENUM('SuperAdmin', 'UnitAdmin') NOT NULL DEFAULT 'UnitAdmin',
+    `unit_id` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
---
--- Table structure for table `units`
---
+    UNIQUE INDEX `users_email_key`(`email`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `units` (
-  `id` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `id` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
 
---
--- Table structure for table `members`
---
+    UNIQUE INDEX `units_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `members` (
-  `id` varchar(255) NOT NULL,
-  `membership_code` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `father_name` varchar(255) NOT NULL,
-  `rank` varchar(255) NOT NULL,
-  `trade` varchar(255) NOT NULL,
-  `service_number` varchar(255) NOT NULL,
-  `badge_number` varchar(255) NOT NULL,
-  `blood_group` varchar(50) NOT NULL,
-  `member_post_type` enum('Officiating','Temporary','Substantive') NOT NULL,
-  `joining_rank` varchar(255) NOT NULL,
-  `date_of_birth` date NOT NULL,
-  `date_of_enrollment` date NOT NULL,
-  `superannuation_date` date NOT NULL,
-  `date_of_discharge` date DEFAULT NULL,
-  `address` text NOT NULL,
-  `phone` varchar(50) NOT NULL,
-  `unit_id` varchar(255) NOT NULL,
-  `status` enum('Opened','Closed') NOT NULL,
-  `closure_reason` enum('Retirement','Death','Doubling','Expelled') DEFAULT NULL,
-  `closure_notes` text,
-  `subscription_start_date` date NOT NULL,
-  `nominees` json NOT NULL,
-  `first_witness` json NOT NULL,
-  `second_witness` json NOT NULL,
-  `parent_department` varchar(255) DEFAULT NULL,
-  `date_applied` date NOT NULL,
-  `receipt_date` date NOT NULL,
-  `allotment_date` date NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `membership_code` (`membership_code`),
-  KEY `unit_id` (`unit_id`),
-  CONSTRAINT `members_ibfk_1` FOREIGN KEY (`unit_id`) REFERENCES `units` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `id` VARCHAR(191) NOT NULL,
+    `membership_code` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `father_name` VARCHAR(191) NOT NULL,
+    `rank` VARCHAR(191) NOT NULL,
+    `trade` VARCHAR(191) NOT NULL,
+    `service_number` VARCHAR(191) NOT NULL,
+    `badge_number` VARCHAR(191) NOT NULL,
+    `blood_group` VARCHAR(191) NOT NULL,
+    `member_post_type` ENUM('Officiating', 'Temporary', 'Substantive') NOT NULL,
+    `joining_rank` VARCHAR(191) NOT NULL,
+    `date_of_birth` DATE NOT NULL,
+    `date_of_enrollment` DATE NOT NULL,
+    `superannuation_date` DATE NOT NULL,
+    `date_of_discharge` DATE NULL,
+    `address` TEXT NOT NULL,
+    `phone` VARCHAR(191) NOT NULL,
+    `unit_id` VARCHAR(191) NOT NULL,
+    `status` ENUM('Opened', 'Closed') NOT NULL,
+    `closure_reason` ENUM('Retirement', 'Death', 'Doubling', 'Expelled') NULL,
+    `closure_notes` TEXT NULL,
+    `subscription_start_date` DATE NOT NULL,
+    `nominees` JSON NOT NULL,
+    `first_witness` JSON NOT NULL,
+    `second_witness` JSON NOT NULL,
+    `parent_department` VARCHAR(191) NULL,
+    `date_applied` DATE NOT NULL,
+    `receipt_date` DATE NOT NULL,
+    `allotment_date` DATE NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
---
--- Table structure for table `payments`
---
+    UNIQUE INDEX `members_membership_code_key`(`membership_code`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `payments` (
-  `id` varchar(255) NOT NULL,
-  `member_id` varchar(255) NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `months` json NOT NULL,
-  `payment_date` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `member_id` (`member_id`),
-  CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `id` VARCHAR(191) NOT NULL,
+    `member_id` VARCHAR(191) NOT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `months` JSON NOT NULL,
+    `payment_date` DATETIME(0) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
---
--- Table structure for table `transfers`
---
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `transfers` (
-  `id` varchar(255) NOT NULL,
-  `member_id` varchar(255) NOT NULL,
-  `from_unit_id` varchar(255) NOT NULL,
-  `to_unit_id` varchar(255) NOT NULL,
-  `transfer_date` datetime NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `member_id` (`member_id`),
-  KEY `from_unit_id` (`from_unit_id`),
-  KEY `to_unit_id` (`to_unit_id`),
-  CONSTRAINT `transfers_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `transfers_ibfk_2` FOREIGN KEY (`from_unit_id`) REFERENCES `units` (`id`),
-  CONSTRAINT `transfers_ibfk_3` FOREIGN KEY (`to_unit_id`) REFERENCES `units` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `id` VARCHAR(191) NOT NULL,
+    `member_id` VARCHAR(191) NOT NULL,
+    `from_unit_id` VARCHAR(191) NOT NULL,
+    `to_unit_id` VARCHAR(191) NOT NULL,
+    `transfer_date` DATETIME(0) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
---
--- Table structure for table `settings`
---
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `settings` (
-  `key` varchar(255) NOT NULL,
-  `value` varchar(255) NOT NULL,
-  PRIMARY KEY (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `id` VARCHAR(191) NOT NULL,
+    `key` VARCHAR(191) NOT NULL,
+    `value` TEXT NOT NULL,
 
---
--- Inserting default data for `settings`
---
-INSERT INTO `settings` (`key`, `value`) VALUES
-('subscriptionAmount', '100'),
-('expiredReleaseAmount', '50000');
+    UNIQUE INDEX `settings_key_key`(`key`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `users` ADD CONSTRAINT `users_unit_id_fkey` FOREIGN KEY (`unit_id`) REFERENCES `units`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `members` ADD CONSTRAINT `members_unit_id_fkey` FOREIGN KEY (`unit_id`) REFERENCES `units`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `payments` ADD CONSTRAINT `payments_member_id_fkey` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transfers` ADD CONSTRAINT `transfers_member_id_fkey` FOREIGN KEY (`member_id`) REFERENCES `members`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transfers` ADD CONSTRAINT `transfers_from_unit_id_fkey` FOREIGN KEY (`from_unit_id`) REFERENCES `units`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transfers` ADD CONSTRAINT `transfers_to_unit_id_fkey` FOREIGN KEY (`to_unit_id`) REFERENCES `units`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
