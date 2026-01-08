@@ -1,4 +1,8 @@
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env.development.local
+dotenv.config({ path: '.env.development.local' });
 
 // This is a simplified connection pool. In a real production app,
 // you might want to handle connection closing and re-opening more robustly.
