@@ -41,8 +41,10 @@ export function TransferTable({ data }: TransferTableProps) {
         const valA = a[sortKey];
         const valB = b[sortKey];
 
-        if (valA && typeof valA === 'object' && 'toDate' in valA && valB && typeof valB === 'object' && 'toDate' in valB) {
-            return sortDirection === 'asc' ? valA.toDate().getTime() - valB.toDate().getTime() : valB.toDate().getTime() - valA.toDate().getTime();
+        if (sortKey === 'transferDate') {
+            const dateA = new Date(valA as string).getTime();
+            const dateB = new Date(valB as string).getTime();
+            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
         }
 
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
@@ -77,11 +79,8 @@ export function TransferTable({ data }: TransferTableProps) {
     { key: 'transferDate', label: 'Transfer Date' },
   ];
 
-  const toDate = (timestamp: any): Date => {
-    if (timestamp && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate();
-    }
-    return new Date(timestamp);
+  const toDate = (dateStr: string | Date): Date => {
+    return new Date(dateStr);
   }
 
   return (

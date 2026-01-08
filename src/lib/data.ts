@@ -1,15 +1,10 @@
-// This file is now deprecated as data is being moved to Firebase.
-// It is kept for reference during the transition but will be removed later.
+// This file is now deprecated as data is fetched from the MySQL database.
+// It can be removed in the future.
 
 import type { Unit, Member, Payment, Transfer } from './types';
 
-export const units: Unit[] = [
-  { id: '1', name: '1MR' },
-  { id: '2', name: '2MR' },
-  { id: '3', name: '3MR' },
-  { id: '4', name: 'HQ' },
-];
-
+// These arrays are now empty as they are no longer the source of truth.
+export const units: Unit[] = [];
 export const members: Member[] = [];
 export const payments: Payment[] = [];
 export const transfers: Transfer[] = [];

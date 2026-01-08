@@ -6,7 +6,18 @@ import Link from "next/link";
 import { TransferTable } from "./components/transfer-table";
 import type { Transfer, Unit } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { transfers, units } from '@/lib/data';
+
+async function fetchData() {
+    const [transfersRes, unitsRes] = await Promise.all([
+        fetch('/api/transfers'),
+        fetch('/api/units')
+    ]);
+    const [transfersData, unitsData] = await Promise.all([
+        transfersRes.json(),
+        unitsRes.json()
+    ]);
+    return { transfers: transfersData.transfers, units: unitsData.units };
+}
 
 export default function TransfersPage() {
   const [transferData, setTransferData] = useState<Transfer[]>([]);
@@ -14,9 +25,18 @@ export default function TransfersPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setTransferData(transfers);
-    setUnitData(units);
-    setIsLoading(false);
+    async function loadData() {
+        try {
+            const { transfers, units } = await fetchData();
+            setTransferData(transfers);
+            setUnitData(units);
+        } catch (error) {
+            console.error("Failed to load transfer data", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    loadData();
   }, []);
 
   const enrichedTransfers = (transferData || []).map(transfer => ({

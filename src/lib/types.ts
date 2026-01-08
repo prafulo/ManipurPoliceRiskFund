@@ -41,7 +41,7 @@ export type Member = {
   closureReason?: ClosureReason;
   closureNotes?: string;
   subscriptionStartDate: Date | string;
-  nominees: Nominee[];
+  nominees: Nominee[] | string;
   firstWitness: {
     name: string;
     address: string;
@@ -65,7 +65,7 @@ export type Payment = {
   membershipCode: string;
   unitName: string;
   amount: number;
-  months: (Date | string)[]; 
+  months: (Date | string)[] | string; 
   paymentDate: Date | string;
 };
 
@@ -75,6 +75,8 @@ export type Transfer = {
   memberName: string;
   fromUnitId: string;
   toUnitId: string;
+  fromUnitName?: string;
+  toUnitName?: string;
   transferDate: Date | string;
   createdAt?: Date | string;
 };

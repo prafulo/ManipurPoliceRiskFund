@@ -7,7 +7,19 @@ import Link from "next/link";
 import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Member, Unit } from '@/lib/types';
-import { members, units } from '@/lib/data';
+
+
+async function fetchData() {
+    const [membersRes, unitsRes] = await Promise.all([
+        fetch('/api/members'),
+        fetch('/api/units')
+    ]);
+    const [membersData, unitsData] = await Promise.all([
+        membersRes.json(),
+        unitsRes.json()
+    ]);
+    return { members: membersData.members, units: unitsData.units };
+}
 
 
 export default function MembersPage() {
@@ -15,13 +27,22 @@ export default function MembersPage() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const unitsMap = new Map(units.map(unit => [unit.id, unit.name]));
-    const allMembers = members.map(member => ({
-        ...member,
-        unitName: unitsMap.get(member.unitId) || 'N/A',
-    }));
-    setEnrichedMembers(allMembers);
-    setIsLoading(false);
+    async function loadData() {
+        try {
+            const { members, units } = await fetchData();
+            const unitsMap = new Map(units.map((unit: Unit) => [unit.id, unit.name]));
+            const allMembers = members.map((member: Member) => ({
+                ...member,
+                unitName: unitsMap.get(member.unitId) || 'N/A',
+            }));
+            setEnrichedMembers(allMembers);
+        } catch (error) {
+            console.error("Failed to fetch members data", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    loadData();
   }, []);
 
 

@@ -6,8 +6,13 @@ import Link from "next/link";
 import { PaymentTable } from "./components/payment-table";
 import type { Payment } from "@/lib/types";
 import React from "react";
-import { payments as paymentData } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
+
+async function fetchData() {
+    const res = await fetch('/api/payments');
+    const data = await res.json();
+    return data.payments;
+}
 
 export default function PaymentsPage() {
   const { toast } = useToast();
@@ -15,16 +20,43 @@ export default function PaymentsPage() {
   const [payments, setPayments] = React.useState<Payment[]>([]);
 
   React.useEffect(() => {
-    setPayments(paymentData);
-    setIsLoading(false);
-  }, []);
+    async function loadData() {
+        try {
+            const data = await fetchData();
+            setPayments(data);
+        } catch (error) {
+            console.error("Failed to fetch payments", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not fetch payment data.'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    loadData();
+  }, [toast]);
 
   const handleDeletePayment = async (paymentId: string) => {
-    toast({
-      variant: "destructive",
-      title: "Feature Disabled",
-      description: "Data modification is disabled in local data mode.",
-    });
+    try {
+        const res = await fetch(`/api/payments/${paymentId}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Failed to delete payment.');
+        }
+        toast({
+            title: "Payment Deleted",
+            description: "The payment record has been deleted.",
+        });
+        setPayments(prev => prev.filter(p => p.id !== paymentId));
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: "Error",
+            description: error.message,
+        });
+    }
   };
 
   if (isLoading) {

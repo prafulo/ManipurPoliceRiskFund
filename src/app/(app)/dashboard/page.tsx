@@ -8,8 +8,20 @@ import {
 } from '@/components/ui/card';
 import { Users, UserCheck, UserX, Landmark } from 'lucide-react';
 import type { Member, Unit } from '@/lib/types';
-import { members as allMembers, units as allUnits } from '@/lib/data';
 import { useEffect, useState } from 'react';
+
+async function fetchData() {
+  const [membersRes, unitsRes] = await Promise.all([
+    fetch('/api/members'),
+    fetch('/api/units')
+  ]);
+  const [membersData, unitsData] = await Promise.all([
+    membersRes.json(),
+    unitsRes.json()
+  ]);
+  return { members: membersData.members, units: unitsData.units };
+}
+
 
 export default function Dashboard() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -17,10 +29,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
-    setMembers(allMembers);
-    setUnits(allUnits);
-    setLoading(false);
+    async function loadData() {
+      try {
+        const { members, units } = await fetchData();
+        setMembers(members);
+        setUnits(units);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
   }, []);
 
   const stats = {
@@ -112,7 +132,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="pl-6">
             <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">No recent activity (local data mode).</p>
+                <p className="text-sm text-muted-foreground">Recent activity feed coming soon.</p>
             </div>
           </CardContent>
         </Card>

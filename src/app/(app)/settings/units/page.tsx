@@ -33,38 +33,87 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Unit } from '@/lib/types';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
-import { units as allUnits } from '@/lib/data';
+import { useRouter } from 'next/navigation';
 
 
 export default function ManageUnitsPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [unitName, setUnitName] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    setUnits(allUnits);
-    setIsLoading(false);
-  }, []);
+    async function getUnits() {
+        try {
+            const res = await fetch('/api/units');
+            const data = await res.json();
+            setUnits(data.units);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch units.'})
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    getUnits();
+  }, [toast]);
 
   const handleAddOrUpdateUnit = async () => {
-    toast({
-        variant: 'destructive',
-        title: 'Feature Disabled',
-        description: 'Data modification is disabled in local data mode.',
-    });
-    setUnitName('');
-    setEditingUnit(null);
+    if (!unitName.trim()) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Unit name cannot be empty.' });
+        return;
+    }
+    
+    const url = editingUnit ? `/api/units/${editingUnit.id}` : '/api/units/new';
+    const method = editingUnit ? 'PUT' : 'POST';
+
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: unitName })
+        });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Failed to save unit.');
+        }
+
+        toast({
+            title: `Unit ${editingUnit ? 'Updated' : 'Added'}`,
+            description: `The unit "${unitName}" has been saved.`
+        });
+        
+        setUnitName('');
+        setEditingUnit(null);
+        router.refresh(); // This will trigger a re-fetch in the useEffect
+        // Manually update state to see changes immediately
+        const updatedUnits = await (await fetch('/api/units')).json();
+        setUnits(updatedUnits.units);
+
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   const handleDeleteUnit = async (unitId: string, unitName: string) => {
-    toast({
-        variant: 'destructive',
-        title: 'Feature Disabled',
-        description: 'Data modification is disabled in local data mode.',
-    });
+    try {
+        const res = await fetch(`/api/units/${unitId}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Failed to delete unit.');
+        }
+        toast({
+            title: 'Unit Deleted',
+            description: `The unit "${unitName}" has been deleted.`
+        });
+        setUnits(prev => prev.filter(u => u.id !== unitId));
+
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   };
 
   const startEditing = (unit: Unit) => {
@@ -164,7 +213,7 @@ export default function ManageUnitsPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={2} className="h-24 text-center">
-                    No units found.
+                    No units found. Add one above to get started.
                   </TableCell>
                 </TableRow>
               )}

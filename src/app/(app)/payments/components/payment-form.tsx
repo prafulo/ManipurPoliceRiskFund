@@ -31,7 +31,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
-import { members as allMembers, units as allUnits } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const formSchema = z.object({
@@ -54,12 +53,28 @@ export function PaymentForm({}: PaymentFormProps) {
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const monthlySubscriptionAmount = 100; // Mocked
+  const monthlySubscriptionAmount = 100;
   
   useEffect(() => {
-    setMembers(allMembers);
-    setUnits(allUnits);
-    setLoading(false);
+    async function loadData() {
+        try {
+            const [membersRes, unitsRes] = await Promise.all([
+                fetch('/api/members'),
+                fetch('/api/units')
+            ]);
+            const [membersData, unitsData] = await Promise.all([
+                membersRes.json(),
+                unitsRes.json()
+            ]);
+            setMembers(membersData.members);
+            setUnits(unitsData.units);
+        } catch (error) {
+            console.error("Failed to load data for payment form", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    loadData();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -95,11 +110,48 @@ export function PaymentForm({}: PaymentFormProps) {
   }, [monthRange, monthlySubscriptionAmount]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    toast({
-        variant: "destructive",
-        title: "Feature Disabled",
-        description: "Data modification is disabled in local data mode.",
-    });
+    const member = members.find(m => m.id === values.memberId);
+    if (!member) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Selected member not found.'});
+        return;
+    }
+
+    const payload = {
+        memberId: values.memberId,
+        months: eachMonthOfInterval({ start: values.monthRange.from, end: values.monthRange.to }),
+        amount: totalAmount,
+        paymentDate: new Date(),
+        memberName: member.name,
+        membershipCode: member.membershipCode,
+        unitName: units.find(u => u.id === member.unitId)?.name || 'N/A'
+    };
+    
+    try {
+        const res = await fetch('/api/payments/new', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Something went wrong');
+        }
+
+        toast({
+            title: "Payment Saved",
+            description: `Payment of ₹${totalAmount.toFixed(2)} for ${member.name} has been recorded.`
+        });
+        router.push('/payments');
+        router.refresh();
+
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error saving payment",
+            description: error.message,
+        });
+    }
   }
 
   const selectedMemberId = form.watch('memberId');

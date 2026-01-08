@@ -4,8 +4,15 @@ import { ClientOnlyMemberForm } from "../components/client-only-member-form";
 import { notFound } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import type { Member } from "@/lib/types";
-import { members } from "@/lib/data";
 
+async function getMember(id: string): Promise<Member | null> {
+    const res = await fetch(`/api/members/${id}`);
+    if (!res.ok) {
+        return null;
+    }
+    const data = await res.json();
+    return data.member;
+}
 
 export default function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -13,9 +20,19 @@ export default function EditMemberPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const foundMember = members.find(m => m.id === id);
-    setMember(foundMember);
-    setLoading(false);
+    async function loadMember() {
+        try {
+            const foundMember = await getMember(id);
+            setMember(foundMember || undefined);
+        } catch (error) {
+            console.error("Failed to fetch member", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    if (id) {
+        loadMember();
+    }
   }, [id]);
 
   if (loading) {

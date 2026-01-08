@@ -28,7 +28,6 @@ import { format } from 'date-fns';
 import type { Member, Unit, Transfer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { members as allMembers, units as allUnits } from '@/lib/data';
 import { useEffect, useState } from 'react';
 
 
@@ -58,9 +57,25 @@ export function TransferForm({}: TransferFormProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMembers(allMembers);
-    setUnits(allUnits);
-    setLoading(false);
+    async function loadData() {
+        try {
+            const [membersRes, unitsRes] = await Promise.all([
+                fetch('/api/members'),
+                fetch('/api/units')
+            ]);
+            const [membersData, unitsData] = await Promise.all([
+                membersRes.json(),
+                unitsRes.json()
+            ]);
+            setMembers(membersData.members);
+            setUnits(unitsData.units);
+        } catch (error) {
+            console.error("Failed to load data for transfer form", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    loadData();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -83,7 +98,35 @@ export function TransferForm({}: TransferFormProps) {
   const fromUnit = units?.find(u => u.id === selectedMember?.unitId);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    toast({ variant: 'destructive', title: 'Error', description: 'Could not process transfer in local data mode.' });
+    if (!selectedMember || !fromUnit) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Selected member or original unit not found.' });
+        return;
+    }
+
+    const payload = {
+        ...values,
+        fromUnitId: fromUnit.id,
+        memberName: selectedMember.name,
+    };
+
+    try {
+        const res = await fetch('/api/transfers/new', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Failed to process transfer.');
+        }
+        
+        toast({ title: 'Transfer Processed', description: `${selectedMember.name} has been transferred.` });
+        router.push('/transfers');
+        router.refresh();
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
   }
   
   if (loading) {

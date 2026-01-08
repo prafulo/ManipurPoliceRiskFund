@@ -62,8 +62,10 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
         const valA = a[sortKey];
         const valB = b[sortKey];
 
-        if (valA && typeof valA === 'object' && 'toDate' in valA && valB && typeof valB === 'object' && 'toDate' in valB) {
-            return sortDirection === 'asc' ? valA.toDate().getTime() - valB.toDate().getTime() : valB.toDate().getTime() - valA.toDate().getTime();
+        if (sortKey === 'paymentDate') {
+            const dateA = new Date(valA as string).getTime();
+            const dateB = new Date(valB as string).getTime();
+            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
         }
 
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
@@ -99,11 +101,22 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
     { key: 'amount', label: 'Amount' },
   ];
 
-  const toDate = (timestamp: any): Date => {
-      if (timestamp && typeof timestamp.toDate === 'function') {
-          return timestamp.toDate();
-      }
-      return new Date(timestamp);
+  const toDate = (dateStr: string | Date): Date => {
+      return new Date(dateStr);
+  }
+
+  const formatMonths = (months: string | (string | Date)[]) => {
+    let monthArray: (string | Date)[];
+    if(typeof months === 'string') {
+        try {
+            monthArray = JSON.parse(months);
+        } catch {
+            return 'Invalid month data';
+        }
+    } else {
+        monthArray = months;
+    }
+    return monthArray.map(m => format(toDate(m), 'MMM yyyy')).join(', ');
   }
 
   return (
@@ -145,7 +158,7 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
                     <TableCell>{payment.unitName}</TableCell>
                     <TableCell>{format(toDate(payment.paymentDate), 'PP')}</TableCell>
                     <TableCell>₹{payment.amount.toFixed(2)}</TableCell>
-                    <TableCell>{payment.months.map(m => format(toDate(m), 'MMM yyyy')).join(', ')}</TableCell>
+                    <TableCell>{formatMonths(payment.months)}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>
                         <DropdownMenu>

@@ -59,11 +59,24 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   const rowsPerPage = 10;
   
   const handleDeleteMember = async (memberId: string) => {
-    toast({
-        variant: 'destructive',
-        title: "Feature Disabled",
-        description: "Data modification is disabled in local data mode.",
-      });
+    try {
+        const res = await fetch(`/api/members/${memberId}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Failed to delete member.');
+        }
+        toast({
+            title: "Member Deleted",
+            description: "The member profile has been permanently deleted.",
+        });
+        router.refresh();
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: "Error",
+            description: error.message,
+        });
+    }
   };
 
   const roleFilteredData = React.useMemo(() => {
@@ -78,7 +91,7 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
     let result = roleFilteredData.filter(member =>
       (
         member.name.toLowerCase().includes(lowercasedFilter) ||
-        member.membershipCode.toLowerCase().includes(lowercasedFilter) ||
+        (member.membershipCode && member.membershipCode.toLowerCase().includes(lowercasedFilter)) ||
         member.unitName.toLowerCase().includes(lowercasedFilter)
       )
     );

@@ -33,7 +33,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { units as allUnits } from '@/lib/data';
 
 const nomineeSchema = z.object({
   name: z.string().min(2, 'Nominee name is required.'),
@@ -71,6 +70,7 @@ const formSchema = z.object({
   dateApplied: z.date({ required_error: "Date applied is required." }),
   receiptDate: z.date({ required_error: "Receipt date is required." }),
   allotmentDate: z.date({ required_error: "Allotment date is required." }),
+  subscriptionStartDate: z.date({ required_error: "Subscription start date is required." }),
 }).refine(data => {
   if (data.status === 'Closed') {
     return data.closureReason !== "";
@@ -103,7 +103,6 @@ type MemberFormProps = {
   member?: Member | null;
 };
 
-// Convert Timestamps/string dates to JS Dates
 function memberToForm(member: Member): any {
     const formValues: any = { ...member };
     const dateFields = ['dateOfBirth', 'dateOfEnrollment', 'superannuationDate', 'dateOfDischarge', 'subscriptionStartDate', 'dateApplied', 'receiptDate', 'allotmentDate', 'createdAt', 'updatedAt'];
@@ -121,6 +120,10 @@ function memberToForm(member: Member): any {
         formValues.secondWitnessName = member.secondWitness.name;
         formValues.secondWitnessAddress = member.secondWitness.address;
     }
+    // Handle nominees JSON string
+    if (typeof formValues.nominees === 'string') {
+        formValues.nominees = JSON.parse(formValues.nominees);
+    }
     return formValues;
 }
 
@@ -133,7 +136,12 @@ export function MemberForm({ member }: MemberFormProps) {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
   useEffect(() => {
-    setUnits(allUnits);
+    async function loadUnits() {
+        const res = await fetch('/api/units');
+        const data = await res.json();
+        setUnits(data.units);
+    }
+    loadUnits();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -171,13 +179,15 @@ export function MemberForm({ member }: MemberFormProps) {
   const selectedUnitId = form.watch("unitId");
 
   useEffect(() => {
-    function generateCode() {
+    async function generateCode() {
         if (!member && selectedUnitId) {
             const unit = units?.find(u => u.id === selectedUnitId);
             if (unit) {
-                const nextSerial = 31000 + Math.floor(Math.random() * 1000); // Placeholder serial
-                const datePart = format(new Date(), 'MMyy');
-                setGeneratedCode(`${unit.name}-${nextSerial}-${datePart}`);
+                const res = await fetch(`/api/members/next-code?unitId=${selectedUnitId}&unitName=${unit.name}`);
+                const data = await res.json();
+                if (data.code) {
+                    setGeneratedCode(data.code);
+                }
             }
         } else if (member) {
             setGeneratedCode(member.membershipCode);
@@ -188,11 +198,41 @@ export function MemberForm({ member }: MemberFormProps) {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    toast({
-        variant: "destructive",
-        title: "Feature Disabled",
-        description: "Data modification is disabled in local data mode.",
-    });
+    const method = member ? 'PUT' : 'POST';
+    const url = member ? `/api/members/${member.id}` : '/api/members/new';
+    
+    const finalValues = {
+        ...values,
+        membershipCode: generatedCode
+    };
+
+    try {
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalValues)
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Something went wrong');
+        }
+
+        toast({
+            title: `Member ${member ? 'updated' : 'created'}`,
+            description: `Member profile for ${values.name} has been successfully saved.`,
+        });
+
+        router.push('/members');
+        router.refresh();
+
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message,
+        });
+    }
   }
 
   const status = form.watch("status");
@@ -366,6 +406,23 @@ export function MemberForm({ member }: MemberFormProps) {
                           <SelectItem value="Closed">Closed</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField control={form.control} name="subscriptionStartDate" render={({ field }) => (
+                    <FormItem className="flex flex-col"><FormLabel>Subscription Start Date</FormLabel>
+                       <Popover>
+                        <PopoverTrigger asChild><FormControl>
+                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
+                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
