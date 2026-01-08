@@ -16,17 +16,19 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { subscriptionAmount, expiredReleaseAmount } = body;
 
-        const updateSubscription = prisma.setting.update({
+        const upsertSubscription = prisma.setting.upsert({
             where: { key: 'subscriptionAmount' },
-            data: { value: String(subscriptionAmount) },
+            update: { value: String(subscriptionAmount) },
+            create: { key: 'subscriptionAmount', value: String(subscriptionAmount) },
         });
 
-        const updateExpiredRelease = prisma.setting.update({
+        const upsertExpiredRelease = prisma.setting.upsert({
             where: { key: 'expiredReleaseAmount' },
-            data: { value: String(expiredReleaseAmount) },
+            update: { value: String(expiredReleaseAmount) },
+            create: { key: 'expiredReleaseAmount', value: String(expiredReleaseAmount) },
         });
 
-        await prisma.$transaction([updateSubscription, updateExpiredRelease]);
+        await prisma.$transaction([upsertSubscription, upsertExpiredRelease]);
 
         return NextResponse.json({ message: 'Settings updated successfully' });
 
