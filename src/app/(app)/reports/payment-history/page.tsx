@@ -65,7 +65,11 @@ export default function PaymentHistoryReportPage() {
                 settingsRes.json(),
             ]);
             setAllMembers(membersData.members);
-            setAllPayments(paymentsData.payments);
+            const parsedPayments = paymentsData.payments.map((p: any) => ({
+                ...p,
+                amount: Number(p.amount)
+            }));
+            setAllPayments(parsedPayments);
             setAllUnits(unitsData.units);
             const subAmount = settingsData.find((s:any) => s.key === 'subscriptionAmount');
             if (subAmount) {
