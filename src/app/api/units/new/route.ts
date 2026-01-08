@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { query } from '@/lib/mysql';
+import { prisma } from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
     try {
@@ -9,15 +10,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
         }
 
-        const result = await query('INSERT INTO units (name) VALUES (?)', [name]) as any;
+        const newUnit = await prisma.unit.create({
+            data: {
+                id: uuidv4(),
+                name: name,
+            }
+        });
 
-        return NextResponse.json({ id: result.insertId, name }, { status: 201 });
+        return NextResponse.json(newUnit, { status: 201 });
 
     } catch (error: any) {
         // Handle potential duplicate entry error
-        if (error.code === 'ER_DUP_ENTRY') {
-             return NextResponse.json({ message: `Unit name "${error.values[0]}" already exists.` }, { status: 409 });
+        if (error.code === 'P2002') {
+             return NextResponse.json({ message: `Unit name "${name}" already exists.` }, { status: 409 });
         }
+        console.error("Failed to create unit:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

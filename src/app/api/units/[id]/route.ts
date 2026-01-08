@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { query } from '@/lib/mysql';
+import { prisma } from '@/lib/prisma';
 
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
@@ -11,14 +11,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
         }
 
-        const result = await query('UPDATE units SET name = ? WHERE id = ?', [name, id]);
+        const result = await prisma.unit.update({
+            where: { id: id },
+            data: { name: name },
+        });
         
         return NextResponse.json({ message: 'Unit updated successfully' });
 
     } catch (error: any) {
-       if (error.code === 'ER_DUP_ENTRY') {
-             return NextResponse.json({ message: `Unit name "${error.values[0]}" already exists.` }, { status: 409 });
+       if (error.code === 'P2002') { // Prisma unique constraint violation
+             return NextResponse.json({ message: `Unit name "${name}" already exists.` }, { status: 409 });
         }
+        console.error("Failed to update unit:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
@@ -28,17 +32,22 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     try {
         const { id } = params;
         
-        const [members] = await query('SELECT COUNT(*) as count FROM members WHERE unit_id = ?', [id]) as any;
+        const memberCount = await prisma.member.count({
+            where: { unitId: id },
+        });
 
-        if(members.count > 0) {
+        if(memberCount > 0) {
             return NextResponse.json({ message: 'Cannot delete unit with assigned members. Please transfer members first.' }, { status: 400 });
         }
 
-        await query('DELETE FROM units WHERE id = ?', [id]);
+        await prisma.unit.delete({
+            where: { id: id }
+        });
 
         return NextResponse.json({ message: 'Unit deleted successfully' });
 
     } catch (error: any) {
+        console.error("Failed to delete unit:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

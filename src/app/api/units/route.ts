@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/mysql';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
     try {
-        const units = await query('SELECT * FROM units ORDER BY name ASC', []);
+        const units = await prisma.unit.findMany({
+            orderBy: {
+                name: 'asc'
+            }
+        });
         return NextResponse.json({ units });
     } catch (error: any) {
+        console.error("Failed to fetch units:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

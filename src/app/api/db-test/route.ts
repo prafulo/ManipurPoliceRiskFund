@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/mysql';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
     try {
-        // The query 'SELECT 1' is a standard way to check a database connection
-        // without interacting with any specific tables.
-        await query('SELECT 1', []);
+        // The $queryRaw command is a good way to test the connection without affecting data.
+        await prisma.$queryRaw`SELECT 1`;
         return NextResponse.json({ message: 'Database connection successful!' });
     } catch (error: any) {
         console.error("Database connection test failed:", error);

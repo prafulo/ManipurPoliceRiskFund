@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+//
+// ENUMS
+//
+
+enum MemberPostType {
+  Officiating
+  Temporary
+  Substantive
+}
+
+enum MemberStatus {
+  Opened
+  Closed
+}
+
+enum ClosureReason {
+  Retirement
+  Death
+  Doubling
+  Expelled
+}
+
+//
+// MODELS
+//
+
+model Unit {
+  id    String   @id @default(uuid()) @db.VarChar(255)
+  name  String   @unique @db.VarChar(255)
+
+  membersFrom Member[] @relation("UnitMembers")
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
+
+  @@map("units")
+}
+
+model Member {
+  id                     String          @id @db.VarChar(255)
+  membershipCode          String          @unique @db.VarChar(255)
+  name                   String          @db.VarChar(255)
+  fatherName             String          @db.VarChar(255)
+  rank                   String          @db.VarChar(255)
+  trade                  String          @db.VarChar(255)
+  serviceNumber           String          @db.VarChar(255)
+  badgeNumber             String          @db.VarChar(255)
+  bloodGroup              String          @db.VarChar(50)
+  memberPostType          MemberPostType
+  joiningRank             String          @db.VarChar(255)
+  dateOfBirth             DateTime        @db.Date
+  dateOfEnrollment        DateTime        @db.Date
+  superannuationDate      DateTime        @db.Date
+  dateOfDischarge         DateTime?       @db.Date
+  address                 String          @db.Text
+  phone                   String          @db.VarChar(50)
+
+  unitId                  String          @db.VarChar(255)
+  unit                    Unit            @relation("UnitMembers", fields: [unitId], references: [id], onDelete: Restrict)
+
+  status                  MemberStatus
+  closureReason           ClosureReason?
+  closureNotes            String?         @db.Text
+
+  subscriptionStartDate   DateTime        @db.Date
+  nominees                Json
+  firstWitness            Json
+  secondWitness           Json
+
+  parentDepartment        String?         @db.VarChar(255)
+
+  dateApplied             DateTime        @db.Date
+  receiptDate             DateTime        @db.Date
+  allotmentDate           DateTime        @db.Date
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  payments                Payment[]
+  transfers               Transfer[]
+
+  @@index([unitId])
+  @@map("members")
+}
+
+model Payment {
+  id          String   @id @db.VarChar(255)
+  memberId    String   @db.VarChar(255)
+  amount      Decimal  @db.Decimal(10, 2)
+  months      Json
+  paymentDate DateTime
+
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@map("payments")
+}
+
+model Transfer {
+  id            String   @id @db.VarChar(255)
+  memberId      String   @db.VarChar(255)
+  fromUnitId    String   @db.VarChar(255)
+  toUnitId      String   @db.VarChar(255)
+  transferDate  DateTime
+  createdAt     DateTime @default(now())
+
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnit      Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
+  toUnit        Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
+
+  @@index([memberId])
+  @@index([fromUnitId])
+  @@index([toUnitId])
+  @@map("transfers")
+}

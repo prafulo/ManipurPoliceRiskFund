@@ -1,23 +1,34 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/mysql';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
     try {
-         const sql = `
-            SELECT 
-                t.*,
-                m.name as memberName,
-                from_u.name as fromUnitName,
-                to_u.name as toUnitName
-            FROM transfers t
-            JOIN members m ON t.member_id = m.id
-            JOIN units from_u ON t.from_unit_id = from_u.id
-            JOIN units to_u ON t.to_unit_id = to_u.id
-            ORDER BY t.transfer_date DESC
-        `;
-        const transfers = await query(sql, []);
-        return NextResponse.json({ transfers });
+        const transfers = await prisma.transfer.findMany({
+            include: {
+                member: { select: { name: true } },
+                fromUnit: { select: { name: true } },
+                toUnit: { select: { name: true } },
+            },
+            orderBy: {
+                transferDate: 'desc'
+            }
+        });
+
+        const formattedTransfers = transfers.map(t => ({
+            id: t.id,
+            memberId: t.memberId,
+            fromUnitId: t.fromUnitId,
+            toUnitId: t.toUnitId,
+            transferDate: t.transferDate,
+            createdAt: t.createdAt,
+            memberName: t.member.name,
+            fromUnitName: t.fromUnit.name,
+            toUnitName: t.toUnit.name,
+        }));
+
+        return NextResponse.json({ transfers: formattedTransfers });
     } catch (error: any) {
+        console.error("Failed to fetch transfers:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

@@ -1,12 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { query } from '@/lib/mysql';
-import { format } from 'date-fns';
+import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
-
-function toMySQLDatetime(date: string | Date | null | undefined): string | null {
-    if (!date) return null;
-    return format(new Date(date), 'yyyy-MM-dd HH:mm:ss');
-}
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,31 +12,28 @@ export async function POST(request: NextRequest) {
         }
         
         const transferId = uuidv4();
-        const createdAt = new Date();
 
-        const transferSql = `
-            INSERT INTO transfers (id, member_id, from_unit_id, to_unit_id, transfer_date, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `;
+        // Use a transaction to ensure both operations succeed or fail together
+        const [_, transfer] = await prisma.$transaction([
+            prisma.member.update({
+                where: { id: memberId },
+                data: { unitId: toUnitId },
+            }),
+            prisma.transfer.create({
+                data: {
+                    id: transferId,
+                    memberId: memberId,
+                    fromUnitId: fromUnitId,
+                    toUnitId: toUnitId,
+                    transferDate: new Date(transferDate),
+                }
+            })
+        ]);
 
-        const transferValues = [
-            transferId,
-            memberId,
-            fromUnitId,
-            toUnitId,
-            toMySQLDatetime(transferDate),
-            toMySQLDatetime(createdAt)
-        ];
-
-        await query(transferSql, transferValues);
-        
-        // Also update the member's current unitId
-        const updateMemberSql = `UPDATE members SET unit_id = ? WHERE id = ?`;
-        await query(updateMemberSql, [toUnitId, memberId]);
-
-        return NextResponse.json({ message: 'Transfer processed successfully', id: transferId }, { status: 201 });
+        return NextResponse.json({ message: 'Transfer processed successfully', id: transfer.id }, { status: 201 });
 
     } catch (error: any) {
+        console.error("Failed to process transfer:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { query } from '@/lib/mysql';
+import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
 
 export async function GET(request: NextRequest) {
@@ -12,13 +12,16 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const sql = `SELECT membership_code FROM members WHERE unit_id = ? ORDER BY created_at DESC LIMIT 1`;
-        const [lastMember] = await query(sql, [unitId]) as any[];
+        const lastMember = await prisma.member.findFirst({
+            where: { unitId: unitId },
+            orderBy: { createdAt: 'desc' },
+            select: { membershipCode: true }
+        });
         
         let nextSerial = 30001; // Starting serial number
 
-        if (lastMember && lastMember.membership_code) {
-             const parts = lastMember.membership_code.split('-');
+        if (lastMember && lastMember.membershipCode) {
+             const parts = lastMember.membershipCode.split('-');
              if (parts.length === 3) {
                  const lastSerial = parseInt(parts[1], 10);
                  if (!isNaN(lastSerial)) {
@@ -33,6 +36,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ code: nextCode });
 
     } catch (error: any) {
+        console.error("Failed to generate next code:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
