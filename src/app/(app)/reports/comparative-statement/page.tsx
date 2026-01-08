@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon, Printer } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { format, startOfDay, endOfDay, isWithinInterval, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { DateRange } from 'react-day-picker';
 
@@ -75,7 +75,7 @@ export default function ComparativeStatementPage() {
   }, []);
 
   const generateReport = () => {
-    if (initialLoading || !allMembers.length || !allUnits.length) {
+    if (initialLoading || !allMembers || !allUnits || !allTransfers) {
         return;
     }
     setReportLoading(true);
@@ -91,7 +91,7 @@ export default function ComparativeStatementPage() {
         let closedExpiredRetired = 0;
         let closedDoubling = 0;
 
-        // Calculate transfers within the period
+        // Transfers within the current period
         const transfersInPeriod = allTransfers.filter(t => 
             isWithinInterval(toDate(t.transferDate), { start: startDate, end: endDate })
         );
@@ -102,31 +102,35 @@ export default function ComparativeStatementPage() {
             const allotmentDate = toDate(member.allotmentDate);
             const dischargeDate = member.dateOfDischarge ? toDate(member.dateOfDischarge) : null;
             
-            // Determine the member's unit *before* the start date
+            // Find the member's unit at the START of the period
             const transfersBeforePeriod = allTransfers
-                .filter(t => t.memberId === member.id && toDate(t.transferDate) < startDate)
+                .filter(t => t.memberId === member.id && isBefore(toDate(t.transferDate), startDate))
                 .sort((a, b) => toDate(b.transferDate).getTime() - toDate(a.transferDate).getTime());
             
             const unitBeforePeriod = transfersBeforePeriod.length > 0 ? transfersBeforePeriod[0].toUnitId : member.unitId;
 
             // Is the member part of the "Previous Members" count for this unit?
-            if (unitBeforePeriod === unit.id && allotmentDate < startDate && (!dischargeDate || dischargeDate >= startDate)) {
+            // They were allotted before the start date AND their unit before the start date was this one
+            // AND they were not discharged before the start date
+            if (isBefore(allotmentDate, startDate) && unitBeforePeriod === unit.id && (!dischargeDate || !isBefore(dischargeDate, startDate))) {
                 previousMembers++;
             }
 
             // Is the member a "New Member" for this unit during the period?
+            // They were allotted during this period AND their original unitId is this unit
             if (member.unitId === unit.id && isWithinInterval(allotmentDate, { start: startDate, end: endDate })) {
                 newMembers++;
             }
 
             // Was the member closed in this unit during this period?
             if (dischargeDate && isWithinInterval(dischargeDate, { start: startDate, end: endDate })) {
-                 const transfersBeforeClosure = allTransfers
-                    .filter(t => t.memberId === member.id && toDate(t.transferDate) <= dischargeDate)
+                 // To correctly attribute closure, find the member's unit at the time of discharge
+                const transfersBeforeClosure = allTransfers
+                    .filter(t => t.memberId === member.id && !isBefore(dischargeDate, toDate(t.transferDate)))
                     .sort((a,b) => toDate(b.transferDate).getTime() - toDate(a.transferDate).getTime());
             
                 const unitAtClosure = transfersBeforeClosure.length > 0 ? transfersBeforeClosure[0].toUnitId : member.unitId;
-
+                
                 if (unitAtClosure === unit.id) {
                     if (member.closureReason === 'Retirement' || member.closureReason === 'Death' || member.closureReason === 'Expelled') {
                         closedExpiredRetired++;
@@ -160,9 +164,9 @@ export default function ComparativeStatementPage() {
   };
   
   useEffect(() => {
-    generateReport();
+      generateReport();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange, allMembers, allTransfers, allUnits, initialLoading]); 
+  }, [dateRange, initialLoading]); 
 
 
   const handlePrint = () => {
