@@ -105,6 +105,20 @@ type MemberFormProps = {
 
 function memberToForm(member: Member): any {
     const formValues: any = { ...member };
+
+    // Convert any null string values to empty strings to avoid React warnings
+    const stringFields: (keyof Member)[] = ['name', 'fatherName', 'rank', 'trade', 'serviceNumber', 'badgeNumber', 'bloodGroup', 'joiningRank', 'address', 'phone', 'closureNotes', 'parentDepartment'];
+    stringFields.forEach(field => {
+        if (formValues[field] === null) {
+            formValues[field] = '';
+        }
+    });
+    
+    // Ensure closureReason is not null if it exists
+    if (formValues.closureReason === null) {
+      formValues.closureReason = '';
+    }
+
     const dateFields = ['dateOfBirth', 'dateOfEnrollment', 'superannuationDate', 'dateOfDischarge', 'subscriptionStartDate', 'dateApplied', 'receiptDate', 'allotmentDate', 'createdAt', 'updatedAt'];
     for (const key of dateFields) {
         if (formValues[key] && !(formValues[key] instanceof Date)) {
