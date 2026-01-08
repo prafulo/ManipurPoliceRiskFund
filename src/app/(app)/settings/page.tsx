@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Wifi, WifiOff } from 'lucide-react';
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -21,6 +22,7 @@ export default function SettingsPage() {
   const [subscriptionAmount, setSubscriptionAmount] = useState<number | ''>(100);
   const [expiredReleaseAmount, setExpiredReleaseAmount] = useState<number | ''>(50000);
   const [loading, setLoading] = useState(false);
+  const [isTestingDb, setIsTestingDb] = useState(false);
 
   const handleSave = async () => {
     toast({
@@ -29,12 +31,55 @@ export default function SettingsPage() {
     });
   }
 
+  const handleTestConnection = async () => {
+    setIsTestingDb(true);
+    try {
+        const res = await fetch('/api/db-test');
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.message || 'An unknown error occurred.');
+        }
+
+        toast({
+            title: 'Success',
+            description: data.message,
+            className: 'bg-green-100 text-green-900 border-green-300',
+        });
+
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Connection Failed',
+            description: error.message,
+        });
+    } finally {
+        setIsTestingDb(false);
+    }
+  }
+
   return (
     <div className="space-y-8 max-w-4xl">
       <div className="mb-6">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Settings</h2>
         <p className="text-muted-foreground">Manage application-wide settings.</p>
       </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Database Connection</CardTitle>
+          <CardDescription>Verify that the application can successfully connect to the MySQL database using the provided credentials.</CardDescription>
+        </CardHeader>
+        <CardContent>
+           <p className="text-sm text-muted-foreground">The application is configured to use the credentials specified in your <code>.env.development.local</code> file.</p>
+        </CardContent>
+        <CardFooter className="border-t px-6 py-4">
+            <Button onClick={handleTestConnection} disabled={isTestingDb}>
+                {isTestingDb ? <><WifiOff className="animate-pulse" /> Testing...</> : <><Wifi />Test Database Connection</>}
+            </Button>
+        </CardFooter>
+      </Card>
+
 
        <Card>
         <CardHeader>
