@@ -9,6 +9,8 @@ function getPool() {
         return pool;
     }
     
+    // Check if the environment variables are set.
+    // Next.js automatically loads variables from .env.local, so dotenv is not needed here for the app runtime.
     if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PASSWORD || !process.env.MYSQL_DB) {
         throw new Error('MySQL environment variables are not set.');
     }
