@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import {
   Menu,
-  GanttChartSquare,
   UserCircle,
   ChevronDown,
   Home,
@@ -43,7 +42,7 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
-  const { role, unit, switchRole } = useAuth();
+  const { user, role, unit, logout } = useAuth();
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
@@ -90,23 +89,18 @@ export function Header() {
               <Button variant="ghost" className="flex items-center gap-2 relative">
                 <UserCircle className="h-8 w-8" />
                 <div className="text-left">
-                  <p className="text-sm font-medium">{role}</p>
+                  <p className="text-sm font-medium">{user?.displayName || role}</p>
                   {unit && <p className="text-xs text-muted-foreground">{unit} Unit</p>}
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Switch Role</DropdownMenuLabel>
+              <DropdownMenuLabel>{user?.email || 'My Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => switchRole('Super Admin')}>
-                Super Admin
+              <DropdownMenuItem onSelect={logout} className="text-destructive focus:text-destructive">
+                Logout
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => switchRole('Unit Admin')}>
-                Unit Admin
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
