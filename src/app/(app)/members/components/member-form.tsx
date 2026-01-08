@@ -103,41 +103,68 @@ type MemberFormProps = {
   member?: Member | null;
 };
 
-function memberToForm(member: Member): any {
-    const formValues: any = { ...member };
+function memberToForm(member: Member) {
+    const formValues: any = {};
+    
+    // Iterate over all keys in the Member type to be safe
+    for (const key in member) {
+        const memberKey = key as keyof Member;
+        const value = member[memberKey];
 
-    // Convert any null string values to empty strings to avoid React warnings
-    const stringFields: (keyof Member)[] = ['name', 'fatherName', 'rank', 'trade', 'serviceNumber', 'badgeNumber', 'bloodGroup', 'joiningRank', 'address', 'phone', 'closureNotes', 'parentDepartment'];
-    stringFields.forEach(field => {
-        if (formValues[field] === null) {
-            formValues[field] = '';
+        if (typeof value === 'string') {
+            formValues[memberKey] = value;
+        } else if (value instanceof Date) {
+            formValues[memberKey] = value;
+        } else if (value === null || value === undefined) {
+             // Handle optional fields: convert null/undefined to empty string for controlled components
+             if (['closureReason', 'closureNotes', 'parentDepartment'].includes(memberKey)) {
+                formValues[memberKey] = '';
+             } else {
+                formValues[memberKey] = undefined; // For optional dates
+             }
+        } else {
+            formValues[memberKey] = value;
+        }
+    }
+
+    // Convert date strings to Date objects
+    const dateFields: (keyof Member)[] = ['dateOfBirth', 'dateOfEnrollment', 'superannuationDate', 'dateOfDischarge', 'subscriptionStartDate', 'dateApplied', 'receiptDate', 'allotmentDate', 'createdAt', 'updatedAt'];
+    dateFields.forEach(field => {
+        if (formValues[field] && typeof formValues[field] === 'string') {
+            formValues[field] = new Date(formValues[field]);
         }
     });
-    
-    // Ensure closureReason is not null if it exists
-    if (formValues.closureReason === null) {
-      formValues.closureReason = '';
-    }
 
-    const dateFields = ['dateOfBirth', 'dateOfEnrollment', 'superannuationDate', 'dateOfDischarge', 'subscriptionStartDate', 'dateApplied', 'receiptDate', 'allotmentDate', 'createdAt', 'updatedAt'];
-    for (const key of dateFields) {
-        if (formValues[key] && !(formValues[key] instanceof Date)) {
-            formValues[key] = new Date(formValues[key]);
-        }
-    }
     // Handle nested witness objects
     if (member.firstWitness) {
-        formValues.firstWitnessName = member.firstWitness.name;
-        formValues.firstWitnessAddress = member.firstWitness.address;
+        formValues.firstWitnessName = member.firstWitness.name || '';
+        formValues.firstWitnessAddress = member.firstWitness.address || '';
+    } else {
+        formValues.firstWitnessName = '';
+        formValues.firstWitnessAddress = '';
     }
     if (member.secondWitness) {
-        formValues.secondWitnessName = member.secondWitness.name;
-        formValues.secondWitnessAddress = member.secondWitness.address;
+        formValues.secondWitnessName = member.secondWitness.name || '';
+        formValues.secondWitnessAddress = member.secondWitness.address || '';
+    } else {
+        formValues.secondWitnessName = '';
+        formValues.secondWitnessAddress = '';
     }
-    // Handle nominees JSON string
-    if (typeof formValues.nominees === 'string') {
-        formValues.nominees = JSON.parse(formValues.nominees);
+
+    // Handle nominees - which could be a JSON string or an array
+    let nomineesArray = [];
+    if (typeof member.nominees === 'string') {
+        try {
+            nomineesArray = JSON.parse(member.nominees);
+        } catch (e) {
+            console.error("Failed to parse nominees JSON string", e);
+            nomineesArray = [];
+        }
+    } else if (Array.isArray(member.nominees)) {
+        nomineesArray = member.nominees;
     }
+    formValues.nominees = nomineesArray;
+
     return formValues;
 }
 
