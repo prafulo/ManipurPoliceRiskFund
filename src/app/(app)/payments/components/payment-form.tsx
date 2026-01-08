@@ -221,7 +221,7 @@ export function PaymentForm({}: PaymentFormProps) {
                     <h4 className="font-medium text-lg">Payment Summary</h4>
                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Monthly Rate:</span>
-                        <span className="font-semibold">${monthlySubscriptionAmount.toFixed(2)}</span>
+                        <span className="font-semibold">₹{monthlySubscriptionAmount.toFixed(2)}</span>
                     </div>
                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Months Selected:</span>
@@ -229,7 +229,7 @@ export function PaymentForm({}: PaymentFormProps) {
                     </div>
                     <div className="flex justify-between items-center text-xl pt-2 border-t mt-2">
                         <span className="font-bold">Total Amount:</span>
-                        <span className="font-bold text-primary">${totalAmount.toFixed(2)}</span>
+                        <span className="font-bold text-primary">₹{totalAmount.toFixed(2)}</span>
                     </div>
                  </div>
             </div>

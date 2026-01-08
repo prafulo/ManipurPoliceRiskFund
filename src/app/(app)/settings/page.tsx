@@ -65,7 +65,7 @@ export default function SettingsPage() {
           ): (
             <>
               <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="amount">Monthly Subscription Amount ($)</Label>
+                <Label htmlFor="amount">Monthly Subscription Amount (₹)</Label>
                 <Input 
                   type="number" 
                   id="amount" 
@@ -76,7 +76,7 @@ export default function SettingsPage() {
               </div>
 
                <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="expired-amount">Expired Member Release Amount ($)</Label>
+                <Label htmlFor="expired-amount">Expired Member Release Amount (₹)</Label>
                 <Input 
                   type="number" 
                   id="expired-amount" 
