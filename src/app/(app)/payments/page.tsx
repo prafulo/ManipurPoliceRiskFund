@@ -8,10 +8,14 @@ import type { Payment } from "@/lib/types";
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
 
-async function fetchData() {
+async function fetchData(): Promise<Payment[]> {
     const res = await fetch('/api/payments');
     const data = await res.json();
-    return data.payments;
+    // Prisma returns Decimal as a string in JSON, so we convert it to a number.
+    return data.payments.map((p: any) => ({
+      ...p,
+      amount: Number(p.amount)
+    }));
 }
 
 export default function PaymentsPage() {
