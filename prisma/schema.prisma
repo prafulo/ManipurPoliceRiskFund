@@ -1,6 +1,8 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
-  provider        = "prisma-client-js"
-  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -46,44 +48,44 @@ model Unit {
 }
 
 model Member {
-  id                     String          @id @db.VarChar(255)
-  membershipCode          String          @unique @db.VarChar(255)
-  name                   String          @db.VarChar(255)
-  fatherName             String          @db.VarChar(255)
-  rank                   String          @db.VarChar(255)
-  trade                  String          @db.VarChar(255)
-  serviceNumber           String          @db.VarChar(255)
-  badgeNumber             String          @db.VarChar(255)
-  bloodGroup              String          @db.VarChar(50)
-  memberPostType          MemberPostType
-  joiningRank             String          @db.VarChar(255)
-  dateOfBirth             DateTime        @db.Date
-  dateOfEnrollment        DateTime        @db.Date
-  superannuationDate      DateTime        @db.Date
-  dateOfDischarge         DateTime?       @db.Date
+  id                      String          @id @db.VarChar(255)
+  membershipCode          String          @unique @map("membership_code") @db.VarChar(255)
+  name                    String          @db.VarChar(255)
+  fatherName              String          @map("father_name") @db.VarChar(255)
+  rank                    String          @db.VarChar(255)
+  trade                   String          @db.VarChar(255)
+  serviceNumber           String          @map("service_number") @db.VarChar(255)
+  badgeNumber             String          @map("badge_number") @db.VarChar(255)
+  bloodGroup              String          @map("blood_group") @db.VarChar(50)
+  memberPostType          MemberPostType  @map("member_post_type")
+  joiningRank             String          @map("joining_rank") @db.VarChar(255)
+  dateOfBirth             DateTime        @map("date_of_birth") @db.Date
+  dateOfEnrollment        DateTime        @map("date_of_enrollment") @db.Date
+  superannuationDate      DateTime        @map("superannuation_date") @db.Date
+  dateOfDischarge         DateTime?       @map("date_of_discharge") @db.Date
   address                 String          @db.Text
   phone                   String          @db.VarChar(50)
 
-  unitId                  String          @db.VarChar(255)
+  unitId                  String          @map("unit_id") @db.VarChar(255)
   unit                    Unit            @relation("UnitMembers", fields: [unitId], references: [id], onDelete: Restrict)
 
   status                  MemberStatus
-  closureReason           ClosureReason?
-  closureNotes            String?         @db.Text
+  closureReason           ClosureReason?  @map("closure_reason")
+  closureNotes            String?         @map("closure_notes") @db.Text
 
-  subscriptionStartDate   DateTime        @db.Date
+  subscriptionStartDate   DateTime        @map("subscription_start_date") @db.Date
   nominees                Json
-  firstWitness            Json
-  secondWitness           Json
+  firstWitness            Json            @map("first_witness")
+  secondWitness           Json            @map("second_witness")
 
-  parentDepartment        String?         @db.VarChar(255)
+  parentDepartment        String?         @map("parent_department") @db.VarChar(255)
 
-  dateApplied             DateTime        @db.Date
-  receiptDate             DateTime        @db.Date
-  allotmentDate           DateTime        @db.Date
+  dateApplied             DateTime        @map("date_applied") @db.Date
+  receiptDate             DateTime        @map("receipt_date") @db.Date
+  allotmentDate           DateTime        @map("allotment_date") @db.Date
 
-  createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
+  createdAt               DateTime        @default(now()) @map("created_at")
+  updatedAt               DateTime        @updatedAt @map("updated_at")
 
   payments                Payment[]
   transfers               Transfer[]
@@ -94,10 +96,10 @@ model Member {
 
 model Payment {
   id          String   @id @db.VarChar(255)
-  memberId    String   @db.VarChar(255)
+  memberId    String   @map("member_id") @db.VarChar(255)
   amount      Decimal  @db.Decimal(10, 2)
   months      Json
-  paymentDate DateTime
+  paymentDate DateTime @map("payment_date")
 
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
@@ -107,11 +109,11 @@ model Payment {
 
 model Transfer {
   id            String   @id @db.VarChar(255)
-  memberId      String   @db.VarChar(255)
-  fromUnitId    String   @db.VarChar(255)
-  toUnitId      String   @db.VarChar(255)
-  transferDate  DateTime
-  createdAt     DateTime @default(now())
+  memberId      String   @map("member_id") @db.VarChar(255)
+  fromUnitId    String   @map("from_unit_id") @db.VarChar(255)
+  toUnitId      String   @map("to_unit_id") @db.VarChar(255)
+  transferDate  DateTime @map("transfer_date")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   member        Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnit      Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
@@ -124,8 +126,9 @@ model Transfer {
 }
 
 model Setting {
-  key   String @id @db.VarChar(255)
-  value String @db.VarChar(255)
+  id    String @id @default(uuid())
+  key   String @unique
+  value String @db.Text
 
   @@map("settings")
 }
