@@ -24,13 +24,13 @@ const nextAuthOptions: NextAuthOptions = {
           });
 
           if (user && user.password && bcrypt.compareSync(credentials.password as string, user.password)) {
-            // Return the user object without the password
+            // Return the user object with all necessary properties for the session
             return {
               id: user.id,
               email: user.email,
               name: user.name,
               role: user.role,
-              unitId: user.unitId || undefined,
+              unitId: user.unitId,
             };
           }
         } catch (e) {
