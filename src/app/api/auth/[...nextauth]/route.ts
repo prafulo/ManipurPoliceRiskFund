@@ -18,10 +18,11 @@ const authOptions: NextAuthOptions = {
 
         try {
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email as string }
+            where: { email: credentials.email }
           });
 
-          if (user && user.password && bcrypt.compareSync(credentials.password as string, user.password)) {
+          if (user && user.password && bcrypt.compareSync(credentials.password, user.password)) {
+            // Return the user object in the shape NextAuth expects
             return {
               id: user.id,
               email: user.email,
@@ -35,12 +36,14 @@ const authOptions: NextAuthOptions = {
           return null;
         }
         
+        // Return null if user not found or password doesn't match
         return null;
       }
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // The user object is available on the first sign-in
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -49,6 +52,7 @@ const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      // The token object contains the data from the jwt callback
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
@@ -59,7 +63,7 @@ const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/login',
-    error: '/login', // Redirect to login on error
+    error: '/login', // Redirecting to login on error is a safe default
   },
   session: {
     strategy: 'jwt',
