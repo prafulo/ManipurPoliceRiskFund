@@ -1,8 +1,11 @@
 
-require('dotenv').config({ path: '.env.development.local' });
+require('dotenv').config({ path: '.env' });
 const { execa } = require('execa');
-const { PrismaClient, UserRole } = require('@prisma/client');
+const { PrismaClient } = require('@prisma/client');
+const { createPool } = require('mysql2');
 const bcrypt = require('bcryptjs');
+
+const pool = createPool({ uri: process.env.DATABASE_URL });
 
 const prisma = new PrismaClient();
 
@@ -14,11 +17,15 @@ async function setupDatabase() {
     console.log('\nStep 1: Resetting and syncing database schema with Prisma...');
     console.log('This will delete all existing data and apply the latest schema.');
     
+    // Use --force-reset to ensure the database is wiped and the new schema can be applied
     const { stdout: pushStdout, stderr: pushStderr } = await execa('npx', ['prisma', 'db', 'push', '--force-reset']);
     
     if (pushStderr && !pushStderr.includes("Your database is now in sync")) {
         console.error("Prisma DB Push Error:", pushStderr);
-        throw new Error(pushStderr);
+        // Sometimes stdout has the success message even if stderr has warnings
+        if (!pushStdout.includes("Your database is now in sync")) {
+            throw new Error(pushStderr);
+        }
     }
     console.log(pushStdout);
     console.log('Schema synchronization complete.');
@@ -63,6 +70,7 @@ async function setupDatabase() {
     process.exit(1);
   } finally {
     await prisma.$disconnect();
+    pool.end(); // Close the connection pool
     process.exit(0);
   }
 }
