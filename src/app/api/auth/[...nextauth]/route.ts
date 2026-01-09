@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-const nextAuthOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -22,7 +22,6 @@ const nextAuthOptions: NextAuthOptions = {
           });
 
           if (user && user.password && bcrypt.compareSync(credentials.password as string, user.password)) {
-            // Return the user object with all necessary properties for the session
             return {
               id: user.id,
               email: user.email,
@@ -42,8 +41,6 @@ const nextAuthOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // After a successful sign-in, the `user` object is available.
-      // We add the custom properties to the token.
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -52,8 +49,6 @@ const nextAuthOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // The session callback receives the token from the jwt callback.
-      // We add the custom properties from the token to the session's user object.
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
@@ -64,6 +59,7 @@ const nextAuthOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/login',
+    error: '/login', // Redirect to login on error
   },
   session: {
     strategy: 'jwt',
@@ -71,6 +67,6 @@ const nextAuthOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || 'super-secret-fallback-for-development',
 };
 
-const handler = NextAuth(nextAuthOptions);
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
