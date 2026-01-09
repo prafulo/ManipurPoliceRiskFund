@@ -22,8 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import type { Member } from '@/lib/types';
+import type { Member, UserRole } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -37,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { useSession } from 'next-auth/react';
 
 type EnrichedMember = Member & { unitName: string };
 type SortKey = keyof EnrichedMember | '';
@@ -48,7 +48,7 @@ interface MemberTableProps {
 }
 
 export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
-  const { role, unit } = useAuth();
+  const { data: session } = useSession();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -58,6 +58,9 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   const [currentPage, setCurrentPage] = React.useState(1);
   const rowsPerPage = 10;
   
+  const role = session?.user?.role as UserRole;
+  const unitId = session?.user?.unit; // This will be the unitId
+
   const handleDeleteMember = async (memberId: string) => {
     try {
         const res = await fetch(`/api/members/${memberId}`, { method: 'DELETE' });
@@ -80,11 +83,11 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
   };
 
   const roleFilteredData = React.useMemo(() => {
-    if (role === 'Unit Admin' && unit) {
-      return data.filter(member => member.unitName === unit);
+    if (role === 'UnitAdmin' && unitId) {
+      return data.filter(member => member.unitId === unitId);
     }
     return data;
-  }, [data, role, unit]);
+  }, [data, role, unitId]);
 
   const filteredAndSortedData = React.useMemo(() => {
     const lowercasedFilter = filter.toLowerCase();
