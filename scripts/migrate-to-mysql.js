@@ -54,7 +54,7 @@ async function setupDatabase() {
 
     console.log('\n\n--- Database Setup Complete! ---');
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('\n--- A critical error occurred during database setup: ---');
     console.error(error.message);
     if(error.stdout) console.error("STDOUT:", error.stdout);
