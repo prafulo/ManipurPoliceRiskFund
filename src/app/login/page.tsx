@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/logo';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -104,6 +106,12 @@ export default function LoginPage() {
             </div>
           </form>
         </CardContent>
+        <CardFooter className="text-center text-sm">
+          No account?&nbsp;
+          <Link href="/register" className="underline">
+            Create a Super Admin account
+          </Link>
+        </CardFooter>
       </Card>
     </div>
   );
