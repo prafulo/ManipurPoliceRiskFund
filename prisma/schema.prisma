@@ -3,8 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
-  binaryTargets = ["native", "wasm"]
+  binaryTargets   = ["native", "wasm"]
 }
 
 datasource db {
@@ -18,86 +17,92 @@ model User {
   name      String
   password  String
   role      UserRole
-  unit      Unit?    @relation(fields: [unitId], references: [id])
   unitId    String?
+  unit      Unit?    @relation(fields: [unitId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Unit {
-  id      String   @id @default(uuid())
-  name    String   @unique
-  members Member[]
-  users   User[]
-  TransferFrom Transfer[] @relation("TransferFrom")
-  TransferTo   Transfer[] @relation("TransferTo")
+  id       String    @id @default(uuid())
+  name     String    @unique
+  members  Member[]
+  users    User[]
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Member {
-  id                      String         @id @default(uuid())
-  membershipCode          String         @unique @map("membership_code")
-  name                    String
-  fatherName              String         @map("father_name")
-  rank                    String
-  trade                   String
-  serviceNumber           String         @map("service_number")
-  badgeNumber             String         @map("badge_number")
-  bloodGroup              String         @map("blood_group")
-  memberPostType          MemberPostType @map("member_post_type")
-  joiningRank             String         @map("joining_rank")
-  dateOfBirth             DateTime       @map("date_of_birth")
-  dateOfEnrollment        DateTime       @map("date_of_enrollment")
-  superannuationDate      DateTime       @map("superannuation_date")
-  dateOfDischarge         DateTime?      @map("date_of_discharge")
-  address                 String
-  phone                   String
-  unit                    Unit           @relation(fields: [unitId], references: [id])
-  unitId                  String
-  status                  MemberStatus
-  closureReason           ClosureReason? @map("closure_reason")
-  closureNotes            String?        @map("closure_notes")
-  subscriptionStartDate   DateTime       @map("subscription_start_date")
-  parentDepartment        String?        @map("parent_department")
-  dateApplied             DateTime       @map("date_applied")
-  receiptDate             DateTime       @map("receipt_date")
-  allotmentDate           DateTime       @map("allotment_date")
-  firstWitness            Json
-  secondWitness           Json
-  nominees                Json
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
-  payments                Payment[]
-  transfers               Transfer[]
+  id                    String          @id @default(uuid())
+  membershipCode        String          @unique @map("membership_code")
+  name                  String
+  fatherName            String          @map("father_name")
+  rank                  String
+  trade                 String
+  serviceNumber         String          @map("service_number")
+  badgeNumber           String          @map("badge_number")
+  bloodGroup            String          @map("blood_group")
+  memberPostType        MemberPostType  @map("member_post_type")
+  joiningRank           String          @map("joining_rank")
+  dateOfBirth           DateTime        @map("date_of_birth")
+  dateOfEnrollment      DateTime        @map("date_of_enrollment")
+  superannuationDate    DateTime        @map("superannuation_date")
+  dateOfDischarge       DateTime?       @map("date_of_discharge")
+  address               String
+  phone                 String
+  status                MemberStatus
+  closureReason         ClosureReason?  @map("closure_reason")
+  closureNotes          String?         @map("closure_notes")
+  subscriptionStartDate DateTime        @map("subscription_start_date")
+  parentDepartment      String?         @map("parent_department")
+  dateApplied           DateTime        @map("date_applied")
+  receiptDate           DateTime        @map("receipt_date")
+  allotmentDate         DateTime        @map("allotment_date")
+  
+  firstWitness          Json
+  secondWitness         Json
+  nominees              Json
 
-  @@map("members")
+  unitId    String
+  unit      Unit      @relation(fields: [unitId], references: [id])
+  
+  payments  Payment[]
+  transfers Transfer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId    String
   amount      Decimal  @db.Decimal(10, 2)
-  months      Json
   paymentDate DateTime @map("payment_date")
+  months      Json
+  
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  @@map("payments")
 }
 
 model Transfer {
   id           String   @id @default(uuid())
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId     String
-  fromUnit     Unit     @relation("TransferFrom", fields: [fromUnitId], references: [id])
-  fromUnitId   String
-  toUnit       Unit     @relation("TransferTo", fields: [toUnitId], references: [id])
-  toUnitId     String
   transferDate DateTime @map("transfer_date")
+
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  fromUnitId   String
+  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
+
+  toUnitId     String
+  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
+  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  @@map("transfers")
 }
 
 model Setting {
