@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['mysql2'],
+  serverExternalPackages: ['mysql2', '@prisma/client', '@prisma/client/runtime', 'prisma', '@prisma/debug', '@prisma/engines', '@prisma/generator-helper', '@prisma/internals', '@prisma/sdk'],
 };
 
 export default nextConfig;
