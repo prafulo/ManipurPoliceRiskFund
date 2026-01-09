@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 export const authConfig = {
+  trustHost: true,
   providers: [
     Credentials({
       async authorize(credentials) {
@@ -31,6 +32,7 @@ export const authConfig = {
           const passwordMatch = await bcrypt.compare(credentials.password as string, user.password);
 
           if (passwordMatch) {
+            console.log(`Password match for user: ${credentials.email}`);
             return {
               id: user.id,
               email: user.email,
@@ -75,5 +77,6 @@ export const authConfig = {
 } satisfies NextAuthConfig;
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+
 
 
