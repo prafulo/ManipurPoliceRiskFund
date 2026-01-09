@@ -10,15 +10,15 @@ async function setupDatabase() {
   console.log('--- Database Setup Script ---');
 
   try {
-    // --- 1. Sync Prisma Schema with the Database ---
-    console.log('\nStep 1: Syncing database schema with Prisma...');
-    const { stdout: pushStdout, stderr: pushStderr } = await execa('npx', ['prisma', 'db', 'push', '--accept-data-loss']);
+    // --- 1. Reset and Sync Prisma Schema with the Database ---
+    console.log('\nStep 1: Resetting and syncing database schema with Prisma...');
+    console.log('This will delete all existing data and apply the latest schema.');
     
-    if (pushStderr && !pushStderr.includes("Your database is already in sync")) {
+    const { stdout: pushStdout, stderr: pushStderr } = await execa('npx', ['prisma', 'db', 'push', '--force-reset']);
+    
+    if (pushStderr && !pushStderr.includes("Your database is now in sync")) {
         console.error("Prisma DB Push Error:", pushStderr);
-        if (!pushStdout.includes("Your database is now in sync")) {
-             throw new Error(pushStderr);
-        }
+        throw new Error(pushStderr);
     }
     console.log(pushStdout);
     console.log('Schema synchronization complete.');
