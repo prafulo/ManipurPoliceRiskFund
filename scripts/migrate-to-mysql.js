@@ -2,10 +2,7 @@
 require('dotenv').config({ path: '.env' });
 const { execa } = require('execa');
 const { PrismaClient } = require('@prisma/client');
-const { createPool } = require('mysql2');
 const bcrypt = require('bcryptjs');
-
-const pool = createPool({ uri: process.env.DATABASE_URL });
 
 const prisma = new PrismaClient();
 
@@ -62,7 +59,6 @@ async function setupDatabase() {
     process.exit(1);
   } finally {
     await prisma.$disconnect();
-    pool.end(); // Close the connection pool
     process.exit(0);
   }
 }
