@@ -6,42 +6,55 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding...');
 
-  const email = process.env.ADMIN_EMAIL || 'admin@example.com';
-  const name = process.env.ADMIN_NAME || 'Super Admin';
-  const password = process.env.ADMIN_PASSWORD || 'password123';
+  // Default Admin
+  const defaultEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+  const defaultName = process.env.ADMIN_NAME || 'Super Admin';
+  const defaultPassword = process.env.ADMIN_PASSWORD || 'password123';
+  await upsertUser(defaultEmail, defaultName, defaultPassword, UserRole.SuperAdmin);
 
-  const existingAdmin = await prisma.user.findUnique({
+  // New Test Admin requested by user
+  const testEmail = 'test@gmail.com';
+  const testName = 'Test Admin';
+  const testPassword = 'test123';
+  await upsertUser(testEmail, testName, testPassword, UserRole.SuperAdmin);
+
+
+  console.log('Seeding finished.');
+  console.log('You can log in with the following credentials:');
+  console.log(`1. Email: ${defaultEmail}, Password: ${defaultPassword}`);
+  console.log(`2. Email: ${testEmail}, Password: ${testPassword}`);
+  console.log('IMPORTANT: Please change these default passwords in a production environment.');
+}
+
+async function upsertUser(email: string, name: string, password: string, role: UserRole) {
+    const existingUser = await prisma.user.findUnique({
     where: { email },
   });
 
-  if (existingAdmin) {
-    console.log(`Admin user with email ${email} already exists. Updating password to default.`);
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  if (existingUser) {
+    console.log(`User with email ${email} already exists. Updating password.`);
     await prisma.user.update({
         where: { email },
         data: {
             password: hashedPassword,
+            name: name,
+            role: role
         }
     });
-    console.log(`Updated password for ${email} to the default password.`);
+    console.log(`Updated user ${email}.`);
   } else {
-    const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
       data: {
         email,
         name,
         password: hashedPassword,
-        role: UserRole.SuperAdmin,
+        role: role,
       },
     });
-    console.log(`Created Super Admin user with email: ${email} and password: ${password}`);
+    console.log(`Created user with email: ${email}`);
   }
-
-  console.log('Seeding finished.');
-  console.log('You can log in with the default credentials:');
-  console.log(`Email: ${email}`);
-  console.log(`Password: ${password}`);
-  console.log('IMPORTANT: Please change this default password in a production environment.');
 }
 
 main()
