@@ -44,7 +44,7 @@ async function setupDatabase() {
           email,
           name,
           password: hashedPassword,
-          role: UserRole.SuperAdmin,
+          role: 'SuperAdmin',
         },
       });
       console.log(`Created Super Admin user with email: ${email}`);
