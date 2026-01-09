@@ -19,21 +19,28 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email as string }
+          });
 
-        if (user && user.password && bcrypt.compareSync(credentials.password as string, user.password)) {
-          // Return the user object without the password
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            unitId: user.unitId || null,
-          };
+          if (user && user.password && bcrypt.compareSync(credentials.password as string, user.password)) {
+            // Return the user object without the password
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              unitId: user.unitId || undefined,
+            };
+          }
+        } catch (e) {
+          console.error('Authorize error:', e);
+          // Return null to indicate failure, which Auth.js will handle.
+          return null;
         }
         
+        // If we get here, either the user was not found or the password did not match.
         return null;
       }
     }),
