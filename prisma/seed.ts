@@ -7,13 +7,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding...');
 
-  // Default Admin
+  // Default Admin from .env
   const defaultEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
   const defaultName = process.env.ADMIN_NAME || 'Super Admin';
   const defaultPassword = process.env.ADMIN_PASSWORD || 'password123';
   await upsertUser(defaultEmail, defaultName, defaultPassword, UserRole.SuperAdmin);
 
-  // New Test Admin requested by user
+  // Hardcoded test admin for debugging
   const testEmail = 'test@gmail.com';
   const testName = 'Test Admin';
   const testPassword = 'test123';
@@ -47,7 +47,7 @@ async function upsertUser(email: string, name: string, password: string, role: U
         where: { email },
         data: {
             password: hashedPassword,
-            name: name,
+            name: name, // Also update name and role on existing user
             role: role
         }
     });
