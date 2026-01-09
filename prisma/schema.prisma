@@ -16,93 +16,91 @@ model User {
   name      String
   password  String
   role      UserRole @default(UnitAdmin)
-  unitId    String?  @map("unit_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  unit Unit? @relation(fields: [unitId], references: [id])
+  unitId    String?
+  unit      Unit?    @relation(fields: [unitId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
 model Unit {
-  id       String    @id @default(uuid())
-  name     String    @unique
-  members  Member[]
-  users    User[]
-  fromTransfers Transfer[] @relation("FromUnit")
-  toTransfers   Transfer[] @relation("ToUnit")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        String    @id @default(uuid())
+  name      String    @unique
+  members   Member[]
+  transfers Transfer[]
+  users     User[]
 }
 
 model Member {
-  id                  String         @id @default(uuid())
-  membershipCode      String         @unique
-  name                String
-  fatherName          String
-  rank                String
-  trade               String
-  serviceNumber       String
-  badgeNumber         String
-  bloodGroup          String
-  memberPostType      MemberPostType
-  joiningRank         String
-  dateOfBirth         DateTime
-  dateOfEnrollment    DateTime
-  superannuationDate  DateTime
-  dateOfDischarge     DateTime?
-  address             String         @db.Text
-  phone               String
-  status              MemberStatus   @default(Opened)
-  closureReason       ClosureReason?
-  closureNotes        String?        @db.Text
+  id                   String          @id @default(uuid())
+  membershipCode       String          @unique
+  name                 String
+  fatherName           String
+  rank                 String
+  trade                String
+  serviceNumber        String
+  badgeNumber          String
+  bloodGroup           String
+  memberPostType       MemberPostType
+  joiningRank          String
+  dateOfBirth          DateTime
+  dateOfEnrollment     DateTime
+  superannuationDate   DateTime
+  dateOfDischarge      DateTime?
+  address              String
+  phone                String
+  status               MemberStatus
+  closureReason        ClosureReason?
+  closureNotes         String?         @db.Text
   subscriptionStartDate DateTime
-  nominees            String         @db.Json
-  firstWitness        String         @db.Json
-  secondWitness       String         @db.Json
-  parentDepartment    String?
-  dateApplied         DateTime
-  receiptDate         DateTime
-  allotmentDate       DateTime
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  parentDepartment     String?
+  dateApplied          DateTime
+  receiptDate          DateTime
+  allotmentDate        DateTime
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
-  unitId   String
-  unit     Unit     @relation(fields: [unitId], references: [id])
-  payments Payment[]
-  transfers Transfer[]
+  unitId               String
+  unit                 Unit            @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  
+  nominees             Json
+  firstWitness         Json
+  secondWitness        Json
+  
+  payments             Payment[]
+  transfers            Transfer[]
 
   @@index([unitId])
 }
 
 model Payment {
-  id          String   @id @default(uuid())
-  amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime
-  months      String   @db.Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  memberId String
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
+  id           String   @id @default(uuid())
+  amount       Decimal  @db.Decimal(10, 2)
+  paymentDate  DateTime
+  months       Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
   @@index([memberId])
 }
+
 
 model Transfer {
   id           String   @id @default(uuid())
   transferDate DateTime
   createdAt    DateTime @default(now())
-
-  memberId String
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  fromUnitId String
-  fromUnit   Unit   @relation("FromUnit", fields: [fromUnitId], references: [id])
-
-  toUnitId String
-  toUnit   Unit   @relation("ToUnit", fields: [toUnitId], references: [id])
+  
+  memberId     String
+  fromUnitId   String
+  toUnitId     String
+  
+  member       Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnit     Unit   @relation(fields: [fromUnitId], references: [id], onDelete: NoAction)
+  toUnit       Unit   @relation(fields: [toUnitId], references: [id], onDelete: NoAction)
 
   @@index([memberId])
   @@index([fromUnitId])
@@ -110,11 +108,9 @@ model Transfer {
 }
 
 model Setting {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  value     String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
 }
 
 
@@ -130,13 +126,13 @@ enum ClosureReason {
   Expelled
 }
 
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
-}
-
 enum MemberPostType {
   Officiating
   Temporary
   Substantive
+}
+
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
 }
