@@ -4,6 +4,9 @@ import { execa } from 'execa';
 export async function POST() {
     try {
         // Using `prisma db push` syncs the schema without creating migration files.
+        // It's suitable for prototyping and development.
+        // The --accept-data-loss flag is used here to simplify development;
+        // in a production scenario, a more robust migration strategy would be needed.
         const { stdout, stderr } = await execa('npx', ['prisma', 'db', 'push', '--accept-data-loss']);
 
         if (stderr && !stderr.includes("Your database is already in sync")) {
