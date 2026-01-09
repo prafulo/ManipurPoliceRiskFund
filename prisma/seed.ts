@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
@@ -47,6 +48,7 @@ async function upsertUser(email: string, name: string, password: string, role: U
   } else {
     await prisma.user.create({
       data: {
+        id: uuidv4(),
         email,
         name,
         password: hashedPassword,
