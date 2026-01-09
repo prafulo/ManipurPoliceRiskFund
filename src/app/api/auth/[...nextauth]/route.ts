@@ -43,7 +43,6 @@ const nextAuthOptions: NextAuthOptions = {
         return null;
       }
     }),
-    ...authConfig.providers,
   ]
 };
 
