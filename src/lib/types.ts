@@ -1,7 +1,7 @@
 
 export type MembershipStatus = "Opened" | "Closed";
 export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "";
-export type UserRole = "Super Admin" | "Unit Admin";
+export type UserRole = "SuperAdmin" | "UnitAdmin";
 export type MemberPostType = "Officiating" | "Temporary" | "Substantive";
 
 export type Unit = {
@@ -22,7 +22,6 @@ export type User = {
     name: string;
     role: UserRole;
     unitId?: string | null;
-    unit?: string | null;
 };
 
 // This type represents the data structure as used in the components.

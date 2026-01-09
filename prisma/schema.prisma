@@ -2,8 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  binaryTargets   = ["native"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -16,82 +15,95 @@ model User {
   email     String   @unique
   name      String
   password  String
-  role      UserRole
-  unitId    String?
-  unit      Unit?    @relation(fields: [unitId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      UserRole @default(UnitAdmin)
+  unitId    String?  @map("unit_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  unit Unit? @relation(fields: [unitId], references: [id])
+
+  @@map("users")
 }
 
 model Unit {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  members   Member[]
-  users     User[]
+  id      String   @id @default(uuid())
+  name    String   @unique
+  members Member[]
+  users   User[]
   transfersFrom Transfer[] @relation("FromUnit")
   transfersTo   Transfer[] @relation("ToUnit")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+
+  @@map("units")
 }
 
 model Member {
-  id                    String         @id @default(uuid())
-  membershipCode        String         @unique @map("membership_code")
-  name                  String
-  fatherName            String         @map("father_name")
-  rank                  String
-  trade                 String
-  serviceNumber         String         @map("service_number")
-  badgeNumber           String         @map("badge_number")
-  bloodGroup            String         @map("blood_group")
-  memberPostType        MemberPostType @map("member_post_type")
-  joiningRank           String         @map("joining_rank")
-  dateOfBirth           DateTime       @map("date_of_birth")
-  dateOfEnrollment      DateTime       @map("date_of_enrollment")
-  superannuationDate    DateTime       @map("superannuation_date")
-  dateOfDischarge       DateTime?      @map("date_of_discharge")
-  address               String
-  phone                 String
-  unitId                String
-  unit                  Unit           @relation(fields: [unitId], references: [id])
-  status                MemberStatus
-  closureReason         ClosureReason? @map("closure_reason")
-  closureNotes          String?        @map("closure_notes")
-  subscriptionStartDate DateTime       @map("subscription_start_date")
-  nominees              Json
-  firstWitness          Json           @map("first_witness")
-  secondWitness         Json           @map("second_witness")
-  parentDepartment      String?        @map("parent_department")
-  dateApplied           DateTime       @map("date_applied")
-  receiptDate           DateTime       @map("receipt_date")
-  allotmentDate         DateTime       @map("allotment_date")
-  payments              Payment[]
-  transfers             Transfer[]
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  id                  String       @id @default(uuid())
+  membershipCode      String       @unique
+  name                String
+  fatherName          String
+  rank                String
+  trade               String
+  serviceNumber       String
+  dateOfBirth         DateTime
+  dateOfEnrollment    DateTime
+  address             String
+  phone               String
+  unitId              String
+  status              MemberStatus @default(Opened)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  nominees            Json
+  firstWitness        Json
+  secondWitness       Json
+  closureReason       ClosureReason?
+  dateOfDischarge     DateTime?
+  badgeNumber         String
+  bloodGroup          String
+  memberPostType      MemberPostType
+  joiningRank         String
+  superannuationDate  DateTime
+  parentDepartment    String?
+  subscriptionStartDate DateTime
+  dateApplied         DateTime
+  receiptDate         DateTime
+  allotmentDate       DateTime
+  closureNotes        String?
+
+  unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  payments Payment[]
+  transfers Transfer[] @relation("MemberTransfers")
+
+  @@map("members")
 }
 
 model Payment {
   id          String   @id @default(uuid())
   memberId    String
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime @map("payment_date")
+  paymentDate DateTime
   months      Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }
+
 
 model Transfer {
   id           String   @id @default(uuid())
   memberId     String
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnitId   String
-  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
   toUnitId     String
-  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
-  transferDate DateTime @map("transfer_date")
+  transferDate DateTime
   createdAt    DateTime @default(now())
+
+  member   Member @relation("MemberTransfers", fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnit Unit   @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Restrict)
+  toUnit   Unit   @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Restrict)
+
+  @@map("transfers")
 }
 
 model Setting {
@@ -100,17 +112,14 @@ model Setting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@map("settings")
 }
+
 
 enum MemberStatus {
   Opened
   Closed
-}
-
-enum MemberPostType {
-  Officiating
-  Temporary
-  Substantive
 }
 
 enum ClosureReason {
@@ -118,6 +127,12 @@ enum ClosureReason {
   Death
   Doubling
   Expelled
+}
+
+enum MemberPostType {
+  Officiating
+  Temporary
+  Substantive
 }
 
 enum UserRole {
