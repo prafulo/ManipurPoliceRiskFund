@@ -42,7 +42,8 @@ const nextAuthOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // On sign in, `user` object is available
+      // After a successful sign-in, the `user` object is available.
+      // We add the custom properties to the token.
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -51,7 +52,8 @@ const nextAuthOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // Add role and unit to the session object
+      // The session callback receives the token from the jwt callback.
+      // We add the custom properties from the token to the session's user object.
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
