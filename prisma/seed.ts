@@ -19,11 +19,18 @@ async function main() {
   const testPassword = 'test123';
   await upsertUser(testEmail, testName, testPassword, UserRole.SuperAdmin);
 
+  // Password reset for top@gmail.com
+  const resetEmail = 'top@gmail.com';
+  const resetName = 'Top User'; // Name will be updated if user exists, or used for new user
+  const resetPassword = '12345678';
+  await upsertUser(resetEmail, resetName, resetPassword, UserRole.SuperAdmin);
+
 
   console.log('Seeding finished.');
   console.log('You can log in with the following credentials:');
   console.log(`1. Email: ${defaultEmail}, Password: ${defaultPassword}`);
   console.log(`2. Email: ${testEmail}, Password: ${testPassword}`);
+  console.log(`3. Email: ${resetEmail}, Password: ${resetPassword}`);
   console.log('IMPORTANT: Please change these default passwords in a production environment.');
 }
 
