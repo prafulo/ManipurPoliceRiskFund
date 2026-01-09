@@ -1,11 +1,10 @@
-import NextAuth from 'next-auth';
+import NextAuth, { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { authConfig } from '@/auth.config';
 
-// We spread the base authConfig and add the providers that require Node.js APIs
-export const { handlers: { GET, POST }, auth } = NextAuth({
+const nextAuthOptions: NextAuthOptions = {
   ...authConfig,
   providers: [
     CredentialsProvider({
@@ -46,4 +45,8 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
     }),
     ...authConfig.providers,
   ]
-});
+};
+
+const handler = NextAuth(nextAuthOptions);
+
+export { handler as GET, handler as POST };
