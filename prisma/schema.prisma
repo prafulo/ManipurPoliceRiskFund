@@ -7,20 +7,33 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole
+  unitId    String?
+  unit      Unit?    @relation(fields: [unitId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Unit {
-  id      String    @id @default(uuid())
-  name    String    @unique
-  members Member[]
-  users   User[]
-  TransferFrom Transfer[] @relation("TransferFrom")
-  TransferTo   Transfer[] @relation("TransferTo")
+  id        String    @id @default(cuid())
+  name      String    @unique
+  members   Member[]
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
+  users     User[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Member {
-  id                    String          @id @default(uuid())
+  id                    String          @id @default(cuid())
   membershipCode        String          @unique @map("membership_code")
   name                  String
   fatherName            String          @map("father_name")
@@ -35,48 +48,53 @@ model Member {
   dateOfEnrollment      DateTime        @map("date_of_enrollment")
   superannuationDate    DateTime        @map("superannuation_date")
   dateOfDischarge       DateTime?       @map("date_of_discharge")
-  address               String
+  address               String          @db.Text
   phone                 String
   unitId                String          @map("unit_id")
-  unit                  Unit            @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  unit                  Unit            @relation(fields: [unitId], references: [id])
   status                MemberStatus    @default(Opened)
   closureReason         ClosureReason?  @map("closure_reason")
-  closureNotes          String?         @map("closure_notes") @db.Text
+  closureNotes          String?         @db.Text @map("closure_notes")
   subscriptionStartDate DateTime        @map("subscription_start_date")
-  nominees              Json
-  firstWitness          Json            @map("first_witness")
-  secondWitness         Json            @map("second_witness")
   parentDepartment      String?         @map("parent_department")
   dateApplied           DateTime        @map("date_applied")
   receiptDate           DateTime        @map("receipt_date")
   allotmentDate         DateTime        @map("allotment_date")
-  createdAt             DateTime        @default(now()) @map("created_at")
-  updatedAt             DateTime        @updatedAt @map("updated_at")
+  firstWitness          String          @db.Json
+  secondWitness         String          @db.Json
+  nominees              String          @db.Json
   payments              Payment[]
   transfers             Transfer[]
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  @@index([unitId])
 }
 
 model Payment {
-  id          String   @id @default(uuid())
+  id          String   @id @default(cuid())
   memberId    String   @map("member_id")
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(10, 2)
+  months      String   @db.Json
   paymentDate DateTime @map("payment_date")
-  months      Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([memberId])
 }
 
 model Transfer {
-  id           String   @id @default(uuid())
+  id           String   @id @default(cuid())
   memberId     String   @map("member_id")
   member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnitId   String   @map("from_unit_id")
-  fromUnit     Unit     @relation("TransferFrom", fields: [fromUnitId], references: [id], onDelete: Restrict)
+  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
   toUnitId     String   @map("to_unit_id")
-  toUnit       Unit     @relation("TransferTo", fields: [toUnitId], references: [id], onDelete: Restrict)
+  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
   transferDate DateTime @map("transfer_date")
-  createdAt    DateTime @default(now())
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@index([memberId])
   @@index([fromUnitId])
@@ -84,25 +102,12 @@ model Transfer {
 }
 
 model Setting {
-  id    String @id @default(uuid())
-  key   String @unique
-  value String
-}
-
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      UserRole @default(UnitAdmin)
-  unitId    String?  @map("unit_id")
-  unit      Unit?    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([unitId])
 }
-
 
 enum MemberStatus {
   Opened
