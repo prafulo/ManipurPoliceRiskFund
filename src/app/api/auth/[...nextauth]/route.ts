@@ -2,9 +2,11 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import type { NextAuthConfig } from 'next-auth';
+import { authConfig } from '@/auth.config';
 
-export const authConfig: NextAuthConfig = {
+// We spread the base authConfig and add the providers that require Node.js APIs
+export const { handlers: { GET, POST }, auth } = NextAuth({
+  ...authConfig,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -21,48 +23,20 @@ export const authConfig: NextAuthConfig = {
           where: { email: credentials.email as string }
         });
 
-        if (user && bcrypt.compareSync(credentials.password as string, user.password)) {
+        if (user && user.password && bcrypt.compareSync(credentials.password as string, user.password)) {
           // Return the user object without the password
           return {
             id: user.id,
             email: user.email,
             name: user.name,
             role: user.role,
-            unit: user.unitId || null,
+            unitId: user.unitId || null,
           };
         }
         
         return null;
       }
-    })
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      // On sign in, `user` object is available
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.unit = user.unit;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      // Add role and unit to the session object
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.unit = token.unit;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: '/login',
-  },
-  session: {
-    strategy: 'jwt',
-  },
-  secret: process.env.NEXTAUTH_SECRET || 'super-secret-fallback-for-development',
-};
-
-export const { handlers: { GET, POST }, auth } = NextAuth(authConfig);
+    }),
+    ...authConfig.providers,
+  ]
+});
