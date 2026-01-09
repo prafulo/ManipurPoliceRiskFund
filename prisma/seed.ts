@@ -15,7 +15,15 @@ async function main() {
   });
 
   if (existingAdmin) {
-    console.log(`Admin user with email ${email} already exists. Skipping.`);
+    console.log(`Admin user with email ${email} already exists. Updating password to default.`);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.user.update({
+        where: { email },
+        data: {
+            password: hashedPassword,
+        }
+    });
+    console.log(`Updated password for ${email} to the default password.`);
   } else {
     const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
@@ -27,10 +35,13 @@ async function main() {
       },
     });
     console.log(`Created Super Admin user with email: ${email} and password: ${password}`);
-    console.log('IMPORTANT: Please change this default password in a production environment.');
   }
 
   console.log('Seeding finished.');
+  console.log('You can log in with the default credentials:');
+  console.log(`Email: ${email}`);
+  console.log(`Password: ${password}`);
+  console.log('IMPORTANT: Please change this default password in a production environment.');
 }
 
 main()

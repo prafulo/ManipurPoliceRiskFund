@@ -15,14 +15,12 @@ async function setupDatabase() {
   try {
     // --- 1. Reset and Sync Prisma Schema with the Database ---
     console.log('\nStep 1: Resetting and syncing database schema with Prisma...');
-    console.log('This will delete all existing data and apply the latest schema.');
+    console.log('This will apply the latest schema. It may delete data on schema changes.');
     
-    // Use --force-reset to ensure the database is wiped and the new schema can be applied
-    const { stdout: pushStdout, stderr: pushStderr } = await execa('npx', ['prisma', 'db', 'push', '--force-reset']);
+    const { stdout: pushStdout, stderr: pushStderr } = await execa('npx', ['prisma', 'db', 'push', '--accept-data-loss']);
     
     if (pushStderr && !pushStderr.includes("Your database is now in sync")) {
         console.error("Prisma DB Push Error:", pushStderr);
-        // Sometimes stdout has the success message even if stderr has warnings
         if (!pushStdout.includes("Your database is now in sync")) {
             throw new Error(pushStderr);
         }
@@ -42,10 +40,16 @@ async function setupDatabase() {
       where: { email },
     });
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     if (existingAdmin) {
-      console.log(`Admin user with email ${email} already exists. Skipping.`);
+      console.log(`Admin user with email ${email} already exists. Updating password.`);
+      await prisma.user.update({
+          where: { email },
+          data: { password: hashedPassword }
+      });
+      console.log(`Updated password for Super Admin user with email: ${email}`);
     } else {
-      const hashedPassword = await bcrypt.hash(password, 10);
       await prisma.user.create({
         data: {
           email,
@@ -55,18 +59,22 @@ async function setupDatabase() {
         },
       });
       console.log(`Created Super Admin user with email: ${email}`);
-      console.log(`Default password: ${password}`);
-      console.log('IMPORTANT: Please change this default password in a production environment.');
     }
-    console.log('Seeding finished.');
+    
+    console.log('\n--- Seeding finished. ---');
+    console.log('You can now log in with the Super Admin credentials:');
+    console.log(`  Email: ${email}`);
+    console.log(`  Password: ${password}`);
+    console.log('IMPORTANT: Please change this default password in a production environment.');
 
 
     console.log('\n\n--- Database Setup Complete! ---');
-    console.log('You can now log in with the Super Admin credentials.');
 
   } catch (error) {
     console.error('\n--- A critical error occurred during database setup: ---');
-    console.error(error);
+    console.error(error.message);
+    if(error.stdout) console.error("STDOUT:", error.stdout);
+    if(error.stderr) console.error("STDERR:", error.stderr);
     process.exit(1);
   } finally {
     await prisma.$disconnect();
