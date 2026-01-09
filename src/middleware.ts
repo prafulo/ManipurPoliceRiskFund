@@ -1,10 +1,4 @@
-import NextAuth from 'next-auth';
-import { authConfig } from '@/auth.config';
-
-// The `auth` middleware from NextAuth.js handles session validation.
-// It doesn't need to access the database directly, thus avoiding
-// the Prisma-related build errors in the Edge runtime.
-export default NextAuth(authConfig).auth;
+export { auth as middleware } from '@/app/api/auth/[...nextauth]/route';
 
 export const config = {
   /*
