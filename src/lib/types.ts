@@ -1,5 +1,6 @@
 
 
+
 export type MembershipStatus = "Opened" | "Closed";
 export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "";
 export type UserRole = "SuperAdmin" | "UnitAdmin";

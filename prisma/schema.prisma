@@ -1,11 +1,3 @@
-// datasource db {
-//   provider = "mysql"
-//   url      = env("DATABASE_URL")
-// }
-
-// generator client {
-//   provider = "prisma-client-js"
-// }
 
 datasource db {
   provider = "mysql"
@@ -50,51 +42,54 @@ model Member {
   unitId                String
   unit                  units         @relation(fields: [unitId], references: [id])
   payments              Payment[]
-  transfersFrom         Transfer[]    @relation("TransferFrom")
-  transfersTo           Transfer[]    @relation("TransferTo")
+  transfers             Transfer[]
 }
 
 model units {
-  id            String     @id @default(uuid())
-  name          String     @unique
-  members       Member[]
-  transfersFrom Transfer[] @relation("UnitTransfersFrom")
-  transfersTo   Transfer[] @relation("UnitTransfersTo")
-  users         users[]
+  id        String     @id @default(uuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  members   Member[]
+  users     users[]
+  transfersFrom Transfer[] @relation("TransferFrom")
+  transfersTo   Transfer[] @relation("TransferTo")
 }
 
 model users {
-  id       String   @id @default(uuid())
-  email    String   @unique
-  name     String
-  password String
-  role     UserRole
-  unitId   String?
-  unit     units?   @relation(fields: [unitId], references: [id])
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole
+  unitId    String?
+  unit      units?   @relation(fields: [unitId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  amount      Float
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(10, 2)
   paymentDate DateTime
   months      Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 }
 
 model Transfer {
   id           String   @id @default(uuid())
-  transferDate DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
   memberId     String
   member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnitId   String
-  fromUnit     units    @relation("UnitTransfersFrom", fields: [fromUnitId], references: [id])
+  fromUnit     units    @relation("TransferFrom", fields: [fromUnitId], references: [id])
   toUnitId     String
-  toUnit       units    @relation("UnitTransfersTo", fields: [toUnitId], references: [id])
+  toUnit       units    @relation("TransferTo", fields: [toUnitId], references: [id])
+  transferDate DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Setting {
@@ -117,13 +112,13 @@ enum ClosureReason {
   Expelled
 }
 
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
-}
-
 enum MemberPostType {
   Officiating
   Temporary
   Substantive
+}
+
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
 }
