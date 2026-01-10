@@ -1,12 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 model Member {
@@ -44,65 +43,7 @@ model Member {
   unit                  units         @relation(fields: [unitId], references: [id])
   payments              Payment[]
   transfers             Transfer[]
-
-  @@index([unitId])
 }
-
-model units {
-  id            String     @id @default(uuid())
-  name          String     @unique
-  members       Member[]
-  transfersFrom Transfer[] @relation("TransferFrom")
-  transfersTo   Transfer[] @relation("TransferTo")
-  users         users[]
-}
-
-model Payment {
-  id          String   @id @default(uuid())
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  amount      Decimal  @db.Decimal(10, 2)
-  months      Json
-  paymentDate DateTime
-
-  @@index([memberId])
-}
-
-model Transfer {
-  id           String   @id @default(uuid())
-  memberId     String
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnitId   String
-  fromUnit     units    @relation("TransferFrom", fields: [fromUnitId], references: [id])
-  toUnitId     String
-  toUnit       units    @relation("TransferTo", fields: [toUnitId], references: [id])
-  transferDate DateTime
-  createdAt    DateTime @default(now())
-
-  @@index([memberId])
-  @@index([fromUnitId])
-  @@index([toUnitId])
-}
-
-model users {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  name      String
-  password  String
-  role      UserRole
-  unitId    String?
-  unit      units?    @relation(fields: [unitId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@index([unitId])
-}
-
-model Setting {
-  key   String @id
-  value String @db.Text
-}
-
 
 enum MemberStatus {
   Opened
@@ -120,6 +61,57 @@ enum MemberPostType {
   Officiating
   Temporary
   Substantive
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  months      Json
+  paymentDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model Transfer {
+  id           String   @id @default(uuid())
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnitId   String
+  fromUnit     units    @relation("TransferFrom", fields: [fromUnitId], references: [id])
+  toUnitId     String
+  toUnit       units    @relation("TransferTo", fields: [toUnitId], references: [id])
+  transferDate DateTime
+  createdAt    DateTime @default(now())
+}
+
+model users {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  password  String
+  role      UserRole
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  unitId    String?
+  unit      units?    @relation(fields: [unitId], references: [id])
+}
+
+model units {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  members   Member[]
+  users     users[]
+  transfersFrom Transfer[] @relation("TransferFrom")
+  transfersTo   Transfer[] @relation("TransferTo")
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum UserRole {
