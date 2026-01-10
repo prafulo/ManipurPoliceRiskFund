@@ -1,3 +1,5 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
   provider = "mysql"
@@ -45,32 +47,35 @@ model Member {
   transfers             Transfer[]
 }
 
-enum MemberStatus {
-  Opened
-  Closed
+model units {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  members   Member[]
+  users     users[]
+  transfersFrom Transfer[] @relation("TransferFrom")
+  transfersTo   Transfer[] @relation("TransferTo")
 }
 
-enum ClosureReason {
-  Retirement
-  Death
-  Doubling
-  Expelled
-}
-
-enum MemberPostType {
-  Officiating
-  Temporary
-  Substantive
+model users {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  unitId    String?
+  unit      units?   @relation(fields: [unitId], references: [id])
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  amount      Decimal  @db.Decimal(10, 2)
-  months      Json
-  paymentDate DateTime @default(now())
-  createdAt   DateTime @default(now())
   memberId    String
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(10, 2)
+  paymentDate DateTime
+  months      Json
+  createdAt   DateTime @default(now())
 }
 
 model Transfer {
@@ -85,36 +90,32 @@ model Transfer {
   createdAt    DateTime @default(now())
 }
 
-model users {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  name      String
-  password  String
-  role      UserRole
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  unitId    String?
-  unit      units?    @relation(fields: [unitId], references: [id])
-}
-
-model units {
-  id        String     @id @default(uuid())
-  name      String     @unique
-  members   Member[]
-  users     users[]
-  transfersFrom Transfer[] @relation("TransferFrom")
-  transfersTo   Transfer[] @relation("TransferTo")
-}
-
 model Setting {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  value     String   @db.Text
+  key       String @id
+  value     String @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum MemberStatus {
+  Opened
+  Closed
+}
+
+enum ClosureReason {
+  Retirement
+  Death
+  Doubling
+  Expelled
 }
 
 enum UserRole {
   SuperAdmin
   UnitAdmin
+}
+
+enum MemberPostType {
+  Officiating
+  Temporary
+  Substantive
 }
