@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
     try {
-        const users = await prisma.User.findMany({
+        const users = await prisma.user.findMany({
             orderBy: {
                 name: 'asc'
             }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = await prisma.User.create({
+        const newUser = await prisma.user.create({
             data: {
                 id: uuidv4(),
                 email,

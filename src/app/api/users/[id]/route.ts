@@ -7,7 +7,7 @@ import { UserRole } from '@prisma/client';
 // GET a single user
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     try {
-        const user = await prisma.User.findUnique({
+        const user = await prisma.user.findUnique({
             where: { id: params.id },
         });
 
@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             updateData.password = await bcrypt.hash(password, 10);
         }
 
-        const updatedUser = await prisma.User.update({
+        const updatedUser = await prisma.user.update({
             where: { id: params.id },
             data: updateData
         });
@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // DELETE a user
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
     try {
-        await prisma.User.delete({
+        await prisma.user.delete({
             where: { id: params.id }
         });
 
