@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Unit, UserRole } from '@/lib/types';
-import { Trash2, Edit, UserPlus, X } from 'lucide-react';
+import { Trash2, Edit, UserPlus, X, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -71,6 +71,7 @@ export default function ManageUsersPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole>('UnitAdmin');
   const [unitId, setUnitId] = useState<string | undefined>(undefined);
   
@@ -116,6 +117,7 @@ export default function ManageUsersPage() {
     setName('');
     setEmail('');
     setPassword('');
+    setShowPassword(false);
     setRole('UnitAdmin');
     setUnitId(undefined);
   }
@@ -269,7 +271,18 @@ export default function ManageUsersPage() {
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="password" className="text-right">Password</Label>
-                        <Input id="password" type="password" placeholder={editingUser ? 'Leave blank to keep unchanged' : 'Required'} value={password} onChange={(e) => setPassword(e.target.value)} className="col-span-3" />
+                        <div className="col-span-3 relative">
+                            <Input id="password" type={showPassword ? 'text' : 'password'} placeholder={editingUser ? 'Leave blank to keep unchanged' : 'Required'} value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10" />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                            >
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </Button>
+                        </div>
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="role" className="text-right">Role</Label>
