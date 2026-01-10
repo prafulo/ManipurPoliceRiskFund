@@ -1,5 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
 
 datasource db {
   provider = "mysql"
@@ -44,55 +50,57 @@ model Member {
   unitId                String
   unit                  units         @relation(fields: [unitId], references: [id])
   payments              Payment[]
-  transfers             Transfer[]
+  transfersFrom         Transfer[]    @relation("TransferFrom")
+  transfersTo           Transfer[]    @relation("TransferTo")
 }
 
 model units {
-  id        String     @id @default(uuid())
-  name      String     @unique
-  members   Member[]
-  users     users[]
-  transfersFrom Transfer[] @relation("TransferFrom")
-  transfersTo   Transfer[] @relation("TransferTo")
+  id            String     @id @default(uuid())
+  name          String     @unique
+  members       Member[]
+  transfersFrom Transfer[] @relation("UnitTransfersFrom")
+  transfersTo   Transfer[] @relation("UnitTransfersTo")
+  users         users[]
 }
 
 model users {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  unitId    String?
-  unit      units?   @relation(fields: [unitId], references: [id])
+  id       String   @id @default(uuid())
+  email    String   @unique
+  name     String
+  password String
+  role     UserRole
+  unitId   String?
+  unit     units?   @relation(fields: [unitId], references: [id])
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  amount      Decimal  @db.Decimal(10, 2)
+  amount      Float
   paymentDate DateTime
   months      Json
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 }
 
 model Transfer {
   id           String   @id @default(uuid())
+  transferDate DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   memberId     String
   member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnitId   String
-  fromUnit     units    @relation("TransferFrom", fields: [fromUnitId], references: [id])
+  fromUnit     units    @relation("UnitTransfersFrom", fields: [fromUnitId], references: [id])
   toUnitId     String
-  toUnit       units    @relation("TransferTo", fields: [toUnitId], references: [id])
-  transferDate DateTime
-  createdAt    DateTime @default(now())
+  toUnit       units    @relation("UnitTransfersTo", fields: [toUnitId], references: [id])
 }
 
 model Setting {
-  key       String @id
-  value     String @db.Text
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
