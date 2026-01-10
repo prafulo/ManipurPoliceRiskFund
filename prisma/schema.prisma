@@ -10,18 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Unit {
-  id      String   @id @default(uuid())
-  name    String   @unique
-  members Member[]
-  users   User[]
-
-  transfersFrom Transfer[] @relation("FromUnit")
-  transfersTo   Transfer[] @relation("ToUnit")
-
-  @@map("units")
-}
-
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -33,81 +21,104 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("users")
+  @@map("User")
+}
+
+
+model Unit {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  members Member[]
+  users   User[]
+  fromTransfers Transfer[] @relation("FromUnit")
+  toTransfers   Transfer[] @relation("ToUnit")
+
+  @@map("units")
 }
 
 model Member {
-  id                    String            @id @default(uuid())
-  membershipCode        String            @unique
+  id                    String         @id @default(uuid())
+  membershipCode        String         @unique @map("membership_code")
   name                  String
-  fatherName            String
+  fatherName            String         @map("father_name")
   rank                  String
   trade                 String
-  serviceNumber         String
-  badgeNumber           String
-  bloodGroup            String
-  memberPostType        MemberPostType
-  joiningRank           String
-  dateOfBirth           DateTime
-  dateOfEnrollment      DateTime
-  superannuationDate    DateTime
-  dateOfDischarge       DateTime?
-  address               String
+  serviceNumber         String         @map("service_number")
+  badgeNumber           String         @map("badge_number")
+  bloodGroup            String         @map("blood_group")
+  memberPostType        MemberPostType @map("member_post_type")
+  joiningRank           String         @map("joining_rank")
+  dateOfBirth           DateTime       @db.Date @map("date_of_birth")
+  dateOfEnrollment      DateTime       @db.Date @map("date_of_enrollment")
+  superannuationDate    DateTime       @db.Date @map("superannuation_date")
+  dateOfDischarge       DateTime?      @db.Date @map("date_of_discharge")
+  address               String         @db.Text
   phone                 String
-  unitId                String
-  unit                  Unit              @relation(fields: [unitId], references: [id])
-  status                MemberStatus      @default(Opened)
-  closureReason         ClosureReason?
-  closureNotes          String?           @db.Text
-  subscriptionStartDate DateTime
-  nominees              Json // Storing as a JSON string
-  firstWitness          Json
-  secondWitness         Json
-  parentDepartment      String?
-  dateApplied           DateTime
-  receiptDate           DateTime
-  allotmentDate         DateTime
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  unitId                String         @map("unit_id")
+  status                MemberStatus   @default(Opened)
+  closureReason         ClosureReason? @map("closure_reason")
+  closureNotes          String?        @db.Text @map("closure_notes")
+  subscriptionStartDate DateTime       @db.Date @map("subscription_start_date")
+  
+  nominees              Json
+  firstWitness          Json           @map("first_witness")
+  secondWitness         Json           @map("second_witness")
+
+  parentDepartment      String?        @map("parent_department")
+  dateApplied           DateTime       @db.Date @map("date_applied")
+  receiptDate           DateTime       @db.Date @map("receipt_date")
+  allotmentDate         DateTime       @db.Date @map("allotment_date")
+
+  unit                  Unit           @relation(fields: [unitId], references: [id])
   payments              Payment[]
   transfers             Transfer[]
 
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+
+  @@index([unitId])
   @@map("members")
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId    String   @map("member_id")
   amount      Decimal  @db.Decimal(10, 2)
   months      Json
-  paymentDate DateTime @default(now())
+  paymentDate DateTime @map("payment_date")
+  createdAt   DateTime @default(now()) @map("created_at")
 
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
   @@map("payments")
 }
 
 model Transfer {
   id           String   @id @default(uuid())
-  memberId     String
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnitId   String
-  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Cascade)
-  toUnitId     String
-  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Cascade)
-  transferDate DateTime
-  createdAt    DateTime @default(now())
+  memberId     String   @map("member_id")
+  fromUnitId   String   @map("from_unit_id")
+  toUnitId     String   @map("to_unit_id")
+  transferDate DateTime @db.Date @map("transfer_date")
+  createdAt    DateTime @default(now()) @map("created_at")
 
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
+  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
+  
+  @@index([memberId])
+  @@index([fromUnitId])
+  @@index([toUnitId])
   @@map("transfers")
 }
 
-
 model Setting {
-  id    String @id @default(uuid())
-  key   String @unique
-  value String @db.Text
+  key   String @id
+  value String
   
   @@map("settings")
 }
+
 
 enum MemberStatus {
   Opened
@@ -121,13 +132,13 @@ enum ClosureReason {
   Expelled
 }
 
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
-}
-
 enum MemberPostType {
   Officiating
   Temporary
   Substantive
+}
+
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
 }
