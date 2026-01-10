@@ -1,10 +1,11 @@
 
+
 export type MembershipStatus = "Opened" | "Closed";
 export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "";
 export type UserRole = "SuperAdmin" | "UnitAdmin";
 export type MemberPostType = "Officiating" | "Temporary" | "Substantive";
 
-export type Unit = {
+export type units = {
   id: string;
   name: string;
 };
@@ -16,7 +17,7 @@ export type Nominee = {
   share: number;
 };
 
-export type User = {
+export type users = {
     id: string;
     email: string;
     name: string;

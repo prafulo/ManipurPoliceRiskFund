@@ -26,7 +26,7 @@ import { CalendarIcon, Save } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, eachMonthOfInterval, startOfMonth } from 'date-fns';
-import type { Member, Unit, Payment } from '@/lib/types';
+import type { Member, units as Unit, Payment } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';

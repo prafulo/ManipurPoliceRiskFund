@@ -36,7 +36,7 @@ async function main() {
 }
 
 async function upsertUser(email: string, name: string, password: string, role: UserRole) {
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
     where: { email },
   });
 
@@ -44,7 +44,7 @@ async function upsertUser(email: string, name: string, password: string, role: U
 
   if (existingUser) {
     console.log(`User with email ${email} already exists. Updating password.`);
-    await prisma.user.update({
+    await prisma.users.update({
         where: { email },
         data: {
             password: hashedPassword,
@@ -54,7 +54,7 @@ async function upsertUser(email: string, name: string, password: string, role: U
     });
     console.log(`Updated user ${email}.`);
   } else {
-    await prisma.user.create({
+    await prisma.users.create({
       data: {
         id: uuidv4(),
         email,

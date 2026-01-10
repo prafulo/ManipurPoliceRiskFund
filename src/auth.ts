@@ -3,7 +3,7 @@ import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import type { User } from '@/lib/types';
+import type { users as User } from '@/lib/types';
 
 export const authConfig = {
   basePath: '/api/auth',
@@ -17,7 +17,7 @@ export const authConfig = {
         }
 
         try {
-          const user = await prisma.user.findUnique({
+          const user = await prisma.users.findUnique({
             where: { email: credentials.email as string },
           });
 

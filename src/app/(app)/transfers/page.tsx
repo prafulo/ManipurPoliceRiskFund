@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { TransferTable } from "./components/transfer-table";
-import type { Transfer, Unit } from "@/lib/types";
+import type { Transfer, units as Unit } from "@/lib/types";
 import { useEffect, useState } from "react";
 
 async function fetchData() {

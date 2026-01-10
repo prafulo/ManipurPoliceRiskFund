@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
         }
 
-        const newUnit = await prisma.unit.create({
+        const newUnit = await prisma.units.create({
             data: {
                 id: uuidv4(),
                 name: name,

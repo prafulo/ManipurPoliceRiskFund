@@ -1,108 +1,98 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model Member {
-  id                   String         @id @default(uuid())
-  membershipCode       String         @unique
-  name                 String
-  fatherName           String
-  rank                 String
-  trade                String
-  serviceNumber        String
-  badgeNumber          String
-  bloodGroup           String
-  memberPostType       MemberPostType
-  joiningRank          String
-  dateOfBirth          DateTime
-  dateOfEnrollment     DateTime
-  superannuationDate   DateTime
-  dateOfDischarge      DateTime?
-  address              String
-  phone                String
-  status               MemberStatus   @default(Opened)
-  closureReason        ClosureReason?
-  closureNotes         String?        @db.Text
-  subscriptionStartDate DateTime
-  parentDepartment     String?
-  dateApplied          DateTime
-  receiptDate          DateTime
-  allotmentDate        DateTime
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-  unitId               String
-  unit                 Unit           @relation(fields: [unitId], references: [id])
-  nominees             Json
-  firstWitness         Json
-  secondWitness        Json
-  payments             Payment[]
-  transfers            Transfer[]
-
-  @@map("members")
+datasource db {
+  provider = "mysql"
 }
 
-model Unit {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  members   Member[]
-  users     User[]
-  transfersFrom Transfer[] @relation("FromUnit")
-  transfersTo   Transfer[] @relation("ToUnit")
-
-  @@map("units")
-}
-
-model Payment {
-  id          String   @id @default(uuid())
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime
-  months      Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("payments")
-}
-
-model Transfer {
-  id           String   @id @default(uuid())
-  memberId     String
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnitId   String
-  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
-  toUnitId     String
-  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
-  transferDate DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("transfers")
-}
-
-model User {
+model users {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String
   password  String
   role      UserRole @default(UnitAdmin)
   unitId    String?
-  unit      Unit?    @relation(fields: [unitId], references: [id])
+  unit      units?   @relation(fields: [unitId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@map("users")
+  @@map("User")
 }
+
+model units {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  createdAt DateTime @default(now())
+  members Member[]
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo Transfer[] @relation("ToUnit")
+  users users[]
+
+  @@map("Unit")
+}
+
+model Member {
+  id                    String         @id @default(uuid())
+  membershipCode        String         @unique
+  name                  String
+  fatherName            String
+  rank                  String
+  trade                 String
+  serviceNumber         String
+  badgeNumber           String
+  bloodGroup            String
+  memberPostType        MemberPostType
+  joiningRank           String
+  dateOfBirth           DateTime
+  dateOfEnrollment      DateTime
+  superannuationDate    DateTime
+  dateOfDischarge       DateTime?
+  address               String
+  phone                 String
+  unitId                String
+  status                MemberStatus
+  closureReason         ClosureReason?
+  closureNotes          String?        @db.Text
+  subscriptionStartDate DateTime
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
+  parentDepartment      String?
+  dateApplied           DateTime
+  receiptDate           DateTime
+  allotmentDate         DateTime
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  unit                  units          @relation(fields: [unitId], references: [id])
+  payments              Payment[]
+  transfers             Transfer[]
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  memberId    String
+  amount      Decimal  @db.Decimal(10, 2)
+  months      Json
+  paymentDate DateTime
+  createdAt   DateTime @default(now())
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model Transfer {
+  id           String   @id @default(uuid())
+  memberId     String
+  fromUnitId   String
+  toUnitId     String
+  transferDate DateTime
+  createdAt    DateTime @default(now())
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnit     units    @relation("FromUnit", fields: [fromUnitId], references: [id])
+  toUnit       units    @relation("ToUnit", fields: [toUnitId], references: [id])
+}
+
 
 model Setting {
   id        String   @id @default(uuid())
@@ -110,10 +100,7 @@ model Setting {
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("settings")
 }
-
 
 enum MemberStatus {
   Opened
@@ -127,13 +114,13 @@ enum ClosureReason {
   Expelled
 }
 
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
-}
-
 enum MemberPostType {
   Officiating
   Temporary
   Substantive
+}
+
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
 }

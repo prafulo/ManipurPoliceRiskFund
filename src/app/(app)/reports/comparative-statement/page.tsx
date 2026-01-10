@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import type { Member, Unit, Transfer } from '@/lib/types';
+import type { Member, units as Unit, Transfer } from '@/lib/types';
 import {
   Table,
   TableBody,
