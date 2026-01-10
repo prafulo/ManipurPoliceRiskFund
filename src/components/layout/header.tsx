@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useSession, signOut } from 'next-auth/react';
 import { Logo } from '../logo';
@@ -44,6 +44,7 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
 
   const user = session?.user;
@@ -51,7 +52,8 @@ export function Header() {
   const unit = user?.unit;
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/' });
+    await signOut({ redirect: false });
+    router.push('/');
   };
 
 

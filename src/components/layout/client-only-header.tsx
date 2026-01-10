@@ -3,6 +3,7 @@
 
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePathname, useRouter } from 'next/navigation';
 
 // Dynamically import the Header with SSR turned off
 const Header = dynamic(() => import('./header').then(mod => mod.Header), {
