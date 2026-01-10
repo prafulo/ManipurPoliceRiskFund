@@ -120,12 +120,6 @@ export default function LoginPage() {
             </div>
           </form>
         </CardContent>
-        <CardFooter className="text-center text-sm">
-          No account?&nbsp;
-          <Link href="/register" className="underline">
-            Create a Super Admin account
-          </Link>
-        </CardFooter>
       </Card>
     </div>
   );

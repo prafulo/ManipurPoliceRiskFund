@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { User, Unit, UserRole } from '@/lib/types';
-import { Trash2, Edit, PlusCircle, UserPlus, X } from 'lucide-react';
+import { Trash2, Edit, UserPlus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
