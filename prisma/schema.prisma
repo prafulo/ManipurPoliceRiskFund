@@ -9,34 +9,9 @@ datasource db {
   provider = "mysql"
 }
 
-model users {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole @default(UnitAdmin)
-  unitId    String?
-  unit      units?   @relation(fields: [unitId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@map("User")
-}
-
-model units {
-  id      String   @id @default(uuid())
-  name    String   @unique
-  createdAt DateTime @default(now())
-  members Member[]
-  transfersFrom Transfer[] @relation("FromUnit")
-  transfersTo Transfer[] @relation("ToUnit")
-  users users[]
-
-  @@map("Unit")
-}
-
 model Member {
-  id                    String         @id @default(uuid())
-  membershipCode        String         @unique
+  id                    String        @id @default(uuid())
+  membershipCode        String        @unique
   name                  String
   fatherName            String
   rank                  String
@@ -52,55 +27,82 @@ model Member {
   dateOfDischarge       DateTime?
   address               String
   phone                 String
-  unitId                String
-  status                MemberStatus
+  status                MemberStatus  @default(Opened)
   closureReason         ClosureReason?
-  closureNotes          String?        @db.Text
+  closureNotes          String?       @db.Text
   subscriptionStartDate DateTime
-  nominees              Json
-  firstWitness          Json
-  secondWitness         Json
+  nominees              Json?
+  firstWitness          Json?
+  secondWitness         Json?
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  unit                  units          @relation(fields: [unitId], references: [id])
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  unitId                String
+  unit                  units         @relation(fields: [unitId], references: [id])
   payments              Payment[]
   transfers             Transfer[]
+
+  @@index([unitId])
+}
+
+model units {
+  id            String     @id @default(uuid())
+  name          String     @unique
+  members       Member[]
+  transfersFrom Transfer[] @relation("TransferFrom")
+  transfersTo   Transfer[] @relation("TransferTo")
+  users         users[]
 }
 
 model Payment {
   id          String   @id @default(uuid())
   memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(10, 2)
   months      Json
   paymentDate DateTime
-  createdAt   DateTime @default(now())
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
 }
 
 model Transfer {
   id           String   @id @default(uuid())
   memberId     String
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnitId   String
+  fromUnit     units    @relation("TransferFrom", fields: [fromUnitId], references: [id])
   toUnitId     String
+  toUnit       units    @relation("TransferTo", fields: [toUnitId], references: [id])
   transferDate DateTime
   createdAt    DateTime @default(now())
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnit     units    @relation("FromUnit", fields: [fromUnitId], references: [id])
-  toUnit       units    @relation("ToUnit", fields: [toUnitId], references: [id])
+
+  @@index([memberId])
+  @@index([fromUnitId])
+  @@index([toUnitId])
 }
 
+model users {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  password  String
+  role      UserRole
+  unitId    String?
+  unit      units?    @relation(fields: [unitId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([unitId])
+}
 
 model Setting {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  key   String @id
+  value String @db.Text
 }
+
 
 enum MemberStatus {
   Opened
