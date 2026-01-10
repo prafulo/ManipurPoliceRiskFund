@@ -51,7 +51,7 @@ export function Header() {
   const unit = user?.unit;
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' });
+    await signOut({ callbackUrl: '/' });
   };
 
 
