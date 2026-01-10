@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import type { User } from '@/lib/types';
 
 export const authConfig = {
+  basePath: '/api/auth',
   trustHost: true,
   providers: [
     Credentials({
