@@ -3,6 +3,7 @@ import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import type { User } from '@/lib/types';
 
 export const authConfig = {
   trustHost: true,
@@ -15,7 +16,7 @@ export const authConfig = {
         }
 
         try {
-          const user = await prisma.user.findUnique({
+          const user = await prisma.User.findUnique({
             where: { email: credentials.email as string },
           });
 
@@ -33,13 +34,15 @@ export const authConfig = {
 
           if (passwordMatch) {
             console.log(`Password match for user: ${credentials.email}`);
-            return {
+            // Ensure you return a plain object
+            const userPayload: User & { role: string, unitId?: string | null } = {
               id: user.id,
               email: user.email,
               name: user.name,
               role: user.role,
               unitId: user.unitId,
             };
+            return userPayload;
           } else {
              console.log(`Password mismatch for user: ${credentials.email}`);
              return null;
@@ -55,8 +58,8 @@ export const authConfig = {
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
-        token.unit = user.unitId;
+        token.role = (user as any).role;
+        token.unit = (user as any).unitId;
       }
       return token;
     },
@@ -77,8 +80,3 @@ export const authConfig = {
 } satisfies NextAuthConfig;
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
-
-
-
-
-

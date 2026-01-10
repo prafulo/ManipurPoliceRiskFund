@@ -1,3 +1,4 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
@@ -6,7 +7,7 @@ import { UserRole } from '@prisma/client';
 // GET a single user
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     try {
-        const user = await prisma.user.findUnique({
+        const user = await prisma.User.findUnique({
             where: { id: params.id },
         });
 
@@ -45,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             updateData.password = await bcrypt.hash(password, 10);
         }
 
-        const updatedUser = await prisma.user.update({
+        const updatedUser = await prisma.User.update({
             where: { id: params.id },
             data: updateData
         });
@@ -66,7 +67,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // DELETE a user
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
     try {
-        await prisma.user.delete({
+        await prisma.User.delete({
             where: { id: params.id }
         });
 

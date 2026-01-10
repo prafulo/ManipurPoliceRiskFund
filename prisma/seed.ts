@@ -1,3 +1,4 @@
+
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -35,7 +36,7 @@ async function main() {
 }
 
 async function upsertUser(email: string, name: string, password: string, role: UserRole) {
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.User.findUnique({
     where: { email },
   });
 
@@ -43,7 +44,7 @@ async function upsertUser(email: string, name: string, password: string, role: U
 
   if (existingUser) {
     console.log(`User with email ${email} already exists. Updating password.`);
-    await prisma.user.update({
+    await prisma.User.update({
         where: { email },
         data: {
             password: hashedPassword,
@@ -53,7 +54,7 @@ async function upsertUser(email: string, name: string, password: string, role: U
     });
     console.log(`Updated user ${email}.`);
   } else {
-    await prisma.user.create({
+    await prisma.User.create({
       data: {
         id: uuidv4(),
         email,
