@@ -3,7 +3,7 @@ import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import type { users as User } from '@/lib/types';
+import type { User as AppUser } from '@/lib/types';
 
 export const authConfig = {
   basePath: '/api/auth',
@@ -17,7 +17,7 @@ export const authConfig = {
         }
 
         try {
-          const user = await prisma.users.findUnique({
+          const user = await prisma.user.findUnique({
             where: { email: credentials.email as string },
           });
 
@@ -36,7 +36,7 @@ export const authConfig = {
           if (passwordMatch) {
             console.log(`Password match for user: ${credentials.email}`);
             // Ensure you return a plain object
-            const userPayload: User & { role: string, unitId?: string | null } = {
+            const userPayload: AppUser & { role: string, unitId?: string | null } = {
               id: user.id,
               email: user.email,
               name: user.name,

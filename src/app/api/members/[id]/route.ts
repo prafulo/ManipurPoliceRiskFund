@@ -17,9 +17,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         return NextResponse.json({
           member: {
             ...member,
-            nominees: JSON.parse(member.nominees as string),
-            firstWitness: JSON.parse(member.firstWitness as string),
-            secondWitness: JSON.parse(member.secondWitness as string),
+            nominees: member.nominees ? JSON.parse(member.nominees as string) : [],
+            firstWitness: member.firstWitness ? JSON.parse(member.firstWitness as string) : {},
+            secondWitness: member.secondWitness ? JSON.parse(member.secondWitness as string) : {},
           }
         });
 

@@ -13,22 +13,16 @@ export async function POST(request: NextRequest) {
         
         const transferId = uuidv4();
 
-        // Use a transaction to ensure both operations succeed or fail together
-        const [_, transfer] = await prisma.$transaction([
-            prisma.member.update({
-                where: { id: memberId },
-                data: { unitId: toUnitId },
-            }),
-            prisma.transfer.create({
-                data: {
-                    id: transferId,
-                    memberId: memberId,
-                    fromUnitId: fromUnitId,
-                    toUnitId: toUnitId,
-                    transferDate: new Date(transferDate),
-                }
-            })
-        ]);
+        const transfer = await prisma.transfer.create({
+            data: {
+                id: transferId,
+                memberId: memberId,
+                fromUnitId: fromUnitId,
+                toUnitId: toUnitId,
+                transferDate: new Date(transferDate),
+            }
+        });
+        
 
         return NextResponse.json({ message: 'Transfer processed successfully', id: transfer.id }, { status: 201 });
 

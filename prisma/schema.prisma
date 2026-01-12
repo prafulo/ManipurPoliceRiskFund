@@ -1,4 +1,3 @@
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -9,95 +8,100 @@ generator client {
 }
 
 model Member {
-  id                    String        @id @default(uuid())
-  membershipCode        String        @unique
+  id                    String         @id @default(uuid())
+  membershipCode        String         @unique @map("membership_code")
   name                  String
-  fatherName            String
+  fatherName            String         @map("father_name")
   rank                  String
   trade                 String
-  serviceNumber         String
-  badgeNumber           String
-  bloodGroup            String
-  memberPostType        MemberPostType
-  joiningRank           String
-  dateOfBirth           DateTime
-  dateOfEnrollment      DateTime
-  superannuationDate    DateTime
-  dateOfDischarge       DateTime?
-  address               String
+  serviceNumber         String         @map("service_number")
+  badgeNumber           String         @map("badge_number")
+  bloodGroup            String         @map("blood_group")
+  memberPostType        MemberPostType @map("member_post_type")
+  joiningRank           String         @map("joining_rank")
+  dateOfBirth           DateTime       @db.Date @map("date_of_birth")
+  dateOfEnrollment      DateTime       @db.Date @map("date_of_enrollment")
+  superannuationDate    DateTime       @db.Date @map("superannuation_date")
+  dateOfDischarge       DateTime?      @db.Date @map("date_of_discharge")
+  address               String         @db.Text
   phone                 String
-  status                MemberStatus  @default(Opened)
-  closureReason         ClosureReason?
-  closureNotes          String?       @db.Text
-  subscriptionStartDate DateTime
-  nominees              Json?
-  firstWitness          Json?
-  secondWitness         Json?
-  parentDepartment      String?
-  dateApplied           DateTime
-  receiptDate           DateTime
-  allotmentDate         DateTime
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  unitId                String
-  unit                  units         @relation(fields: [unitId], references: [id])
+  status                MemberStatus   @default(Opened)
+  closureReason         ClosureReason? @map("closure_reason")
+  closureNotes          String?        @db.Text @map("closure_notes")
+  subscriptionStartDate DateTime       @db.Date @map("subscription_start_date")
+  nominees              Json
+  firstWitness          Json           @map("first_witness")
+  secondWitness         Json           @map("second_witness")
+  parentDepartment      String?        @map("parent_department")
+  dateApplied           DateTime       @db.Date @map("date_applied")
+  receiptDate           DateTime       @db.Date @map("receipt_date")
+  allotmentDate         DateTime       @db.Date @map("allotment_date")
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+  unitId                String         @map("unit_id")
+  unit                  units          @relation(fields: [unitId], references: [id], map: "members_unit_id_fkey")
   payments              Payment[]
   transfers             Transfer[]
-}
 
-model units {
-  id        String     @id @default(uuid())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  members   Member[]
-  users     users[]
-  transfersFrom Transfer[] @relation("TransferFrom")
-  transfersTo   Transfer[] @relation("TransferTo")
-}
-
-model users {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole
-  unitId    String?
-  unit      units?   @relation(fields: [unitId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@map("members")
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId    String   @map("member_id")
   amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime
   months      Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  paymentDate DateTime @map("payment_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade, map: "payments_member_id_fkey")
+
+  @@map("payments")
 }
 
 model Transfer {
   id           String   @id @default(uuid())
-  memberId     String
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnitId   String
-  fromUnit     units    @relation("TransferFrom", fields: [fromUnitId], references: [id])
-  toUnitId     String
-  toUnit       units    @relation("TransferTo", fields: [toUnitId], references: [id])
-  transferDate DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  memberId     String   @map("member_id")
+  fromUnitId   String   @map("from_unit_id")
+  toUnitId     String   @map("to_unit_id")
+  transferDate DateTime @db.Date @map("transfer_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade, map: "transfers_member_id_fkey")
+  fromUnit     units    @relation("TransfersFrom", fields: [fromUnitId], references: [id], map: "transfers_from_unit_id_fkey")
+  toUnit       units    @relation("TransfersTo", fields: [toUnitId], references: [id], map: "transfers_to_unit_id_fkey")
+
+  @@map("transfers")
 }
 
-model Setting {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model units {
+  id            String     @id
+  name          String     @unique
+  members       Member[]
+  transfersFrom Transfer[] @relation("TransfersFrom")
+  transfersTo   Transfer[] @relation("TransfersTo")
+  users         User[]
+
+  @@map("units")
+}
+
+model settings {
+  key   String @id
+  value String
+
+  @@map("settings")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  password  String
+  role      UserRole  @default(UnitAdmin)
+  unitId    String?   @map("unit_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  unit      units?    @relation(fields: [unitId], references: [id], map: "User_unit_id_fkey")
+
+  @@map("User")
 }
 
 enum MemberStatus {
@@ -112,13 +116,13 @@ enum ClosureReason {
   Expelled
 }
 
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
+}
+
 enum MemberPostType {
   Officiating
   Temporary
   Substantive
-}
-
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
 }
