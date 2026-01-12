@@ -3,7 +3,7 @@ import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import type { User as AppUser } from '@/lib/types';
+import type { User as AppUser, UserRole } from '@/lib/types';
 
 export const authConfig = {
   basePath: '/api/auth',
