@@ -3,7 +3,7 @@ export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "
 export type UserRole = "SuperAdmin" | "UnitAdmin";
 export type MemberPostType = "Officiating" | "Temporary" | "Substantive";
 
-export type units = {
+export type Unit = {
   id: string;
   name: string;
 };

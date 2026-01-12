@@ -6,7 +6,7 @@ import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Member, units as Unit } from '@/lib/types';
+import type { Member, Unit } from '@/lib/types';
 
 
 async function fetchData() {

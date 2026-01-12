@@ -25,7 +25,7 @@ import { CalendarIcon, ArrowRightLeft } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { Member, units as Unit, Transfer } from '@/lib/types';
+import type { Member, Unit, Transfer } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';

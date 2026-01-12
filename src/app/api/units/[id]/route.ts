@@ -11,7 +11,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
         }
 
-        const result = await prisma.units.update({
+        const result = await prisma.unit.update({
             where: { id: id },
             data: { name: name },
         });
@@ -40,7 +40,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
             return NextResponse.json({ message: 'Cannot delete unit with assigned members. Please transfer members first.' }, { status: 400 });
         }
 
-        await prisma.units.delete({
+        await prisma.unit.delete({
             where: { id: id }
         });
 

@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Users, UserCheck, UserX, Landmark } from 'lucide-react';
-import type { Member, units as Unit } from '@/lib/types';
+import type { Member, Unit } from '@/lib/types';
 import { useEffect, useState } from 'react';
 
 async function fetchData() {
