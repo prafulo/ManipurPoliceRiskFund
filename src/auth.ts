@@ -6,7 +6,6 @@ import bcrypt from 'bcryptjs';
 import type { User as AppUser, UserRole } from '@/lib/types';
 
 export const authConfig = {
-  basePath: '/api/auth',
   trustHost: true,
   providers: [
     Credentials({
@@ -48,7 +47,7 @@ export const authConfig = {
              console.log(`Password mismatch for user: ${credentials.email}`);
              return null;
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Authorize error:', e);
           return null;
         }
@@ -77,7 +76,7 @@ export const authConfig = {
     signIn: '/login',
     error: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
 } satisfies NextAuthConfig;
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
