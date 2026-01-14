@@ -83,7 +83,7 @@ model units {
   @@map("units")
 }
 
-model settings {
+model Setting {
   key   String @id
   value String
 
