@@ -101,8 +101,13 @@ export function MemberTable({ data, listType = 'opened' }: MemberTableProps) {
 
     if (sortKey) {
       result.sort((a, b) => {
-        const valA = a[sortKey as keyof Member] as any;
-        const valB = b[sortKey as keyof Member] as any;
+        //const valA = a[sortKey as keyof Member] as any;
+        //const valB = b[sortKey as keyof Member] as any;
+
+        const valA = a[sortKey as keyof EnrichedMember] as any;
+        const valB = b[sortKey as keyof EnrichedMember] as any;
+
+
         if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
         return 0;
