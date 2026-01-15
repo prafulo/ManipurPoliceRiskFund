@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wifi, Database, Users } from 'lucide-react';
+import { Wifi, Database } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import type { UserRole } from '@/lib/types';
 
@@ -198,23 +198,6 @@ export default function SettingsPage() {
           </Link>
         </CardFooter>
       </Card>
-      
-      {userRole === 'SuperAdmin' && (
-         <Card>
-            <CardHeader>
-            <CardTitle>Manage Users</CardTitle>
-            <CardDescription>Add, edit, or remove user accounts and manage their roles.</CardDescription>
-            </CardHeader>
-            <CardContent>
-            <p className="text-sm text-muted-foreground">Control who can access the application and what they can do.</p>
-            </CardContent>
-            <CardFooter className="border-t px-6 py-4">
-                <Link href="/settings/users">
-                    <Button variant="outline"><Users className="mr-2"/>Manage Users</Button>
-                </Link>
-            </CardFooter>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>

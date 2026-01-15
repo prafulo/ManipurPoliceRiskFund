@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Settings, FileText, GanttChartSquare, CreditCard, ArrowRightLeft } from 'lucide-react';
+import { Home, Users, Settings, FileText, CreditCard, ArrowRightLeft, Users2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '../logo';
+import { useSession } from 'next-auth/react';
+import type { UserRole } from '@/lib/types';
+
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -12,11 +15,14 @@ const navItems = [
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/transfers', label: 'Transfers', icon: ArrowRightLeft },
   { href: '/reports', label: 'Reports', icon: FileText },
+  { href: '/settings/users', label: 'Users', icon: Users2, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const role = session?.user.role as UserRole;
 
   return (
     <aside className="hidden md:flex w-64 flex-col bg-card border-r">
@@ -31,6 +37,9 @@ export function Sidebar() {
       </div>
       <nav className="flex-1 px-4 space-y-2">
         {navItems.map((item) => {
+          if (item.adminOnly && role !== 'SuperAdmin') {
+            return null;
+          }
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
