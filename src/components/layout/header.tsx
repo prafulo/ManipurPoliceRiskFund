@@ -40,7 +40,7 @@ const navItems = [
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/transfers', label: 'Transfers', icon: ArrowRightLeft },
   { href: '/reports', label: 'Reports', icon: FileText },
-  { href: '/settings/users', label: 'Users', icon: Users2, adminOnly: true },
+  { href: '/users', label: 'Users', icon: Users2, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 

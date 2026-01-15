@@ -15,7 +15,7 @@ const navItems = [
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/transfers', label: 'Transfers', icon: ArrowRightLeft },
   { href: '/reports', label: 'Reports', icon: FileText },
-  { href: '/settings/users', label: 'Users', icon: Users2, adminOnly: true },
+  { href: '/users', label: 'Users', icon: Users2, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -40,7 +40,7 @@ export function Sidebar() {
           if (item.adminOnly && role !== 'SuperAdmin') {
             return null;
           }
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
