@@ -179,9 +179,18 @@ export function BulkPaymentForm() {
             }
 
             toast({ title: 'Payments Saved', description: `${paymentsToCreate.length} payment records have been created successfully.`});
-            router.refresh();
+            
+            // Re-fetch payments to update the UI state instantly
+            const paymentsRes = await fetch('/api/payments');
+            if (paymentsRes.ok) {
+                const paymentsData = await paymentsRes.json();
+                const parsedPayments = paymentsData.payments.map((p: any) => ({...p, amount: Number(p.amount)}));
+                setAllPayments(parsedPayments);
+            }
+            
             // Reset selections after successful payment
             setSelections({});
+            router.refresh();
 
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
