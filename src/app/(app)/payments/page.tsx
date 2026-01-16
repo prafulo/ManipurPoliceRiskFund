@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { FileSpreadsheet, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { PaymentTable } from "./components/payment-table";
 import type { Payment } from "@/lib/types";
@@ -74,12 +74,20 @@ export default function PaymentsPage() {
           <h2 className="text-3xl font-bold tracking-tight font-headline">Payments</h2>
           <p className="text-muted-foreground">Manage member subscription payments.</p>
         </div>
-        <Link href="/payments/new">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Payment
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+            <Link href="/payments/bulk">
+              <Button variant="outline">
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Bulk Payment
+              </Button>
+            </Link>
+            <Link href="/payments/new">
+            <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Payment
+            </Button>
+            </Link>
+        </div>
       </div>
       <PaymentTable data={payments || []} onDelete={handleDeletePayment} />
     </div>
