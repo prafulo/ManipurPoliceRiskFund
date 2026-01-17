@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, CheckCircle, Info, Lock } from 'lucide-react';
+import { CalendarIcon, CheckCircle, Info, Lock, ArchiveRestore } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -89,7 +89,11 @@ export function ReleaseForm() {
   const selectedMemberId = form.watch('memberId');
 
   const eligibleMembers = useMemo(() => {
-      const filteredByEligibility = allMembers.filter(m => m.status === 'Closed' && m.closureReason === 'Retirement');
+      const filteredByEligibility = allMembers.filter(m => 
+        m.status === 'Closed' && 
+        m.closureReason === 'Retirement' &&
+        !m.releaseDate // Filter out members who already have a release date
+      );
       if (!selectedUnitId) return filteredByEligibility;
       return filteredByEligibility.filter(m => m.unitId === selectedUnitId);
   }, [allMembers, selectedUnitId]);
@@ -185,8 +189,11 @@ export function ReleaseForm() {
               name="unitId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select Unit (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel>Filter by Unit (Optional)</FormLabel>
+                  <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue('memberId', ''); // Reset member selection when unit changes
+                  }} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Filter members by unit" />
@@ -209,19 +216,19 @@ export function ReleaseForm() {
               name="memberId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select Member</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel>Select Retired Member</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a retired member" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {eligibleMembers.map(member => (
+                      {eligibleMembers.length > 0 ? eligibleMembers.map(member => (
                         <SelectItem key={member.id} value={member.id}>
                           {member.name} ({member.membershipCode})
                         </SelectItem>
-                      ))}
+                      )) : <p className="p-4 text-sm text-muted-foreground">No eligible members found.</p>}
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -12,15 +12,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowUpDown } from 'lucide-react';
-import type { SubscriptionRelease } from '@/lib/types';
+import type { Member } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 
-type SortKey = keyof SubscriptionRelease | '';
+type SortKey = keyof Member | 'unitName' | '';
 type SortDirection = 'asc' | 'desc';
 
 interface ReleaseTableProps {
-  data: SubscriptionRelease[];
+  data: Member[];
 }
 
 export function ReleaseTable({ data }: ReleaseTableProps) {
@@ -32,13 +32,13 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
 
   const filteredAndSortedData = React.useMemo(() => {
     let result = data.filter(release =>
-      release.memberName?.toLowerCase().includes(filter.toLowerCase())
+      release.name?.toLowerCase().includes(filter.toLowerCase())
     );
 
     if (sortKey) {
       result.sort((a, b) => {
-        const valA = a[sortKey];
-        const valB = b[sortKey];
+        const valA = a[sortKey as keyof Member];
+        const valB = b[sortKey as keyof Member];
 
         if (sortKey === 'releaseDate' || sortKey === 'createdAt') {
             const dateA = new Date(valA as string).getTime();
@@ -72,12 +72,11 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
   };
   
   const headers: { key: SortKey; label: string }[] = [
-    { key: 'memberName', label: 'Member Name' },
+    { key: 'name', label: 'Member Name' },
     { key: 'membershipCode', label: 'Code' },
-    { key: 'unitName', label: 'Unit' },
     { key: 'releaseDate', label: 'Release Date' },
-    { key: 'amount', label: 'Amount' },
-    { key: 'notes', label: 'Notes' },
+    { key: 'releaseAmount', label: 'Amount' },
+    { key: 'releaseNotes', label: 'Notes' },
   ];
 
   const toDate = (dateStr: string | Date): Date => {
@@ -104,7 +103,7 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
               <TableRow>
                 {headers.map(header => (
                   <TableHead key={header.key}>
-                    <Button variant="ghost" onClick={() => handleSort(header.key)}>
+                    <Button variant="ghost" onClick={() => handleSort(header.key as keyof Member)}>
                       {header.label}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -116,12 +115,11 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
               {paginatedData.length > 0 ? (
                 paginatedData.map((release) => (
                   <TableRow key={release.id}>
-                    <TableCell className="font-medium">{release.memberName}</TableCell>
+                    <TableCell className="font-medium">{release.name}</TableCell>
                     <TableCell>{release.membershipCode}</TableCell>
-                    <TableCell>{release.unitName}</TableCell>
-                    <TableCell>{format(toDate(release.releaseDate), 'PP')}</TableCell>
-                    <TableCell>₹{release.amount.toFixed(2)}</TableCell>
-                    <TableCell className="max-w-xs truncate">{release.notes}</TableCell>
+                    <TableCell>{release.releaseDate ? format(toDate(release.releaseDate), 'PP') : ''}</TableCell>
+                    <TableCell>₹{release.releaseAmount ? release.releaseAmount.toFixed(2) : '0.00'}</TableCell>
+                    <TableCell className="max-w-xs truncate">{release.releaseNotes}</TableCell>
                   </TableRow>
                 ))
               ) : (

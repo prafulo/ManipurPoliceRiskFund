@@ -1,6 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
     try {
@@ -11,22 +10,24 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
-        // Check if a release for this member already exists to prevent duplicates
-        const existingRelease = await prisma.subscriptionRelease.findFirst({
-            where: { memberId: memberId }
+        const member = await prisma.member.findUnique({
+            where: { id: memberId }
         });
 
-        if (existingRelease) {
+        if (!member) {
+            return NextResponse.json({ message: 'Member not found.' }, { status: 404 });
+        }
+
+        if (member.releaseDate) {
             return NextResponse.json({ message: 'A subscription release has already been processed for this member.' }, { status: 409 });
         }
         
-        await prisma.subscriptionRelease.create({
+        await prisma.member.update({
+            where: { id: memberId },
             data: {
-                id: uuidv4(),
-                memberId: memberId,
-                amount: amount,
                 releaseDate: new Date(releaseDate),
-                notes: notes,
+                releaseAmount: amount,
+                releaseNotes: notes,
             }
         });
 

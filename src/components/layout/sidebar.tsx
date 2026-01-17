@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Settings, FileText, CreditCard, ArrowRightLeft, Users2, ChevronRight, Building, DollarSign, Database, ArchiveRestore } from 'lucide-react';
+import { Home, Users, Settings, FileText, CreditCard, ArrowRightLeft, UserPlus, ChevronRight, Building, DollarSign, Database, Users2, ArchiveRestore } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '../logo';
 import { useSession } from 'next-auth/react';

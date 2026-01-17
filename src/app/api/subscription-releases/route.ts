@@ -3,18 +3,11 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
     try {
-        const releases = await prisma.subscriptionRelease.findMany({
-            include: {
-                member: {
-                    select: {
-                        name: true,
-                        membershipCode: true,
-                        unit: {
-                            select: {
-                                name: true
-                            }
-                        }
-                    }
+        // Fetch members who have had a release processed
+        const releases = await prisma.member.findMany({
+            where: {
+                releaseDate: {
+                    not: null
                 }
             },
             orderBy: {
@@ -22,19 +15,8 @@ export async function GET(request: Request) {
             }
         });
 
-        const formattedReleases = releases.map(r => ({
-            id: r.id,
-            memberId: r.memberId,
-            amount: r.amount,
-            releaseDate: r.releaseDate,
-            notes: r.notes,
-            createdAt: r.createdAt,
-            memberName: r.member.name,
-            membershipCode: r.member.membershipCode,
-            unitName: r.member.unit.name,
-        }));
-
-        return NextResponse.json({ releases: formattedReleases });
+        // The data is already in the correct format on the member model
+        return NextResponse.json({ releases });
     } catch (error: any) {
         console.error("Failed to fetch subscription releases:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });

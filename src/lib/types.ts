@@ -63,6 +63,11 @@ export type Member = {
   allotmentDate: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
+
+  // New fields for recording the release
+  releaseDate?: Date | string | null;
+  releaseAmount?: number | null;
+  releaseNotes?: string | null;
 };
 
 export type Payment = {

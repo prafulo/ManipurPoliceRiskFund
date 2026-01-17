@@ -4,27 +4,27 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { ReleaseTable } from "./components/release-table";
-import type { SubscriptionRelease } from "@/lib/types";
+import type { Member, Unit } from "@/lib/types";
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
 
-async function fetchData(): Promise<SubscriptionRelease[]> {
+async function fetchData(): Promise<Member[]> {
     const res = await fetch('/api/subscription-releases');
     if (!res.ok) {
         throw new Error('Failed to fetch release data');
     }
     const data = await res.json();
     // Prisma returns Decimal as a string in JSON, so we convert it to a number.
-    return data.releases.map((p: any) => ({
-      ...p,
-      amount: Number(p.amount)
+    return data.releases.map((r: any) => ({
+      ...r,
+      amount: Number(r.releaseAmount)
     }));
 }
 
 export default function SubscriptionReleasesPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(true);
-  const [releases, setReleases] = React.useState<SubscriptionRelease[]>([]);
+  const [releases, setReleases] = React.useState<Member[]>([]);
 
   React.useEffect(() => {
     async function loadData() {
