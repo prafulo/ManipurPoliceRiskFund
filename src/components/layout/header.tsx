@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Building,
   DollarSign,
-  Database
+  Database,
+  ArchiveRestore
 } from 'lucide-react';
 import {
   Sheet,
@@ -44,6 +45,7 @@ const navItems = [
   { href: '/members', label: 'Members', icon: Users },
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/transfers', label: 'Transfers', icon: ArrowRightLeft },
+  { href: '/subscription-release', label: 'Subscription Release', icon: ArchiveRestore },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/users', label: 'Users', icon: Users2, adminOnly: true },
 ];

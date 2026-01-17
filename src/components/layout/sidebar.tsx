@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Settings, FileText, CreditCard, ArrowRightLeft, Users2, ChevronRight, Building, DollarSign, Database } from 'lucide-react';
+import { Home, Users, Settings, FileText, CreditCard, ArrowRightLeft, Users2, ChevronRight, Building, DollarSign, Database, ArchiveRestore } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '../logo';
 import { useSession } from 'next-auth/react';
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/members', label: 'Members', icon: Users },
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/transfers', label: 'Transfers', icon: ArrowRightLeft },
+  { href: '/subscription-release', label: 'Subscription Release', icon: ArchiveRestore },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/users', label: 'Users', icon: Users2, adminOnly: true },
 ];

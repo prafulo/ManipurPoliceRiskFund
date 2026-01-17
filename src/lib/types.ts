@@ -87,3 +87,16 @@ export type Transfer = {
   transferDate: Date | string;
   createdAt?: Date | string;
 };
+
+export type SubscriptionRelease = {
+  id: string;
+  memberId: string;
+  amount: number;
+  releaseDate: Date | string;
+  notes?: string;
+  createdAt: Date | string;
+  // For display in table
+  memberName?: string;
+  membershipCode?: string;
+  unitName?: string;
+};
