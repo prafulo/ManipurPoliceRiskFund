@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,7 +12,7 @@ model User {
   email     String   @unique
   name      String
   password  String
-  role      UserRole @default(UnitAdmin)
+  role      UserRole
   unitId    String?
   unit      Unit?    @relation(fields: [unitId], references: [id])
   createdAt DateTime @default(now())
@@ -25,21 +22,19 @@ model User {
 }
 
 model Unit {
-  id            String    @id @default(uuid())
-  name          String    @unique
+  id            String     @id @default(uuid())
+  name          String     @unique
   members       Member[]
   users         User[]
-  transfersFrom Transfer[] @relation("TransferFrom")
-  transfersTo   Transfer[] @relation("TransferTo")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
 
   @@map("units")
 }
 
 model Member {
-  id                    String        @id @default(uuid())
-  membershipCode        String        @unique
+  id                    String         @id @default(uuid())
+  membershipCode        String         @unique
   name                  String
   fatherName            String
   rank                  String
@@ -53,30 +48,29 @@ model Member {
   dateOfEnrollment      DateTime
   superannuationDate    DateTime
   dateOfDischarge       DateTime?
-  address               String        @db.Text
+  address               String
   phone                 String
-  status                MemberStatus  @default(Opened)
+  unitId                String
+  status                MemberStatus
   closureReason         ClosureReason?
-  closureNotes          String?       @db.Text
+  closureNotes          String?
   subscriptionStartDate DateTime
-  nominees              String?       @db.Json
-  firstWitness          String?       @db.Json
-  secondWitness         String?       @db.Json
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  
-  unitId                String
-  unit                  Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  
-  payments              Payment[]
-  transfers             Transfer[]
-  subscriptionReleases  SubscriptionRelease[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  releaseDate           DateTime?
+  releaseAmount         Decimal? @db.Decimal(10, 2)
+  releaseNotes          String?
 
-  @@index([unitId])
+  unit      Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  payments  Payment[]
+  transfers Transfer[]
   @@map("members")
 }
 
@@ -84,14 +78,11 @@ model Payment {
   id          String   @id @default(uuid())
   memberId    String
   amount      Decimal  @db.Decimal(10, 2)
-  months      String   @db.Json
-  paymentDate DateTime
+  months      Json
+  paymentDate DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@index([memberId])
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   @@map("payments")
 }
 
@@ -105,51 +96,25 @@ model Transfer {
   updatedAt    DateTime @updatedAt
 
   member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnit Unit   @relation("TransferFrom", fields: [fromUnitId], references: [id], onDelete: Cascade)
-  toUnit   Unit   @relation("TransferTo", fields: [toUnitId], references: [id], onDelete: Cascade)
-
-  @@index([memberId])
-  @@index([fromUnitId])
-  @@index([toUnitId])
+  fromUnit Unit   @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Restrict)
+  toUnit   Unit   @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Restrict)
   @@map("transfers")
 }
 
 model Setting {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  value     String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  key   String @id
+  value String
   @@map("settings")
 }
 
-model SubscriptionRelease {
-  id          String   @id @default(uuid())
-  memberId    String
-  amount      Decimal  @db.Decimal(10, 2)
-  releaseDate DateTime
-  notes       String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@index([memberId])
-  @@map("subscription_releases")
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
 }
-
 
 enum MemberStatus {
   Opened
   Closed
-}
-
-enum ClosureReason {
-  Retirement
-  Death
-  Doubling
-  Expelled
 }
 
 enum MemberPostType {
@@ -158,7 +123,9 @@ enum MemberPostType {
   Substantive
 }
 
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
+enum ClosureReason {
+  Retirement
+  Death
+  Doubling
+  Expelled
 }
