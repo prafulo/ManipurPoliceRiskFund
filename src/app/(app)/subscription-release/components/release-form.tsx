@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -177,9 +177,9 @@ export function ReleaseForm() {
                 <ArchiveRestore />
                 Release Payment Details
             </CardTitle>
-            <FormDescription className="text-primary-foreground/80 pt-1">
+            <CardDescription className="text-primary-foreground/80 pt-1">
                 Process member subscription payout for retired members.
-            </FormDescription>
+            </CardDescription>
         </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
