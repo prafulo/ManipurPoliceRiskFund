@@ -56,8 +56,12 @@ export default function SubscriptionReleaseReportPage() {
                 paymentsRes.json(),
                 settingsRes.json(),
             ]);
-            setAllMembers(membersData.members);
-            setAllPayments(paymentsData.payments);
+            setAllMembers(membersData.members || []);
+            const parsedPayments = (paymentsData.payments || []).map((p: any) => ({
+                ...p,
+                amount: Number(p.amount)
+            }));
+            setAllPayments(parsedPayments);
             const expiredAmount = settingsData.find((s:any) => s.key === 'expiredReleaseAmount');
             if (expiredAmount) {
                 setExpiredReleaseAmount(Number(expiredAmount.value));
@@ -102,7 +106,11 @@ export default function SubscriptionReleaseReportPage() {
         totalMonthsPaid = memberPayments.reduce((sum, p) => {
           let months = p.months;
           if (typeof months === 'string') {
-              months = JSON.parse(months);
+              try {
+                months = JSON.parse(months);
+              } catch {
+                months = [];
+              }
           }
           return sum + (Array.isArray(months) ? months.length : 0);
         }, 0);
