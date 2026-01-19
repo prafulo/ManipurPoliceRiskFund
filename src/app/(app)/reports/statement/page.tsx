@@ -48,6 +48,7 @@ export default function StatementReportPage() {
 
   useEffect(() => {
     async function loadData() {
+      try {
         const [membersRes, unitsRes] = await Promise.all([
             fetch('/api/members'),
             fetch('/api/units')
@@ -56,8 +57,13 @@ export default function StatementReportPage() {
             membersRes.json(),
             unitsRes.json()
         ]);
-        setMembers(membersData.members);
-        setUnits(unitsData.units);
+        setMembers(membersData?.members || []);
+        setUnits(unitsData?.units || []);
+      } catch (error) {
+        console.error("Failed to load report data:", error);
+        setMembers([]);
+        setUnits([]);
+      }
     }
     loadData();
   }, []);
@@ -134,7 +140,7 @@ export default function StatementReportPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, members, units]);
 
-  const loading = !members.length || !units.length;
+  const loading = !members.length && !units.length && reportLoading;
 
   if (loading) {
     return <div>Loading data...</div>;
