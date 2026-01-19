@@ -64,9 +64,9 @@ export function ReleaseForm() {
             const [unitsData, membersData, paymentsData] = await Promise.all([
                 unitsRes.json(), membersRes.json(), paymentsRes.json()
             ]);
-            setUnits(unitsData.units);
-            setAllMembers(membersData.members);
-            setAllPayments(paymentsData.payments.map((p: any) => ({...p, amount: Number(p.amount)})));
+            setUnits(unitsData?.units || []);
+            setAllMembers(membersData?.members || []);
+            setAllPayments(paymentsData?.payments?.map((p: any) => ({...p, amount: Number(p.amount)})) || []);
         } catch (error) {
             console.error("Failed to load data for release form", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load required data.' });
