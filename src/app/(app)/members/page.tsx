@@ -30,14 +30,17 @@ export default function MembersPage() {
     async function loadData() {
         try {
             const { members, units } = await fetchData();
-            const unitsMap = new Map(units.map((unit: Unit) => [unit.id, unit.name]));
-            const allMembers = members.map((member: Member) => ({
+            const safeUnits = units || [];
+            const safeMembers = members || [];
+            const unitsMap = new Map(safeUnits.map((unit: Unit) => [unit.id, unit.name]));
+            const allMembers = safeMembers.map((member: Member) => ({
                 ...member,
                 unitName: unitsMap.get(member.unitId) || 'N/A',
             }));
             setEnrichedMembers(allMembers);
         } catch (error) {
             console.error("Failed to fetch members data", error);
+            setEnrichedMembers([]);
         } finally {
             setIsLoading(false);
         }
