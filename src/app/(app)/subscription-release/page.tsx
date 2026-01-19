@@ -17,7 +17,7 @@ async function fetchData(): Promise<Member[]> {
     // Prisma returns Decimal as a string in JSON, so we convert it to a number.
     return data.releases.map((r: any) => ({
       ...r,
-      amount: Number(r.releaseAmount)
+      releaseAmount: r.releaseAmount ? Number(r.releaseAmount) : null
     }));
 }
 
