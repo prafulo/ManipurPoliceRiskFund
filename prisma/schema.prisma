@@ -1,3 +1,5 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
   provider = "mysql"
@@ -15,10 +17,11 @@ model User {
   password  String
   role      UserRole
   unitId    String?  @map("unit_id")
-  unit      Unit?    @relation("UnitUsers", fields: [unitId], references: [id])
+  unit      Unit?    @relation("UnitUsers", fields: [unitId], references: [id], onDelete: Restrict)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([unitId])
   @@map("User")
 }
 
@@ -28,6 +31,7 @@ model Unit {
   members Member[] @relation("UnitMembers")
   users   User[]   @relation("UnitUsers")
 
+  // For transfers
   transfersFrom Transfer[] @relation("FromUnit")
   transfersTo   Transfer[] @relation("ToUnit")
 
@@ -66,15 +70,17 @@ model Member {
   createdAt             DateTime       @default(now()) @map("created_at")
   updatedAt             DateTime       @updatedAt @map("updated_at")
   
-  releaseDate           DateTime?
+  releaseDate           DateTime?      @db.Date
   releaseAmount         Decimal?       @db.Decimal(10, 2)
-  releaseNotes          String?
+  releaseNotes          String?        @db.Text
 
-  unitId    String
+  unitId    String     @map("unit_id")
   unit      Unit       @relation("UnitMembers", fields: [unitId], references: [id], onDelete: Restrict)
+
   payments  Payment[]
   transfers Transfer[]
 
+  @@index([unitId])
   @@map("members")
 }
 
@@ -85,8 +91,10 @@ model Payment {
   months      Json
   paymentDate DateTime @map("payment_date")
   createdAt   DateTime @default(now()) @map("created_at")
+  
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
+  @@index([memberId])
   @@map("payments")
 }
 
@@ -97,17 +105,21 @@ model Transfer {
   toUnitId     String   @map("to_unit_id")
   transferDate DateTime @db.Date @map("transfer_date")
   createdAt    DateTime @default(now()) @map("created_at")
+
   member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Restrict)
   toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Restrict)
 
+  @@index([memberId])
+  @@index([fromUnitId])
+  @@index([toUnitId])
   @@map("transfers")
 }
 
 model Setting {
-  key   String @id
-  value String
-
+  key       String   @id @map("key")
+  value     String
+  
   @@map("settings")
 }
 
