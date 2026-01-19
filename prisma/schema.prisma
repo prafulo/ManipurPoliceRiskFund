@@ -1,5 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
   provider = "mysql"
@@ -10,40 +8,32 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ===================================
-// User and Auth Models
-// ===================================
-
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
+  id        String   @id @default(uuid())
+  email     String   @unique
   name      String
   password  String
-  role      UserRole  @default(UnitAdmin)
+  role      UserRole
   unitId    String?
-  unit      unit?     @relation(fields: [unitId], references: [id])
-
-  @@map("users")
+  unit      Unit?    @relation("UnitUsers", fields: [unitId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-// ===================================
-// Core Application Models
-// ===================================
+model Unit {
+  id      String   @id @default(uuid())
+  name    String   @unique
+  members Member[] @relation("UnitMembers")
+  users   User[]   @relation("UnitUsers")
 
-model unit {
-  id            String      @id @default(uuid())
-  name          String      @unique
-  members       Member[]
-  users         User[]
-  transfersFrom Transfer[]  @relation("FromUnit")
-  transfersTo   Transfer[]  @relation("ToUnit")
-
-  @@map("units")
+  // For transfers
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
 }
 
 model Member {
-  id                    String            @id @default(uuid())
-  membershipCode        String            @unique
+  id                    String         @id @default(uuid())
+  membershipCode        String         @unique
   name                  String
   fatherName            String
   rank                  String
@@ -59,78 +49,61 @@ model Member {
   dateOfDischarge       DateTime?
   address               String
   phone                 String
-  status                MemberStatus      @default(Opened)
+  status                MemberStatus   @default(Opened)
   closureReason         ClosureReason?
-  closureNotes          String?           @db.Text
+  closureNotes          String?
   subscriptionStartDate DateTime
-  nominees              Json?
-  firstWitness          Json?
-  secondWitness         Json?
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  
+  // New fields for release
   releaseDate           DateTime?
-  releaseAmount         Decimal?
-  releaseNotes          String?           @db.Text
-  
-  unitId                String
-  unit                  unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  
-  payments              Payment[]
-  transfers             Transfer[]
+  releaseAmount         Decimal?       @db.Decimal(10, 2)
+  releaseNotes          String?
 
-  @@map("members")
+  unitId    String
+  unit      Unit       @relation("UnitMembers", fields: [unitId], references: [id], onDelete: Restrict)
+  payments  Payment[]
+  transfers Transfer[]
 }
 
 model Payment {
   id          String   @id @default(uuid())
-  memberId    String
   amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime
   months      Json
+  paymentDate DateTime @default(now())
   createdAt   DateTime @default(now())
-  
+  updatedAt   DateTime @updatedAt
+  memberId    String
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@map("payments")
 }
 
 model Transfer {
   id           String   @id @default(uuid())
-  memberId     String
-  fromUnitId   String
-  toUnitId     String
   transferDate DateTime
   createdAt    DateTime @default(now())
-
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  fromUnit unit   @relation(fields: [fromUnitId], references: [id], name: "FromUnit")
-  toUnit   unit   @relation(fields: [toUnitId], references: [id], name: "ToUnit")
-
-  @@map("transfers")
+  updatedAt    DateTime @updatedAt
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnitId   String
+  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id], onDelete: Restrict)
+  toUnitId     String
+  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id], onDelete: Restrict)
 }
 
 model Setting {
   id        String   @id @default(uuid())
   key       String   @unique
-  value     String   @db.Text
+  value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("settings")
-}
-
-
-// ===================================
-// Enums
-// ===================================
-
-enum UserRole {
-  SuperAdmin
-  UnitAdmin
 }
 
 enum MemberStatus {
@@ -149,4 +122,9 @@ enum MemberPostType {
   Officiating
   Temporary
   Substantive
+}
+
+enum UserRole {
+  SuperAdmin
+  UnitAdmin
 }
