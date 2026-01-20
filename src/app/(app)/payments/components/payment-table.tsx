@@ -160,7 +160,7 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
                     <TableCell>{payment.membershipCode}</TableCell>
                     <TableCell>{payment.unitName}</TableCell>
                     <TableCell>{format(toDate(payment.paymentDate), 'PP')}</TableCell>
-                    <TableCell>₹{Number(payment.amount).toFixed(2)}</TableCell>
+                    <TableCell>Rs. {Number(payment.amount).toFixed(2)}</TableCell>
                     <TableCell>{formatMonths(payment.months)}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>

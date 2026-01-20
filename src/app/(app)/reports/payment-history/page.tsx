@@ -255,11 +255,11 @@ export default function PaymentHistoryReportPage() {
                                     <TableCell>{row.memberCode}</TableCell>
                                     <TableCell>{row.rank}</TableCell>
                                     <TableCell>{row.name}</TableCell>
-                                    <TableCell className="text-right">₹{row.subscription.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right">₹{row.arrear.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right font-semibold">₹{row.totalPayable.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right text-green-600">₹{row.received.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right font-semibold">₹{row.balance.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">Rs. {row.subscription.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right">Rs. {row.arrear.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-semibold">Rs. {row.totalPayable.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right text-green-600">Rs. {row.received.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-semibold">Rs. {row.balance.toFixed(2)}</TableCell>
                                 </TableRow>
                             ))
                         ) : (
@@ -273,18 +273,18 @@ export default function PaymentHistoryReportPage() {
                     <TableFooter>
                          <TableRow className="font-bold bg-muted/50">
                             <TableCell colSpan={4} className="text-right">TOTAL</TableCell>
-                            <TableCell className="text-right">₹{totals.subscription.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">₹{totals.arrear.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">₹{totals.totalPayable.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">₹{totals.received.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">₹{totals.balance.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">Rs. {totals.subscription.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">Rs. {totals.arrear.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">Rs. {totals.totalPayable.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">Rs. {totals.received.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">Rs. {totals.balance.toFixed(2)}</TableCell>
                          </TableRow>
                     </TableFooter>
                 </Table>
             </CardContent>
         </Card>
         <div className="mt-4 text-right pr-4 font-semibold print:block hidden">
-            <p>₹{totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
+            <p>Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
         </div>
         <div className="text-right mt-12 print:block hidden">
             <p>(Ningshen Worngam), IPS</p>

@@ -243,7 +243,7 @@ export default function SubscriptionReleaseReportPage() {
                                     <TableCell>{row.name}</TableCell>
                                     <TableCell>{format(row.closureDate, 'PP')}</TableCell>
                                     <TableCell className="text-right">{row.totalMonthsPaid}</TableCell>
-                                    <TableCell className="text-right font-semibold">₹{row.totalAmountPaid.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-semibold">Rs. {row.totalAmountPaid.toFixed(2)}</TableCell>
                                     <TableCell>{row.remark}</TableCell>
                                 </TableRow>
                             ))
@@ -258,7 +258,7 @@ export default function SubscriptionReleaseReportPage() {
                     <TableFooter>
                          <TableRow className="font-bold bg-muted/50">
                             <TableCell colSpan={6} className="text-right">GRAND TOTAL</TableCell>
-                            <TableCell className="text-right">₹{totals.totalAmountPaid.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">Rs. {totals.totalAmountPaid.toFixed(2)}</TableCell>
                             <TableCell></TableCell>
                          </TableRow>
                     </TableFooter>

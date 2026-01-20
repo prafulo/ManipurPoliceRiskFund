@@ -289,7 +289,7 @@ export function BulkPaymentForm() {
                                         </TableCell>
                                     );
                                 })}
-                                <TableCell className="sticky right-0 bg-background z-10 text-right font-bold">₹{rowTotal.toFixed(2)}</TableCell>
+                                <TableCell className="sticky right-0 bg-background z-10 text-right font-bold">Rs. {rowTotal.toFixed(2)}</TableCell>
                             </TableRow>
                         )}) : (
                             <TableRow>
@@ -309,7 +309,7 @@ export function BulkPaymentForm() {
             <div className="flex items-center gap-6">
                 <div className="text-right">
                     <p className="text-sm text-muted-foreground">Total Amount</p>
-                    <p className="text-2xl font-bold text-primary">₹{totalAmount.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-primary">Rs. {totalAmount.toFixed(2)}</p>
                 </div>
                 <Button onClick={handleMakePayment} disabled={isSaving || totalAmount === 0}>
                     {isSaving ? 'Saving...' : <><FileSpreadsheet className="mr-2"/> Make Payment</>}

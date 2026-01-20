@@ -153,7 +153,7 @@ export function ReleaseForm() {
 
   if (loading) {
     return (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg max-w-4xl mx-auto">
             <CardContent className="p-8 space-y-6">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
@@ -169,7 +169,7 @@ export function ReleaseForm() {
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg max-w-4xl mx-auto">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="p-6 md:p-8 space-y-6">
@@ -227,26 +227,18 @@ export function ReleaseForm() {
 
             {selectedMember && (
                 <div className="space-y-4 pt-2">
-                    <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-slate-800/50 rounded-lg border border-blue-200 dark:border-slate-700">
-                        <Info className="text-blue-600 dark:text-blue-400 h-5 w-5 mt-0.5" />
-                        <div>
-                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                            Superannuation Date
-                        </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Retired on {selectedMember.dateOfDischarge ? format(new Date(selectedMember.dateOfDischarge), 'PPP') : 'N/A'}
-                        </p>
-                        </div>
-                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Retired on {selectedMember.dateOfDischarge ? format(new Date(selectedMember.dateOfDischarge), 'PPP') : 'N/A'}
+                    </p>
                     <div className="space-y-1">
                         <Label htmlFor="total-amount">Total Amount to be released</Label>
                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">₹</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rs.</span>
                             <Input 
                                 id="total-amount"
                                 readOnly
                                 value={totalAmount.toFixed(2)}
-                                className="pl-8 font-bold text-lg bg-muted/50 cursor-not-allowed"
+                                className="pl-10 font-bold text-lg bg-muted/50 cursor-not-allowed"
                             />
                             <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4"/>
                         </div>
