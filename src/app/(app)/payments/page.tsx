@@ -7,6 +7,8 @@ import { PaymentTable } from "./components/payment-table";
 import type { Payment } from "@/lib/types";
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 
 async function fetchData(): Promise<Payment[]> {
     const res = await fetch('/api/payments');
@@ -16,6 +18,33 @@ async function fetchData(): Promise<Payment[]> {
       ...p,
       amount: Number(p.amount)
     }));
+}
+
+function PaymentsPageSkeleton() {
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <Skeleton className="h-9 w-48" />
+                    <Skeleton className="h-5 w-72 mt-2" />
+                </div>
+                <div className="flex gap-2">
+                    <Skeleton className="h-10 w-36" />
+                    <Skeleton className="h-10 w-32" />
+                </div>
+            </div>
+            <Card>
+                <CardContent className="p-0">
+                    <div className="p-4">
+                        <Skeleton className="h-10 max-w-sm" />
+                    </div>
+                    <div className="border-t p-4 space-y-2">
+                        {[...Array(5)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
 }
 
 export default function PaymentsPage() {
@@ -64,7 +93,7 @@ export default function PaymentsPage() {
   };
 
   if (isLoading) {
-    return <div>Loading payments...</div>;
+    return <PaymentsPageSkeleton />;
   }
 
   return (

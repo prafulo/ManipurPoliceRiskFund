@@ -7,6 +7,8 @@ import Link from "next/link";
 import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Member, Unit } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 
 
 async function fetchData() {
@@ -19,6 +21,52 @@ async function fetchData() {
         unitsRes.json()
     ]);
     return { members: membersData.members, units: unitsData.units };
+}
+
+function MembersPageSkeleton() {
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <Skeleton className="h-9 w-48" />
+                    <Skeleton className="h-5 w-72 mt-2" />
+                </div>
+                <Skeleton className="h-10 w-32" />
+            </div>
+
+            <Tabs defaultValue="opened">
+                <TabsList className="grid w-full grid-cols-2 max-w-md">
+                    <TabsTrigger value="opened">Opened</TabsTrigger>
+                    <TabsTrigger value="closed">Closed</TabsTrigger>
+                </TabsList>
+                <TabsContent value="opened" className="mt-4">
+                    <Card>
+                        <CardContent className="p-0">
+                            <div className="p-4">
+                                <Skeleton className="h-10 max-w-sm" />
+                            </div>
+                            <div className="border-t p-4 space-y-2">
+                                {[...Array(5)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                 <TabsContent value="closed" className="mt-4">
+                    <Card>
+                        <CardContent className="p-0">
+                            <div className="p-4">
+                                <Skeleton className="h-10 max-w-sm" />
+                            </div>
+                            <div className="border-t p-4 space-y-2">
+                               <Skeleton className="h-12 w-full" />
+                               <Skeleton className="h-12 w-full" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+        </div>
+    );
 }
 
 
@@ -50,7 +98,7 @@ export default function MembersPage() {
 
 
   if (isLoading) {
-    return <div>Loading members...</div>;
+    return <MembersPageSkeleton />;
   }
 
   const openMembers = enrichedMembers.filter(m => m.status === 'Opened');

@@ -4,6 +4,7 @@ import { ClientOnlyMemberForm } from "../components/client-only-member-form";
 import { notFound } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import type { Member } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 async function getMember(id: string): Promise<Member | null> {
     const res = await fetch(`/api/members/${id}`);
@@ -12,6 +13,29 @@ async function getMember(id: string): Promise<Member | null> {
     }
     const data = await res.json();
     return data.member;
+}
+
+function EditMemberPageSkeleton() {
+  return (
+    <div>
+      <div className="mb-6">
+        <Skeleton className="h-9 w-72" />
+        <Skeleton className="h-5 w-96 mt-2" />
+      </div>
+      <div className="space-y-8 p-8 border rounded-lg bg-card">
+        <Skeleton className="h-10 w-1/3" />
+        <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+        </div>
+         <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function EditMemberPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,7 +60,7 @@ export default function EditMemberPage({ params }: { params: Promise<{ id: strin
   }, [id]);
 
   if (loading) {
-    return <div>Loading member data...</div>;
+    return <EditMemberPageSkeleton />;
   }
 
   if (!member && !loading) {
