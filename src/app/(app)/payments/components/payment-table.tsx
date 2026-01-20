@@ -53,8 +53,11 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
   const rowsPerPage = 10;
 
   const filteredAndSortedData = React.useMemo(() => {
+    const lowercasedFilter = filter.toLowerCase();
     let result = data.filter(payment =>
-      payment.memberName.toLowerCase().includes(filter.toLowerCase())
+      payment.memberName.toLowerCase().includes(lowercasedFilter) ||
+      payment.membershipCode.toLowerCase().includes(lowercasedFilter) ||
+      payment.unitName.toLowerCase().includes(lowercasedFilter)
     );
 
     if (sortKey) {
@@ -124,7 +127,7 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
       <CardContent className="p-0">
         <div className="p-4">
           <Input
-            placeholder="Filter by name..."
+            placeholder="Filter by name, code, or unit..."
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
@@ -157,7 +160,7 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
                     <TableCell>{payment.membershipCode}</TableCell>
                     <TableCell>{payment.unitName}</TableCell>
                     <TableCell>{format(toDate(payment.paymentDate), 'PP')}</TableCell>
-                    <TableCell>₹{payment.amount.toFixed(2)}</TableCell>
+                    <TableCell>₹{Number(payment.amount).toFixed(2)}</TableCell>
                     <TableCell>{formatMonths(payment.months)}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>

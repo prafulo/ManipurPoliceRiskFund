@@ -16,7 +16,7 @@ import type { Transfer } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 
-type EnrichedTransfer = Transfer & { fromUnitName: string, toUnitName: string };
+type EnrichedTransfer = Transfer & { fromUnitName: string, toUnitName: string, membershipCode: string };
 type SortKey = keyof EnrichedTransfer | '';
 type SortDirection = 'asc' | 'desc';
 
@@ -32,8 +32,12 @@ export function TransferTable({ data }: TransferTableProps) {
   const rowsPerPage = 10;
 
   const filteredAndSortedData = React.useMemo(() => {
+    const lowercasedFilter = filter.toLowerCase();
     let result = data.filter(transfer =>
-      transfer.memberName.toLowerCase().includes(filter.toLowerCase())
+      transfer.memberName.toLowerCase().includes(lowercasedFilter) ||
+      transfer.membershipCode.toLowerCase().includes(lowercasedFilter) ||
+      transfer.fromUnitName.toLowerCase().includes(lowercasedFilter) ||
+      transfer.toUnitName.toLowerCase().includes(lowercasedFilter)
     );
 
     if (sortKey) {
@@ -74,6 +78,7 @@ export function TransferTable({ data }: TransferTableProps) {
   
   const headers: { key: SortKey; label: string }[] = [
     { key: 'memberName', label: 'Member Name' },
+    { key: 'membershipCode', label: 'Code' },
     { key: 'fromUnitName', label: 'From Unit' },
     { key: 'toUnitName', label: 'To Unit' },
     { key: 'transferDate', label: 'Transfer Date' },
@@ -88,7 +93,7 @@ export function TransferTable({ data }: TransferTableProps) {
       <CardContent className="p-0">
         <div className="p-4">
           <Input
-            placeholder="Filter by member name..."
+            placeholder="Filter by name, code, or unit..."
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
@@ -116,6 +121,7 @@ export function TransferTable({ data }: TransferTableProps) {
                 paginatedData.map((transfer) => (
                   <TableRow key={transfer.id}>
                     <TableCell className="font-medium">{transfer.memberName}</TableCell>
+                    <TableCell>{transfer.membershipCode}</TableCell>
                     <TableCell>{transfer.fromUnitName}</TableCell>
                     <TableCell>{transfer.toUnitName}</TableCell>
                     <TableCell>{format(toDate(transfer.transferDate), 'PP')}</TableCell>

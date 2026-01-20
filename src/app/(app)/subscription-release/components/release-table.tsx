@@ -20,7 +20,7 @@ type SortKey = keyof Member | 'unitName' | '';
 type SortDirection = 'asc' | 'desc';
 
 interface ReleaseTableProps {
-  data: Member[];
+  data: any[];
 }
 
 export function ReleaseTable({ data }: ReleaseTableProps) {
@@ -31,8 +31,11 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
   const rowsPerPage = 10;
 
   const filteredAndSortedData = React.useMemo(() => {
+    const lowercasedFilter = filter.toLowerCase();
     let result = data.filter(release =>
-      release.name?.toLowerCase().includes(filter.toLowerCase())
+      (release.name?.toLowerCase().includes(lowercasedFilter)) ||
+      (release.membershipCode?.toLowerCase().includes(lowercasedFilter)) ||
+      (release.unitName?.toLowerCase().includes(lowercasedFilter))
     );
 
     if (sortKey) {
@@ -74,6 +77,7 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
   const headers: { key: SortKey; label: string }[] = [
     { key: 'name', label: 'Member Name' },
     { key: 'membershipCode', label: 'Code' },
+    { key: 'unitName', label: 'Unit' },
     { key: 'releaseDate', label: 'Release Date' },
     { key: 'releaseAmount', label: 'Amount' },
     { key: 'releaseNotes', label: 'Notes' },
@@ -88,7 +92,7 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
       <CardContent className="p-0">
         <div className="p-4">
           <Input
-            placeholder="Filter by member name..."
+            placeholder="Filter by name, code, or unit..."
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
@@ -103,7 +107,7 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
               <TableRow>
                 {headers.map(header => (
                   <TableHead key={header.key}>
-                    <Button variant="ghost" onClick={() => handleSort(header.key as keyof Member)}>
+                    <Button variant="ghost" onClick={() => handleSort(header.key as any)}>
                       {header.label}
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -117,8 +121,9 @@ export function ReleaseTable({ data }: ReleaseTableProps) {
                   <TableRow key={release.id}>
                     <TableCell className="font-medium">{release.name}</TableCell>
                     <TableCell>{release.membershipCode}</TableCell>
+                    <TableCell>{release.unitName}</TableCell>
                     <TableCell>{release.releaseDate ? format(toDate(release.releaseDate), 'PP') : ''}</TableCell>
-                    <TableCell>₹{release.releaseAmount ? release.releaseAmount.toFixed(2) : '0.00'}</TableCell>
+                    <TableCell>₹{release.releaseAmount ? Number(release.releaseAmount).toFixed(2) : '0.00'}</TableCell>
                     <TableCell className="max-w-xs truncate">{release.releaseNotes}</TableCell>
                   </TableRow>
                 ))

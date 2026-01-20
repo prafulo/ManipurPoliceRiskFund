@@ -5,7 +5,7 @@ export async function GET(request: Request) {
     try {
         const transfers = await prisma.transfer.findMany({
             include: {
-                member: { select: { name: true } },
+                member: { select: { name: true, membershipCode: true } },
                 fromUnit: { select: { name: true } },
                 toUnit: { select: { name: true } },
             },
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
             transferDate: t.transferDate,
             createdAt: t.createdAt,
             memberName: t.member.name,
+            membershipCode: t.member.membershipCode,
             fromUnitName: t.fromUnit.name,
             toUnitName: t.toUnit.name,
         }));
