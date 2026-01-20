@@ -30,7 +30,7 @@ export function Logo({ className }: { className?: string }) {
       <g>
         {/* Kanglasha (Simplified) */}
         <g 
-            transform="translate(-13.5, -15) scale(1.3)"
+            transform="scale(1.6) translate(-21.8, -19.8)"
             stroke="#dcb349" 
             strokeWidth="2" 
             strokeLinecap="round" 
