@@ -102,7 +102,7 @@ export default function SubscriptionReleaseReportPage() {
         totalMonthsPaid = 'N/A';
       } else {
         const memberPayments = allPayments.filter(p => p.memberId === member.id);
-        totalAmountPaid = memberPayments.reduce((sum, p) => sum + p.amount, 0);
+        totalAmountPaid = memberPayments.reduce((sum, p) => sum + Number(p.amount), 0);
         totalMonthsPaid = memberPayments.reduce((sum, p) => {
           let months = p.months;
           if (typeof months === 'string') {
@@ -122,7 +122,7 @@ export default function SubscriptionReleaseReportPage() {
         name: member.name,
         closureDate: toDate(member.dateOfDischarge!),
         totalMonthsPaid,
-        totalAmountPaid,
+        totalAmountPaid: Number(totalAmountPaid) || 0,
         remark: member.closureReason || 'N/A',
       };
     });
@@ -140,7 +140,7 @@ export default function SubscriptionReleaseReportPage() {
 
   const totals = useMemo(() => {
     return reportData.reduce((acc, row) => ({
-      totalAmountPaid: acc.totalAmountPaid + row.totalAmountPaid,
+      totalAmountPaid: acc.totalAmountPaid + Number(row.totalAmountPaid),
     }), { totalAmountPaid: 0 });
   }, [reportData]);
 
@@ -243,7 +243,7 @@ export default function SubscriptionReleaseReportPage() {
                                     <TableCell>{row.name}</TableCell>
                                     <TableCell>{format(row.closureDate, 'PP')}</TableCell>
                                     <TableCell className="text-right">{row.totalMonthsPaid}</TableCell>
-                                    <TableCell className="text-right font-semibold">{row.totalAmountPaid.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-semibold">₹{row.totalAmountPaid.toFixed(2)}</TableCell>
                                     <TableCell>{row.remark}</TableCell>
                                 </TableRow>
                             ))
@@ -258,7 +258,7 @@ export default function SubscriptionReleaseReportPage() {
                     <TableFooter>
                          <TableRow className="font-bold bg-muted/50">
                             <TableCell colSpan={6} className="text-right">GRAND TOTAL</TableCell>
-                            <TableCell className="text-right">{totals.totalAmountPaid.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">₹{totals.totalAmountPaid.toFixed(2)}</TableCell>
                             <TableCell></TableCell>
                          </TableRow>
                     </TableFooter>
