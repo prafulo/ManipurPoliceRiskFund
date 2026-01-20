@@ -43,7 +43,7 @@ export function Sidebar() {
           </div>
         </Link>
       </div>
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           if (item.adminOnly && role !== 'SuperAdmin') {
             return null;
