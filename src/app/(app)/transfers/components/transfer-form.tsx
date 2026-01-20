@@ -21,14 +21,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ArrowRightLeft } from 'lucide-react';
+import { CalendarIcon, ArrowRightLeft, ChevronsUpDown, Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { Member, Unit, Transfer } from '@/lib/types';
+import type { Member, Unit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const formSchema = z.object({
@@ -55,6 +57,10 @@ export function TransferForm({}: TransferFormProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // For searchable member select
+  const [openMemberSelect, setOpenMemberSelect] = useState(false);
+  const [memberSearch, setMemberSearch] = useState("");
 
   useEffect(() => {
     async function loadData() {
@@ -96,6 +102,13 @@ export function TransferForm({}: TransferFormProps) {
   const selectedMemberId = form.watch('memberId');
   const selectedMember = members?.find(m => m.id === selectedMemberId);
   const fromUnit = units?.find(u => u.id === selectedMember?.unitId);
+
+  const filteredMembers = members.filter(member => 
+    member.status === 'Opened' && 
+    (member.name.toLowerCase().includes(memberSearch.toLowerCase()) || 
+     member.membershipCode.toLowerCase().includes(memberSearch.toLowerCase()))
+  );
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!selectedMember || !fromUnit) {
@@ -142,26 +155,78 @@ export function TransferForm({}: TransferFormProps) {
           </CardHeader>
           <CardContent className="p-6 md:p-8 space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-start">
-              <FormField
+               <FormField
                 control={form.control}
                 name="memberId"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Select Member</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a member to transfer" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {members?.filter(m => m.status === 'Opened').map(member => (
-                          <SelectItem key={member.id} value={member.id}>
-                            {member.name} ({member.membershipCode})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openMemberSelect} onOpenChange={(isOpen) => {
+                      setOpenMemberSelect(isOpen);
+                      if (!isOpen) {
+                        setMemberSearch("");
+                      }
+                    }}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openMemberSelect}
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? members.find(
+                                  (member) => member.id === field.value
+                                )?.name
+                              : "Select a member to transfer"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Input 
+                            placeholder="Search by name or code..."
+                            className="h-9 m-1 w-[calc(100%-0.5rem)]"
+                            value={memberSearch}
+                            onChange={(e) => setMemberSearch(e.target.value)}
+                          />
+                          <ScrollArea className="h-72">
+                            {filteredMembers.length > 0 ? filteredMembers.map((member) => (
+                                <div
+                                  key={member.id}
+                                  onClick={() => {
+                                    form.setValue("memberId", member.id === field.value ? "" : member.id);
+                                    setOpenMemberSelect(false);
+                                    setMemberSearch("");
+                                  }}
+                                  className="text-sm p-2 flex items-center hover:bg-accent cursor-pointer"
+                                >
+                                   <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      member.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  <div>
+                                    <div>{member.name}</div>
+                                    <div className="text-xs text-muted-foreground">{member.membershipCode}</div>
+                                  </div>
+                                </div>
+                              )) : (
+                                <div className="p-2 text-center text-sm text-muted-foreground">
+                                    No member found.
+                                </div>
+                              )
+                            }
+                          </ScrollArea>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
