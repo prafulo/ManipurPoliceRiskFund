@@ -66,7 +66,8 @@ export function ReleaseForm() {
             ]);
             setUnits(unitsData?.units || []);
             setAllMembers(membersData?.members || []);
-            setAllPayments(paymentsData?.payments?.map((p: any) => ({...p, amount: Number(p.amount)})) || []);
+            const parsedPayments = (paymentsData.payments || []).map((p: any) => ({...p, amount: Number(p.amount)}));
+            setAllPayments(parsedPayments);
         } catch (error) {
             console.error("Failed to load data for release form", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load required data.' });
@@ -152,11 +153,7 @@ export function ReleaseForm() {
 
   if (loading) {
     return (
-        <Card className="shadow-lg max-w-lg mx-auto">
-            <CardHeader className="bg-primary text-primary-foreground p-6">
-                 <Skeleton className="h-8 w-3/4 bg-primary/50" />
-                 <Skeleton className="h-4 w-1/2 bg-primary/50" />
-            </CardHeader>
+        <Card className="shadow-lg">
             <CardContent className="p-8 space-y-6">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
@@ -164,27 +161,18 @@ export function ReleaseForm() {
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-24 w-full" />
             </CardContent>
-            <CardFooter className="p-8">
-                 <Skeleton className="h-12 w-full" />
+            <CardFooter className="p-6 border-t flex justify-end">
+                 <Skeleton className="h-10 w-32" />
             </CardFooter>
         </Card>
     );
   }
 
   return (
-    <Card className="shadow-xl max-w-lg mx-auto">
-        <CardHeader className="bg-primary p-6">
-            <CardTitle className="text-white text-2xl font-bold flex items-center gap-3">
-                <ArchiveRestore />
-                Release Payment Details
-            </CardTitle>
-            <CardDescription className="text-primary-foreground/80 pt-1">
-                Process member subscription payout for retired members.
-            </CardDescription>
-        </CardHeader>
+    <Card className="shadow-lg">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="p-8 space-y-6">
+          <CardContent className="p-6 md:p-8 space-y-6">
             <FormField
               control={form.control}
               name="unitId"
@@ -301,9 +289,9 @@ export function ReleaseForm() {
               )}
             />
           </CardContent>
-          <CardFooter className="p-8 pt-2">
-            <Button type="submit" className="w-full" size="lg" disabled={!selectedMember || totalAmount <= 0}>
-              <CheckCircle className="mr-2 h-5 w-5" />
+          <CardFooter className="flex justify-end p-6 border-t mt-6">
+            <Button type="submit" disabled={!selectedMember || totalAmount <= 0}>
+              <CheckCircle className="mr-2 h-4 w-4" />
               Release Payment
             </Button>
           </CardFooter>
