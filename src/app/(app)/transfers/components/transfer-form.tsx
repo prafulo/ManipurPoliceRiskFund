@@ -188,12 +188,14 @@ export function TransferForm({}: TransferFormProps) {
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                          <Input 
-                            placeholder="Search by name or code..."
-                            className="h-9 m-1 w-[calc(100%-0.5rem)]"
-                            value={memberSearch}
-                            onChange={(e) => setMemberSearch(e.target.value)}
-                          />
+                          <div className="p-2 border-b">
+                            <Input 
+                              placeholder="Search by name or code..."
+                              className="h-9"
+                              value={memberSearch}
+                              onChange={(e) => setMemberSearch(e.target.value)}
+                            />
+                          </div>
                           <ScrollArea className="h-72">
                             {filteredMembers.length > 0 ? filteredMembers.map((member) => (
                                 <div
