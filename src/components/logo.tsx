@@ -28,11 +28,15 @@ export function Logo({ className }: { className?: string }) {
       
       {/* Central Artwork */}
       <g>
-        {/* Outer Circle */}
-        <circle cx="45" cy="50" r="30" fill="none" stroke="#dcb349" strokeWidth="2.5" />
-        
         {/* Kanglasha (Simplified) */}
-        <g stroke="#dcb349" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <g 
+            transform="translate(-13.5, -15) scale(1.3)"
+            stroke="#dcb349" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            fill="none"
+        >
           {/* Head & Antlers */}
           <path d="M50 38 C48 35, 42 35, 40 38" />
           <path d="M41 38 C40 33, 37 32, 37 32 M37 32 L35 30 M37 32 L35 34" />
