@@ -28,7 +28,7 @@ function AppSkeleton() {
           <Skeleton className="h-8 w-full" />
         </div>
       </div>
-      <div className="flex flex-col">
+      <div className="flex flex-col overflow-hidden">
         {/* Header Skeleton */}
         <header className="flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6 sticky top-0 z-30">
             <div className="flex w-full items-center gap-4 md:ml-auto">
@@ -68,7 +68,7 @@ export default function AppLayout({
   return (
     <div className="grid h-screen w-full md:grid-cols-[256px_1fr]">
       <Sidebar />
-      <div className="flex flex-col">
+      <div className="flex flex-col overflow-hidden">
         <ClientOnlyHeader />
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background overflow-y-auto">
           {children}
