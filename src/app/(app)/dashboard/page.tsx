@@ -7,20 +7,31 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Users, UserCheck, UserX, Landmark } from 'lucide-react';
-import type { Member, Unit } from '@/lib/types';
+import type { Member, Unit, Payment, Transfer } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RecentActivity } from './components/recent-activity';
+import { UnitSubscriptionChart } from './components/unit-pie-chart';
 
 async function fetchData() {
-  const [membersRes, unitsRes] = await Promise.all([
+  const [membersRes, unitsRes, paymentsRes, transfersRes] = await Promise.all([
     fetch('/api/members'),
-    fetch('/api/units')
+    fetch('/api/units'),
+    fetch('/api/payments'),
+    fetch('/api/transfers')
   ]);
-  const [membersData, unitsData] = await Promise.all([
+  const [membersData, unitsData, paymentsData, transfersData] = await Promise.all([
     membersRes.json(),
-    unitsRes.json()
+    unitsRes.json(),
+    paymentsRes.json(),
+    transfersRes.json()
   ]);
-  return { members: membersData.members, units: unitsData.units };
+  return { 
+    members: membersData.members, 
+    units: unitsData.units,
+    payments: paymentsData.payments,
+    transfers: transfersData.transfers
+  };
 }
 
 function DashboardSkeleton() {
@@ -70,14 +81,18 @@ function DashboardSkeleton() {
 export default function Dashboard() {
   const [members, setMembers] = useState<Member[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const { members, units } = await fetchData();
-        setMembers(members);
-        setUnits(units);
+        const { members, units, payments, transfers } = await fetchData();
+        setMembers(members || []);
+        setUnits(units || []);
+        setPayments(payments || []);
+        setTransfers(transfers || []);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -96,31 +111,6 @@ export default function Dashboard() {
 
   if (loading) {
     return <DashboardSkeleton />;
-  }
-  
-  function timeAgo(date: Date) {
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    let interval = seconds / 31536000;
-    if (interval > 1) {
-      return Math.floor(interval) + " years ago";
-    }
-    interval = seconds / 2592000;
-    if (interval > 1) {
-      return Math.floor(interval) + " months ago";
-    }
-    interval = seconds / 86400;
-    if (interval > 1) {
-      return Math.floor(interval) + " days ago";
-    }
-    interval = seconds / 3600;
-    if (interval > 1) {
-      return Math.floor(interval) + " hours ago";
-    }
-    interval = seconds / 60;
-    if (interval > 1) {
-      return Math.floor(interval) + " minutes ago";
-    }
-    return Math.floor(seconds) + " seconds ago";
   }
 
   return (
@@ -175,9 +165,7 @@ export default function Dashboard() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent className="pl-6">
-            <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">Recent activity feed coming soon.</p>
-            </div>
+            <RecentActivity members={members} payments={payments} transfers={transfers} />
           </CardContent>
         </Card>
         <Card className="col-span-3">
@@ -185,9 +173,7 @@ export default function Dashboard() {
             <CardTitle>Subscription Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center bg-muted/50 rounded-md">
-              <p className="text-sm text-muted-foreground">Chart component would go here.</p>
-            </div>
+            <UnitSubscriptionChart members={members} units={units} />
           </CardContent>
         </Card>
       </div>

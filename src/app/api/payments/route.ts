@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         const formattedPayments = payments.map(p => ({
             id: p.id,
             memberId: p.memberId,
-            amount: p.amount,
+            amount: Number(p.amount),
             months: JSON.parse(p.months as string),
             paymentDate: p.paymentDate,
             memberName: p.member.name,
