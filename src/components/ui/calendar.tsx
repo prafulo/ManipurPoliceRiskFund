@@ -57,6 +57,7 @@ function Calendar({
         </div>
       )}
       <DayPicker
+        weekStartsOn={1} 
         showOutsideDays={showOutsideDays}
         className="p-3"
         classNames={{
