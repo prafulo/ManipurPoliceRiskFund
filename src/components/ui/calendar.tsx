@@ -75,13 +75,13 @@ function Calendar({
           
           // Grid-based layout for modern react-day-picker v8+
           weekdays: 'grid grid-cols-7',
-          weekday: 'text-muted-foreground w-9 h-9 flex items-center justify-center font-normal text-[0.8rem]',
-          weeks: 'mt-2 grid gap-y-1',
+          weekday: 'text-muted-foreground h-9 text-center font-normal text-[0.8rem]',
+          weeks: 'mt-2 grid gap-1',
           week: 'grid grid-cols-7',
           
           day: cn(
             buttonVariants({ variant: "ghost" }),
-            "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+            "h-9 w-9 p-0 font-normal aria-selected:opacity-100 mx-auto"
           ),
           day_range_end: "day-range-end",
           day_selected:
