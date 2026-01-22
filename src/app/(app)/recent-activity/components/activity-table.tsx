@@ -136,19 +136,22 @@ export function ActivityTable({ data, isLoading }: ActivityTableProps) {
             </TableHeader>
             <TableBody>
               {paginatedData.length > 0 ? (
-                paginatedData.map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell className="whitespace-nowrap">{format(new Date(activity.date), 'PP p')}</TableCell>
-                    <TableCell>
-                      <Badge variant={typeDisplay[activity.type].variant} className="gap-1.5">
-                        <typeDisplay[activity.type].icon className="h-3.5 w-3.5" />
-                        {typeDisplay[activity.type].label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{activity.description}</TableCell>
-                    <TableCell>{activity.details}</TableCell>
-                  </TableRow>
-                ))
+                paginatedData.map((activity) => {
+                  const Icon = typeDisplay[activity.type].icon;
+                  return (
+                    <TableRow key={activity.id}>
+                      <TableCell className="whitespace-nowrap">{format(new Date(activity.date), 'PP p')}</TableCell>
+                      <TableCell>
+                        <Badge variant={typeDisplay[activity.type].variant} className="gap-1.5">
+                          <Icon className="h-3.5 w-3.5" />
+                          {typeDisplay[activity.type].label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{activity.description}</TableCell>
+                      <TableCell>{activity.details}</TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={headers.length} className="h-24 text-center">
