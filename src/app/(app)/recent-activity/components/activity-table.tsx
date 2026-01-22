@@ -141,7 +141,7 @@ export function ActivityTable({ data, isLoading }: ActivityTableProps) {
                     <TableCell className="whitespace-nowrap">{format(new Date(activity.date), 'PP p')}</TableCell>
                     <TableCell>
                       <Badge variant={typeDisplay[activity.type].variant} className="gap-1.5">
-                        <activity.type.icon className="h-3.5 w-3.5" />
+                        <typeDisplay[activity.type].icon className="h-3.5 w-3.5" />
                         {typeDisplay[activity.type].label}
                       </Badge>
                     </TableCell>
