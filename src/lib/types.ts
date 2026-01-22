@@ -105,3 +105,14 @@ export type SubscriptionRelease = {
   membershipCode?: string;
   unitName?: string;
 };
+
+export type ActivityType = 'new-member' | 'payment' | 'transfer';
+
+export type Activity = {
+  id: string; // e.g. "payment-xyz123"
+  type: ActivityType;
+  date: Date | string;
+  description: string;
+  details: string;
+  amount?: number | null; // For payments
+};

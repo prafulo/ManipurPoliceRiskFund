@@ -99,6 +99,22 @@ export default function ReportsPage() {
             </Link>
           </CardFooter>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Activity Log</CardTitle>
+            <CardDescription>View a chronological log of all recent system activities.</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
+              <p className="text-sm text-center text-muted-foreground">Generates a filterable list of all important events recorded in the system.</p>
+            </div>
+          </CardContent>
+           <CardFooter>
+            <Link href="/recent-activity">
+              <Button>View Activity Log</Button>
+            </Link>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

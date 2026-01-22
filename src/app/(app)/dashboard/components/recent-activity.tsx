@@ -1,13 +1,11 @@
 'use client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import type { Member, Payment, Transfer } from '@/lib/types';
+import type { Activity } from '@/lib/types';
 import { Users, CreditCard, ArrowRightLeft } from 'lucide-react';
 import { useMemo } from 'react';
 
 interface RecentActivityProps {
-  members: Member[];
-  payments: Payment[];
-  transfers: Transfer[];
+  activities: Activity[];
 }
 
 function timeAgo(date: Date | string) {
@@ -25,35 +23,11 @@ function timeAgo(date: Date | string) {
     return Math.floor(seconds) + " seconds ago";
 }
 
-export function RecentActivity({ members, payments, transfers }: RecentActivityProps) {
+export function RecentActivity({ activities }: RecentActivityProps) {
   
   const recentActivities = useMemo(() => {
-    const newMembers = (members || [])
-      .filter(m => m.createdAt)
-      .map(m => ({ 
-        type: 'new-member', 
-        date: new Date(m.createdAt!),
-        data: m,
-      }));
-
-    const newPayments = (payments || []).map(p => ({
-      type: 'payment',
-      date: new Date(p.paymentDate),
-      data: p,
-    }));
-
-    const newTransfers = (transfers || []).map(t => ({
-      type: 'transfer',
-      date: new Date(t.transferDate),
-      data: t,
-    }));
-    
-    const allActivities = [...newMembers, ...newPayments, ...newTransfers];
-    
-    return allActivities
-      .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, 5);
-  }, [members, payments, transfers]);
+    return (activities || []).slice(0, 5);
+  }, [activities]);
 
 
   if(recentActivities.length === 0) {
@@ -64,8 +38,8 @@ export function RecentActivity({ members, payments, transfers }: RecentActivityP
 
   return (
     <div className="space-y-6">
-      {recentActivities.map((activity, index) => (
-        <div key={index} className="flex items-center">
+      {recentActivities.map((activity) => (
+        <div key={activity.id} className="flex items-center">
           <Avatar className="h-9 w-9">
             <AvatarFallback>
               {activity.type === 'new-member' && <Users className="h-4 w-4" />}
@@ -75,14 +49,10 @@ export function RecentActivity({ members, payments, transfers }: RecentActivityP
           </Avatar>
           <div className="ml-4 space-y-1">
             <p className="text-sm font-medium leading-none">
-              {activity.type === 'new-member' && `New Member: ${(activity.data as Member).name}`}
-              {activity.type === 'payment' && `Payment from ${(activity.data as Payment).memberName}`}
-              {activity.type === 'transfer' && `Transfer for ${(activity.data as Transfer).memberName}`}
+              {activity.description}
             </p>
             <p className="text-sm text-muted-foreground">
-              {activity.type === 'new-member' && `Joined the fund.`}
-              {activity.type === 'payment' && `Rs. ${activity.data.amount.toFixed(2)} received.`}
-              {activity.type === 'transfer' && `From ${(activity.data as any).fromUnitName} to ${(activity.data as any).toUnitName}.`}
+              {activity.details}
             </p>
           </div>
           <div className="ml-auto font-medium text-sm text-muted-foreground whitespace-nowrap">{timeAgo(activity.date)}</div>

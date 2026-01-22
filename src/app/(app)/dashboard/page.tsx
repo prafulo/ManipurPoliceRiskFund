@@ -6,31 +6,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Users, UserCheck, UserX, Landmark } from 'lucide-react';
-import type { Member, Unit, Payment, Transfer } from '@/lib/types';
+import type { Member, Unit, Activity } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RecentActivity } from './components/recent-activity';
 import { UnitSubscriptionChart } from './components/unit-pie-chart';
 
 async function fetchData() {
-  const [membersRes, unitsRes, paymentsRes, transfersRes] = await Promise.all([
+  const [membersRes, unitsRes, activitiesRes] = await Promise.all([
     fetch('/api/members'),
     fetch('/api/units'),
-    fetch('/api/payments'),
-    fetch('/api/transfers')
+    fetch('/api/activities') // Fetches last 3 months by default
   ]);
-  const [membersData, unitsData, paymentsData, transfersData] = await Promise.all([
+  const [membersData, unitsData, activitiesData] = await Promise.all([
     membersRes.json(),
     unitsRes.json(),
-    paymentsRes.json(),
-    transfersRes.json()
+    activitiesRes.json()
   ]);
   return { 
     members: membersData.members, 
     units: unitsData.units,
-    payments: paymentsData.payments,
-    transfers: transfersData.transfers
+    activities: activitiesData.activities
   };
 }
 
@@ -81,18 +80,16 @@ function DashboardSkeleton() {
 export default function Dashboard() {
   const [members, setMembers] = useState<Member[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const { members, units, payments, transfers } = await fetchData();
+        const { members, units, activities } = await fetchData();
         setMembers(members || []);
         setUnits(units || []);
-        setPayments(payments || []);
-        setTransfers(transfers || []);
+        setActivities(activities || []);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -162,10 +159,15 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <div className="flex items-center justify-between">
+                <CardTitle>Recent Activity</CardTitle>
+                <Link href="/recent-activity" passHref>
+                    <Button variant="link" className="pr-0 h-auto p-0 text-sm">View all</Button>
+                </Link>
+            </div>
           </CardHeader>
           <CardContent className="pl-6">
-            <RecentActivity members={members} payments={payments} transfers={transfers} />
+            <RecentActivity activities={activities} />
           </CardContent>
         </Card>
         <Card className="col-span-3">
