@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Wifi, Database, Download, AlertTriangle } from 'lucide-react';
+import { Wifi, Database, Download, AlertTriangle, FileCode } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 
 
@@ -101,7 +101,7 @@ export default function DatabaseSettingsPage() {
         window.location.href = '/api/backup';
         toast({
             title: "Backup Started",
-            description: "Your database backup file is being generated and will download shortly.",
+            description: "Your SQL database backup is being generated and will download shortly.",
         });
     } catch (error: any) {
         toast({
@@ -154,10 +154,10 @@ export default function DatabaseSettingsPage() {
         <Card className="border-primary/20">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Download className="h-5 w-5 text-primary" />
-                    Data Backup
+                    <FileCode className="h-5 w-5 text-primary" />
+                    SQL Data Export
                 </CardTitle>
-                <CardDescription>Export all system data for safe keeping.</CardDescription>
+                <CardDescription>Export all system data as a .sql file for easy import.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="p-4 bg-muted/50 rounded-lg border flex gap-4 items-start">
@@ -166,19 +166,19 @@ export default function DatabaseSettingsPage() {
                         <p className="font-medium text-amber-900 dark:text-amber-200">Important Note</p>
                         <p className="text-muted-foreground leading-relaxed">
                             A backup includes all member profiles, payment history, unit transfers, and user accounts. 
-                            It is recommended to take a backup before performing major updates or at the end of each month.
+                            The generated .sql file contains standard INSERT statements compatible with phpMyAdmin.
                         </p>
                     </div>
                 </div>
                 <div>
-                    <h4 className="font-medium">Full System Export</h4>
-                    <p className="text-sm text-muted-foreground pt-1">Generates a JSON file containing every record currently stored in the database.</p>
+                    <h4 className="font-medium">Full System Backup</h4>
+                    <p className="text-sm text-muted-foreground pt-1">Generates a standard SQL file containing every record currently stored in the database.</p>
                 </div>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
                 <Button onClick={handleDownloadBackup} disabled={isBackingUp} className="w-full sm:w-auto">
                     {isBackingUp ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <Download className="mr-2 h-4 w-4" />}
-                    {isBackingUp ? 'Generating Backup...' : 'Download Database Backup'}
+                    {isBackingUp ? 'Generating SQL...' : 'Download SQL Backup'}
                 </Button>
             </CardFooter>
         </Card>
