@@ -23,11 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Save, Trash2, PlusCircle } from 'lucide-react';
+import { CalendarIcon, Save, Trash2, PlusCircle, Lock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, addYears } from 'date-fns';
 import type { Member, Unit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -218,6 +218,17 @@ export function MemberForm({ member }: MemberFormProps) {
   });
 
   const selectedUnitId = form.watch("unitId");
+  const dob = form.watch("dateOfBirth");
+
+  // Automatically calculate superannuation date based on DOB (60 years)
+  useEffect(() => {
+    if (dob) {
+      const superannuationDate = addYears(dob, 60);
+      form.setValue("superannuationDate", superannuationDate, { shouldValidate: true });
+    } else {
+      form.setValue("superannuationDate", undefined as any);
+    }
+  }, [dob, form]);
 
   useEffect(() => {
     async function generateCode() {
@@ -395,18 +406,20 @@ export function MemberForm({ member }: MemberFormProps) {
                   )}
                 />
                 <FormField control={form.control} name="superannuationDate" render={({ field }) => (
-                    <FormItem className="flex flex-col"><FormLabel>Superannuation Date</FormLabel>
-                       <Popover>
-                        <PopoverTrigger asChild><FormControl>
-                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
-                              {field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl></PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date()} />
-                        </PopoverContent>
-                      </Popover>
+                    <FormItem>
+                      <FormLabel>Superannuation Date</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            readOnly 
+                            value={field.value ? format(field.value, "MM/dd/yyyy") : ""} 
+                            className="bg-muted cursor-not-allowed pr-10"
+                            placeholder="Calculated from DOB"
+                          />
+                          <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-50" />
+                        </div>
+                      </FormControl>
+                      <FormDescription>Calculated automatically (DOB + 60 years)</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
