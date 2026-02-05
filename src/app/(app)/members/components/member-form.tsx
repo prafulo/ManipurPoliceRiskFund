@@ -27,7 +27,7 @@ import { CalendarIcon, Save, Trash2, PlusCircle, Lock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { format, addYears } from 'date-fns';
+import { format, addYears, isValid } from 'date-fns';
 import type { Member, Unit } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -137,15 +137,15 @@ function memberToForm(member: Member) {
 
     // Handle nested witness objects
     if (member.firstWitness) {
-        formValues.firstWitnessName = member.firstWitness.name || '';
-        formValues.firstWitnessAddress = member.firstWitness.address || '';
+        formValues.firstWitnessName = (member.firstWitness as any).name || '';
+        formValues.firstWitnessAddress = (member.firstWitness as any).address || '';
     } else {
         formValues.firstWitnessName = '';
         formValues.firstWitnessAddress = '';
     }
     if (member.secondWitness) {
-        formValues.secondWitnessName = member.secondWitness.name || '';
-        formValues.secondWitnessAddress = member.secondWitness.address || '';
+        formValues.secondWitnessName = (member.secondWitness as any).name || '';
+        formValues.secondWitnessAddress = (member.secondWitness as any).address || '';
     } else {
         formValues.secondWitnessName = '';
         formValues.secondWitnessAddress = '';
@@ -219,12 +219,20 @@ export function MemberForm({ member }: MemberFormProps) {
 
   const selectedUnitId = form.watch("unitId");
   const dob = form.watch("dateOfBirth");
+  const superannuationDate = form.watch("superannuationDate");
 
   // Automatically calculate superannuation date based on DOB (60 years)
   useEffect(() => {
     if (dob) {
-      const superannuationDate = addYears(dob, 60);
-      form.setValue("superannuationDate", superannuationDate, { shouldValidate: true });
+      const birthDate = new Date(dob);
+      if (isValid(birthDate)) {
+        const calculatedDate = addYears(birthDate, 60);
+        form.setValue("superannuationDate", calculatedDate, { 
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+      }
     } else {
       form.setValue("superannuationDate", undefined as any);
     }
@@ -320,7 +328,7 @@ export function MemberForm({ member }: MemberFormProps) {
                       <Popover>
                         <PopoverTrigger asChild><FormControl>
                             <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
-                              {field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}
+                              {field.value ? format(new Date(field.value), "MM/dd/yyyy") : <span>Pick a date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                         </FormControl></PopoverTrigger>
@@ -393,7 +401,7 @@ export function MemberForm({ member }: MemberFormProps) {
                        <Popover>
                         <PopoverTrigger asChild><FormControl>
                             <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
-                              {field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}
+                              {field.value ? format(new Date(field.value), "MM/dd/yyyy") : <span>Pick a date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                         </FormControl></PopoverTrigger>
@@ -412,7 +420,7 @@ export function MemberForm({ member }: MemberFormProps) {
                         <div className="relative">
                           <Input 
                             readOnly 
-                            value={field.value ? format(field.value, "MM/dd/yyyy") : ""} 
+                            value={field.value ? format(new Date(field.value), "MM/dd/yyyy") : ""} 
                             className="bg-muted cursor-not-allowed pr-10"
                             placeholder="Calculated from DOB"
                           />
@@ -469,7 +477,7 @@ export function MemberForm({ member }: MemberFormProps) {
                        <Popover>
                         <PopoverTrigger asChild><FormControl>
                             <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
-                              {field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}
+                              {field.value ? format(new Date(field.value), "MM/dd/yyyy") : <span>Pick a date</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                         </FormControl></PopoverTrigger>
@@ -503,7 +511,7 @@ export function MemberForm({ member }: MemberFormProps) {
                           <Popover>
                             <PopoverTrigger asChild><FormControl>
                                 <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
-                                  {field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}
+                                  {field.value ? format(new Date(field.value), "MM/dd/yyyy") : <span>Pick a date</span>}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                             </FormControl></PopoverTrigger>
@@ -606,9 +614,9 @@ export function MemberForm({ member }: MemberFormProps) {
             <div className="space-y-6">
               <h3 className="text-xl font-bold font-headline text-primary">Application Dates</h3>
                <div className="grid md:grid-cols-3 gap-8">
-                  <FormField control={form.control} name="dateApplied" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Date Applied</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="receiptDate" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Receipt Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="allotmentDate" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Allotment Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(field.value, "MM/dd/yyyy") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="dateApplied" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Date Applied</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(new Date(field.value), "MM/dd/yyyy") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="receiptDate" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Receipt Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(new Date(field.value), "MM/dd/yyyy") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="allotmentDate" render={({ field }) => ( <FormItem className="flex flex-col"><FormLabel>Allotment Date</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? format(new Date(field.value), "MM/dd/yyyy") : <span>Pick a date</span>}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                </div>
             </div>
 
