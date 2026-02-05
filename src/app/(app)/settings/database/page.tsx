@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Wifi, Database } from 'lucide-react';
+import { Wifi, Database, Download, AlertTriangle } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 
 
@@ -23,6 +23,7 @@ export default function DatabaseSettingsPage() {
 
   const [isTestingDb, setIsTestingDb] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
   
   const userRole = session?.user?.role as UserRole;
   
@@ -94,39 +95,94 @@ export default function DatabaseSettingsPage() {
     }
   }
 
+  const handleDownloadBackup = async () => {
+    setIsBackingUp(true);
+    try {
+        window.location.href = '/api/backup';
+        toast({
+            title: "Backup Started",
+            description: "Your database backup file is being generated and will download shortly.",
+        });
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Backup Failed',
+            description: 'Could not trigger the backup download.',
+        });
+    } finally {
+        // Since we are using window.location.href, we don't have a reliable callback for when the download finishes
+        // but we can clear the loading state after a short delay.
+        setTimeout(() => setIsBackingUp(false), 2000);
+    }
+  }
+
   return (
     <div className="space-y-8 max-w-4xl">
       <div className="mb-6">
         <h2 className="text-3xl font-bold tracking-tight font-headline">Database Management</h2>
-        <p className="text-muted-foreground">Manage and verify your database connection and schema.</p>
+        <p className="text-muted-foreground">Manage and verify your database connection, schema, and backups.</p>
       </div>
       
-      <Card>
-          <CardHeader>
-              <CardTitle>Database Management</CardTitle>
-              <CardDescription>Manage and verify your database connection and schema.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-          <div>
-              <h4 className="font-medium">Test Connection</h4>
-              <p className="text-sm text-muted-foreground pt-1">Verify that the application can successfully connect to the MySQL database.</p>
-          </div>
-          <div>
-              <h4 className="font-medium">Update Schema</h4>
-              <p className="text-sm text-muted-foreground pt-1">Sync your database with the current Prisma schema. This will apply any pending changes.</p>
-          </div>
-          </CardContent>
-          <CardFooter className="border-t px-6 py-4 flex gap-4">
-              <Button onClick={handleTestConnection} disabled={isTestingDb} variant="outline">
-                  {isTestingDb ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div> : <Wifi />}
-                  {isTestingDb ? 'Testing...' : 'Test Database Connection'}
-              </Button>
-              <Button onClick={handleMigrate} disabled={isMigrating}>
-                  {isMigrating ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div> : <Database />}
-                  {isMigrating ? 'Updating...' : 'Setup/Update Database'}
-              </Button>
-          </CardFooter>
-      </Card>
+      <div className="grid gap-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Maintenance & Health</CardTitle>
+                <CardDescription>Verify connection and sync the database structure.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+            <div>
+                <h4 className="font-medium">Test Connection</h4>
+                <p className="text-sm text-muted-foreground pt-1">Verify that the application can successfully connect to the MySQL database.</p>
+            </div>
+            <div>
+                <h4 className="font-medium">Update Schema</h4>
+                <p className="text-sm text-muted-foreground pt-1">Sync your database with the current Prisma schema. This will apply any pending structure changes.</p>
+            </div>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4 flex gap-4">
+                <Button onClick={handleTestConnection} disabled={isTestingDb} variant="outline">
+                    {isTestingDb ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div> : <Wifi className="mr-2 h-4 w-4" />}
+                    {isTestingDb ? 'Testing...' : 'Test Database Connection'}
+                </Button>
+                <Button onClick={handleMigrate} disabled={isMigrating}>
+                    {isMigrating ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div> : <Database className="mr-2 h-4 w-4" />}
+                    {isMigrating ? 'Updating...' : 'Setup/Update Database'}
+                </Button>
+            </CardFooter>
+        </Card>
+
+        <Card className="border-primary/20">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Download className="h-5 w-5 text-primary" />
+                    Data Backup
+                </CardTitle>
+                <CardDescription>Export all system data for safe keeping.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg border flex gap-4 items-start">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                    <div className="text-sm space-y-1">
+                        <p className="font-medium text-amber-900 dark:text-amber-200">Important Note</p>
+                        <p className="text-muted-foreground leading-relaxed">
+                            A backup includes all member profiles, payment history, unit transfers, and user accounts. 
+                            It is recommended to take a backup before performing major updates or at the end of each month.
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <h4 className="font-medium">Full System Export</h4>
+                    <p className="text-sm text-muted-foreground pt-1">Generates a JSON file containing every record currently stored in the database.</p>
+                </div>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4">
+                <Button onClick={handleDownloadBackup} disabled={isBackingUp} className="w-full sm:w-auto">
+                    {isBackingUp ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> : <Download className="mr-2 h-4 w-4" />}
+                    {isBackingUp ? 'Generating Backup...' : 'Download Database Backup'}
+                </Button>
+            </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
