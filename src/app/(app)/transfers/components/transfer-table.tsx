@@ -11,126 +11,71 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowUpDown } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { Transfer } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 
 type EnrichedTransfer = Transfer & { fromUnitName: string, toUnitName: string, membershipCode: string };
-type SortKey = keyof EnrichedTransfer | '';
-type SortDirection = 'asc' | 'desc';
 
 interface TransferTableProps {
   data: EnrichedTransfer[];
+  isLoading?: boolean;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
+  onSearch: (query: string) => void;
 }
 
-export function TransferTable({ data }: TransferTableProps) {
-  const [filter, setFilter] = React.useState('');
-  const [sortKey, setSortKey] = React.useState<SortKey>('transferDate');
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const rowsPerPage = 10;
+export function TransferTable({ data, isLoading, pagination, onSearch }: TransferTableProps) {
+  const [localSearch, setLocalSearch] = React.useState('');
 
-  const filteredAndSortedData = React.useMemo(() => {
-    const lowercasedFilter = filter.toLowerCase();
-    let result = data.filter(transfer =>
-      transfer.memberName.toLowerCase().includes(lowercasedFilter) ||
-      transfer.membershipCode.toLowerCase().includes(lowercasedFilter) ||
-      transfer.fromUnitName.toLowerCase().includes(lowercasedFilter) ||
-      transfer.toUnitName.toLowerCase().includes(lowercasedFilter)
-    );
-
-    if (sortKey) {
-      result.sort((a, b) => {
-        const valA = a[sortKey];
-        const valB = b[sortKey];
-
-        if (sortKey === 'transferDate') {
-            const dateA = new Date(valA as string).getTime();
-            const dateB = new Date(valB as string).getTime();
-            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-        }
-
-        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return result;
-  }, [data, filter, sortKey, sortDirection]);
-
-  const paginatedData = React.useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredAndSortedData.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedData, currentPage, rowsPerPage]);
-
-  const totalPages = Math.ceil(filteredAndSortedData.length / rowsPerPage);
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDirection('asc');
-    }
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(localSearch);
   };
-  
-  const headers: { key: SortKey; label: string }[] = [
-    { key: 'memberName', label: 'Member Name' },
-    { key: 'membershipCode', label: 'Code' },
-    { key: 'fromUnitName', label: 'From Unit' },
-    { key: 'toUnitName', label: 'To Unit' },
-    { key: 'transferDate', label: 'Transfer Date' },
-  ];
-
-  const toDate = (dateStr: string | Date): Date => {
-    return new Date(dateStr);
-  }
 
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="p-4">
+        <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
           <Input
-            placeholder="Filter by name, code, or unit..."
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setCurrentPage(1);
-            }}
+            placeholder="Search by name or code..."
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             className="max-w-sm"
           />
-        </div>
+          <Button type="submit" variant="secondary">Search</Button>
+          {isLoading && <Loader2 className="h-4 w-4 animate-spin self-center ml-2" />}
+        </form>
         <div className="border-t">
           <Table>
             <TableHeader>
               <TableRow>
-                {headers.map(header => (
-                  <TableHead key={header.key}>
-                    <Button variant="ghost" onClick={() => handleSort(header.key)}>
-                      {header.label}
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                ))}
+                <TableHead>Member Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>From Unit</TableHead>
+                <TableHead>To Unit</TableHead>
+                <TableHead>Transfer Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((transfer) => (
-                  <TableRow key={transfer.id}>
+              {data.length > 0 ? (
+                data.map((transfer) => (
+                  <TableRow key={transfer.id} className={isLoading ? 'opacity-50' : ''}>
                     <TableCell className="font-medium">{transfer.memberName}</TableCell>
                     <TableCell>{transfer.membershipCode}</TableCell>
                     <TableCell>{transfer.fromUnitName}</TableCell>
                     <TableCell>{transfer.toUnitName}</TableCell>
-                    <TableCell>{format(toDate(transfer.transferDate), 'PP')}</TableCell>
+                    <TableCell>{format(new Date(transfer.transferDate), 'PP')}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={headers.length} className="h-24 text-center">
-                    No transfers found.
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    {isLoading ? 'Loading...' : 'No transfers found.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -139,22 +84,22 @@ export function TransferTable({ data }: TransferTableProps) {
         </div>
         <div className="flex items-center justify-between space-x-2 p-4 border-t">
           <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages || 1}
+            Page {pagination.currentPage} of {pagination.totalPages}
           </span>
           <div className="space-x-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
+              onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1 || isLoading}
             >
               Previous
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.totalPages || isLoading}
             >
               Next
             </Button>

@@ -4,77 +4,51 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { TransferTable } from "./components/transfer-table";
-import type { Transfer, Unit } from "@/lib/types";
-import { useEffect, useState } from "react";
+import type { Transfer } from "@/lib/types";
+import { useEffect, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
-async function fetchData() {
-    const [transfersRes, unitsRes] = await Promise.all([
-        fetch('/api/transfers'),
-        fetch('/api/units')
-    ]);
-    const [transfersData, unitsData] = await Promise.all([
-        transfersRes.json(),
-        unitsRes.json()
-    ]);
-    return { transfers: transfersData.transfers, units: unitsData.units };
-}
+export default function TransfersPage() {
+  const [transferData, setTransferData] = useState<Transfer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
-function TransfersPageSkeleton() {
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const res = await fetch(`/api/transfers?page=${page}&limit=10&query=${searchQuery}`);
+        const data = await res.json();
+        setTransferData(data.transfers || []);
+        setTotalPages(data.pages || 1);
+    } catch (error) {
+        console.error("Failed to load transfer data", error);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [page, searchQuery]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
+
+  if (isLoading && transferData.length === 0) {
     return (
         <div>
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <Skeleton className="h-9 w-48" />
-                    <Skeleton className="h-5 w-64 mt-2" />
-                </div>
-                <div className="flex gap-2">
-                    <Skeleton className="h-10 w-36" />
-                </div>
+                <Skeleton className="h-9 w-48" />
+                <Skeleton className="h-10 w-36" />
             </div>
-            <Card>
-                <CardContent className="p-0">
-                    <div className="p-4">
-                        <Skeleton className="h-10 max-w-sm" />
-                    </div>
-                    <div className="border-t p-4 space-y-2">
-                        {[...Array(5)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
-                    </div>
-                </CardContent>
-            </Card>
+            <Card><CardContent className="p-8 space-y-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></CardContent></Card>
         </div>
     );
-}
-
-export default function TransfersPage() {
-  const [transferData, setTransferData] = useState<Transfer[]>([]);
-  const [unitData, setUnitData] = useState<Unit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-        try {
-            const { transfers, units } = await fetchData();
-            setTransferData(transfers);
-            setUnitData(units);
-        } catch (error) {
-            console.error("Failed to load transfer data", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    loadData();
-  }, []);
-
-  const enrichedTransfers = (transferData || []).map(transfer => ({
-      ...transfer,
-      fromUnitName: unitData?.find(u => u.id === transfer.fromUnitId)?.name || 'N/A',
-      toUnitName: unitData?.find(u => u.id === transfer.toUnitId)?.name || 'N/A',
-  }));
-
-  if (isLoading) {
-    return <TransfersPageSkeleton />;
   }
 
   return (
@@ -91,7 +65,16 @@ export default function TransfersPage() {
           </Button>
         </Link>
       </div>
-      <TransferTable data={enrichedTransfers} />
+      <TransferTable 
+        data={transferData} 
+        isLoading={isLoading}
+        pagination={{
+            currentPage: page,
+            totalPages: totalPages,
+            onPageChange: setPage
+        }}
+        onSearch={handleSearch}
+      />
     </div>
   );
 }

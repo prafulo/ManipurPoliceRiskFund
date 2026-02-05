@@ -1,26 +1,44 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const query = searchParams.get('query') || '';
+
     try {
-        const payments = await prisma.payment.findMany({
-            include: {
-                member: {
-                    select: {
-                        name: true,
-                        membershipCode: true,
-                        unit: {
-                            select: {
-                                name: true
+        const where = query ? {
+            OR: [
+                { member: { name: { contains: query } } },
+                { member: { membershipCode: { contains: query } } }
+            ]
+        } : {};
+
+        const [payments, total] = await Promise.all([
+            prisma.payment.findMany({
+                where,
+                skip: (page - 1) * limit,
+                take: limit,
+                include: {
+                    member: {
+                        select: {
+                            name: true,
+                            membershipCode: true,
+                            unit: {
+                                select: {
+                                    name: true
+                                }
                             }
                         }
                     }
+                },
+                orderBy: {
+                    paymentDate: 'desc'
                 }
-            },
-            orderBy: {
-                paymentDate: 'desc'
-            }
-        });
+            }),
+            prisma.payment.count({ where })
+        ]);
 
         const formattedPayments = payments.map(p => ({
             id: p.id,
@@ -33,7 +51,12 @@ export async function GET(request: Request) {
             unitName: p.member.unit.name,
         }));
 
-        return NextResponse.json({ payments: formattedPayments });
+        return NextResponse.json({ 
+            payments: formattedPayments,
+            total,
+            pages: Math.ceil(total / limit),
+            currentPage: page
+        });
     } catch (error: any) {
         console.error("Failed to fetch payments:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });

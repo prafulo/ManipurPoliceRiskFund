@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Loader2 } from 'lucide-react';
 import type { Payment } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -35,139 +35,75 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-
-type SortKey = keyof Payment | '';
-type SortDirection = 'asc' | 'desc';
-
 interface PaymentTableProps {
   data: Payment[];
   onDelete: (paymentId: string) => void;
+  isLoading?: boolean;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
+  onSearch: (query: string) => void;
 }
 
-export function PaymentTable({ data, onDelete }: PaymentTableProps) {
+export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }: PaymentTableProps) {
+  const [localSearch, setLocalSearch] = React.useState('');
 
-  const [filter, setFilter] = React.useState('');
-  const [sortKey, setSortKey] = React.useState<SortKey>('paymentDate');
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const rowsPerPage = 10;
-
-  const filteredAndSortedData = React.useMemo(() => {
-    const lowercasedFilter = filter.toLowerCase();
-    let result = data.filter(payment =>
-      payment.memberName.toLowerCase().includes(lowercasedFilter) ||
-      payment.membershipCode.toLowerCase().includes(lowercasedFilter) ||
-      payment.unitName.toLowerCase().includes(lowercasedFilter)
-    );
-
-    if (sortKey) {
-      result.sort((a, b) => {
-        const valA = a[sortKey];
-        const valB = b[sortKey];
-
-        if (sortKey === 'paymentDate') {
-            const dateA = new Date(valA as string).getTime();
-            const dateB = new Date(valB as string).getTime();
-            return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-        }
-
-        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return result;
-  }, [data, filter, sortKey, sortDirection]);
-
-  const paginatedData = React.useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredAndSortedData.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedData, currentPage, rowsPerPage]);
-
-  const totalPages = Math.ceil(filteredAndSortedData.length / rowsPerPage);
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDirection('asc');
-    }
-  };
-  
-  const headers: { key: SortKey; label: string }[] = [
-    { key: 'memberName', label: 'Member Name' },
-    { key: 'membershipCode', label: 'Code' },
-    { key: 'unitName', label: 'Unit' },
-    { key: 'paymentDate', label: 'Payment Date' },
-    { key: 'amount', label: 'Amount' },
-  ];
-
-  const toDate = (dateStr: string | Date): Date => {
-      return new Date(dateStr);
-  }
-
-  const formatMonths = (months: string | (string | Date)[]) => {
-    let monthArray: (string | Date)[];
+  const formatMonths = (months: any) => {
+    let monthArray: any[];
     if(typeof months === 'string') {
-        try {
-            monthArray = JSON.parse(months);
-        } catch {
-            return 'Invalid month data';
-        }
-    } else {
-        monthArray = months;
-    }
-    return monthArray.map(m => format(toDate(m), 'MMM yyyy')).join(', ');
+        try { monthArray = JSON.parse(months); } catch { return 'Invalid data'; }
+    } else { monthArray = months; }
+    return monthArray.map((m: any) => format(new Date(m), 'MMM yy')).join(', ');
   }
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(localSearch);
+  };
 
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="p-4">
+        <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
           <Input
-            placeholder="Filter by name, code, or unit..."
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setCurrentPage(1);
-            }}
+            placeholder="Search member name or code..."
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             className="max-w-sm"
           />
-        </div>
+          <Button type="submit" variant="secondary">Search</Button>
+          {isLoading && <Loader2 className="h-4 w-4 animate-spin self-center ml-2" />}
+        </form>
         <div className="border-t">
           <Table>
             <TableHeader>
               <TableRow>
-                {headers.map(header => (
-                  <TableHead key={header.key}>
-                    <Button variant="ghost" onClick={() => handleSort(header.key)}>
-                      {header.label}
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                ))}
-                 <TableHead>Months Paid</TableHead>
+                <TableHead>Member Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Months Paid</TableHead>
                 <TableHead className="text-right w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((payment) => (
-                  <TableRow key={payment.id}>
+              {data.length > 0 ? (
+                data.map((payment) => (
+                  <TableRow key={payment.id} className={isLoading ? 'opacity-50' : ''}>
                     <TableCell className="font-medium">{payment.memberName}</TableCell>
                     <TableCell>{payment.membershipCode}</TableCell>
                     <TableCell>{payment.unitName}</TableCell>
-                    <TableCell>{format(toDate(payment.paymentDate), 'PP')}</TableCell>
-                    <TableCell>Rs. {Number(payment.amount).toFixed(2)}</TableCell>
-                    <TableCell>{formatMonths(payment.months)}</TableCell>
+                    <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
+                    <TableCell>₹{Number(payment.amount).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs">{formatMonths(payment.months)}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -176,24 +112,18 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
                             <DropdownMenuItem>View Receipt</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-destructive focus:bg-destructive/20 focus:text-destructive">
-                                    Delete Payment
-                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                             </AlertDialogTrigger>
                           </DropdownMenuContent>
                         </DropdownMenu>
                          <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this payment record.
-                              </AlertDialogDescription>
+                              <AlertDialogTitle>Delete payment record?</AlertDialogTitle>
+                              <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => onDelete(payment.id)}>
-                                Continue
-                              </AlertDialogAction>
+                              <AlertDialogAction onClick={() => onDelete(payment.id)}>Continue</AlertDialogAction>
                             </AlertDialogFooter>
                          </AlertDialogContent>
                        </AlertDialog>
@@ -202,8 +132,8 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={headers.length + 2} className="h-24 text-center">
-                    No payments found.
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    {isLoading ? 'Loading...' : 'No payments found.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -212,22 +142,22 @@ export function PaymentTable({ data, onDelete }: PaymentTableProps) {
         </div>
         <div className="flex items-center justify-between space-x-2 p-4 border-t">
           <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages || 1}
+            Page {pagination.currentPage} of {pagination.totalPages}
           </span>
           <div className="space-x-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
+              onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1 || isLoading}
             >
               Previous
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.totalPages || isLoading}
             >
               Next
             </Button>

@@ -10,66 +10,36 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
-async function fetchData(): Promise<Payment[]> {
-    const res = await fetch('/api/payments');
-    const data = await res.json();
-    // Prisma returns Decimal as a string in JSON, so we convert it to a number.
-    return data.payments.map((p: any) => ({
-      ...p,
-      amount: Number(p.amount)
-    }));
-}
-
-function PaymentsPageSkeleton() {
-    return (
-        <div>
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <Skeleton className="h-9 w-48" />
-                    <Skeleton className="h-5 w-72 mt-2" />
-                </div>
-                <div className="flex gap-2">
-                    <Skeleton className="h-10 w-36" />
-                    <Skeleton className="h-10 w-32" />
-                </div>
-            </div>
-            <Card>
-                <CardContent className="p-0">
-                    <div className="p-4">
-                        <Skeleton className="h-10 max-w-sm" />
-                    </div>
-                    <div className="border-t p-4 space-y-2">
-                        {[...Array(5)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
 export default function PaymentsPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(true);
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const loadData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const res = await fetch(`/api/payments?page=${page}&limit=10&query=${searchQuery}`);
+        const data = await res.json();
+        setPayments(data.payments || []);
+        setTotalPages(data.pages || 1);
+    } catch (error) {
+        console.error("Failed to fetch payments", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not fetch payment data.'
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [page, searchQuery, toast]);
 
   React.useEffect(() => {
-    async function loadData() {
-        try {
-            const data = await fetchData();
-            setPayments(data);
-        } catch (error) {
-            console.error("Failed to fetch payments", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not fetch payment data.'
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    }
     loadData();
-  }, [toast]);
+  }, [loadData]);
 
   const handleDeletePayment = async (paymentId: string) => {
     try {
@@ -82,7 +52,7 @@ export default function PaymentsPage() {
             title: "Payment Deleted",
             description: "The payment record has been deleted.",
         });
-        setPayments(prev => prev.filter(p => p.id !== paymentId));
+        loadData();
     } catch (error: any) {
         toast({
             variant: 'destructive',
@@ -92,8 +62,21 @@ export default function PaymentsPage() {
     }
   };
 
-  if (isLoading) {
-    return <PaymentsPageSkeleton />;
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
+
+  if (isLoading && payments.length === 0) {
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-6">
+                <Skeleton className="h-9 w-48" />
+                <div className="flex gap-2"><Skeleton className="h-10 w-32" /><Skeleton className="h-10 w-32" /></div>
+            </div>
+            <Card><CardContent className="p-8"><Skeleton className="h-12 w-full mb-4" /><Skeleton className="h-12 w-full" /></CardContent></Card>
+        </div>
+    );
   }
 
   return (
@@ -118,7 +101,17 @@ export default function PaymentsPage() {
             </Link>
         </div>
       </div>
-      <PaymentTable data={payments || []} onDelete={handleDeletePayment} />
+      <PaymentTable 
+        data={payments} 
+        onDelete={handleDeletePayment} 
+        isLoading={isLoading}
+        pagination={{
+            currentPage: page,
+            totalPages: totalPages,
+            onPageChange: setPage
+        }}
+        onSearch={handleSearch}
+      />
     </div>
   );
 }

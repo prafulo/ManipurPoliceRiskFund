@@ -4,92 +4,57 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { ReleaseTable } from "./components/release-table";
-import type { Member, Unit } from "@/lib/types";
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
-async function fetchData(): Promise<{ releases: Member[], units: Unit[] }> {
-    const [releasesRes, unitsRes] = await Promise.all([
-      fetch('/api/subscription-releases'),
-      fetch('/api/units')
-    ]);
-    
-    if (!releasesRes.ok || !unitsRes.ok) {
-        throw new Error('Failed to fetch release data');
+export default function SubscriptionReleasesPage() {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [releases, setReleases] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const res = await fetch(`/api/subscription-releases?page=${page}&limit=10&query=${searchQuery}`);
+        const data = await res.json();
+        setReleases(data.releases || []);
+        setTotalPages(data.pages || 1);
+    } catch (error) {
+        console.error("Failed to fetch releases", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not fetch subscription release data.'
+        });
+    } finally {
+        setIsLoading(false);
     }
-    
-    const [releasesData, unitsData] = await Promise.all([
-      releasesRes.json(),
-      unitsRes.json()
-    ]);
+  }, [page, searchQuery, toast]);
 
-    const releases = (releasesData.releases || []).map((r: any) => ({
-      ...r,
-      releaseAmount: r.releaseAmount ? Number(r.releaseAmount) : null
-    }));
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-    return { releases, units: unitsData.units || [] };
-}
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
 
-function ReleasesPageSkeleton() {
+  if (isLoading && releases.length === 0) {
     return (
         <div>
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <Skeleton className="h-9 w-64" />
-                    <Skeleton className="h-5 w-80 mt-2" />
-                </div>
-                <div className="flex gap-2">
-                    <Skeleton className="h-10 w-36" />
-                </div>
+                <Skeleton className="h-9 w-48" />
+                <Skeleton className="h-10 w-32" />
             </div>
-            <Card>
-                <CardContent className="p-0">
-                    <div className="p-4">
-                        <Skeleton className="h-10 max-w-sm" />
-                    </div>
-                    <div className="border-t p-4 space-y-2">
-                        {[...Array(5)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
-                    </div>
-                </CardContent>
-            </Card>
+            <Card><CardContent className="p-8 space-y-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></CardContent></Card>
         </div>
     );
-}
-
-export default function SubscriptionReleasesPage() {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [releases, setReleases] = React.useState<any[]>([]);
-
-  React.useEffect(() => {
-    async function loadData() {
-        try {
-            const { releases, units } = await fetchData();
-            const unitsMap = new Map(units.map((unit: Unit) => [unit.id, unit.name]));
-            const enrichedReleases = releases.map((release: Member) => ({
-                ...release,
-                unitName: unitsMap.get(release.unitId) || 'N/A',
-            }));
-            setReleases(enrichedReleases);
-        } catch (error) {
-            console.error("Failed to fetch releases", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not fetch subscription release data.'
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    loadData();
-  }, [toast]);
-
-  if (isLoading) {
-    return <ReleasesPageSkeleton />;
   }
 
   return (
@@ -97,18 +62,25 @@ export default function SubscriptionReleasesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight font-headline">Subscription Releases</h2>
-          <p className="text-muted-foreground">Manage and review member subscription payouts.</p>
+          <p className="text-muted-foreground">Manage member subscription payouts.</p>
         </div>
-        <div className="flex gap-2">
-            <Link href="/subscription-release/new">
-            <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Release
-            </Button>
-            </Link>
-        </div>
+        <Link href="/subscription-release/new">
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Release
+          </Button>
+        </Link>
       </div>
-      <ReleaseTable data={releases || []} />
+      <ReleaseTable 
+        data={releases || []} 
+        isLoading={isLoading}
+        pagination={{
+            currentPage: page,
+            totalPages: totalPages,
+            onPageChange: setPage
+        }}
+        onSearch={handleSearch}
+      />
     </div>
   );
 }

@@ -6,103 +6,58 @@ import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Member, Unit } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 
+export default function MembersPage() {
+  const [data, setData] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [status, setStatus] = React.useState<'Opened' | 'Closed'>('Opened');
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
-async function fetchData() {
-    const [membersRes, unitsRes] = await Promise.all([
-        fetch('/api/members'),
-        fetch('/api/units')
-    ]);
-    const [membersData, unitsData] = await Promise.all([
-        membersRes.json(),
-        unitsRes.json()
-    ]);
-    return { members: membersData.members, units: unitsData.units };
-}
+  const loadData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const res = await fetch(`/api/members?status=${status}&page=${page}&limit=10&query=${searchQuery}`);
+        const result = await res.json();
+        setData(result.members || []);
+        setTotalPages(result.pages || 1);
+    } catch (error) {
+        console.error("Failed to fetch members data", error);
+        setData([]);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [status, page, searchQuery]);
 
-function MembersPageSkeleton() {
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleTabChange = (value: string) => {
+    setStatus(value as 'Opened' | 'Closed');
+    setPage(1);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
+
+  if (isLoading && data.length === 0) {
     return (
         <div>
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <Skeleton className="h-9 w-48" />
-                    <Skeleton className="h-5 w-72 mt-2" />
-                </div>
+                <Skeleton className="h-9 w-48" />
                 <Skeleton className="h-10 w-32" />
             </div>
-
-            <Tabs defaultValue="opened">
-                <TabsList className="grid w-full grid-cols-2 max-w-md">
-                    <TabsTrigger value="opened">Opened</TabsTrigger>
-                    <TabsTrigger value="closed">Closed</TabsTrigger>
-                </TabsList>
-                <TabsContent value="opened" className="mt-4">
-                    <Card>
-                        <CardContent className="p-0">
-                            <div className="p-4">
-                                <Skeleton className="h-10 max-w-sm" />
-                            </div>
-                            <div className="border-t p-4 space-y-2">
-                                {[...Array(5)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="closed" className="mt-4">
-                    <Card>
-                        <CardContent className="p-0">
-                            <div className="p-4">
-                                <Skeleton className="h-10 max-w-sm" />
-                            </div>
-                            <div className="border-t p-4 space-y-2">
-                               <Skeleton className="h-12 w-full" />
-                               <Skeleton className="h-12 w-full" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+            <Skeleton className="h-10 w-full max-w-md mb-4" />
+            <Card><CardContent className="p-8 space-y-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></CardContent></Card>
         </div>
     );
-}
-
-
-export default function MembersPage() {
-  const [enrichedMembers, setEnrichedMembers] = React.useState<any[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    async function loadData() {
-        try {
-            const { members, units } = await fetchData();
-            const safeUnits = units || [];
-            const safeMembers = members || [];
-            const unitsMap = new Map(safeUnits.map((unit: Unit) => [unit.id, unit.name]));
-            const allMembers = safeMembers.map((member: Member) => ({
-                ...member,
-                unitName: unitsMap.get(member.unitId) || 'N/A',
-            }));
-            setEnrichedMembers(allMembers);
-        } catch (error) {
-            console.error("Failed to fetch members data", error);
-            setEnrichedMembers([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    loadData();
-  }, []);
-
-
-  if (isLoading) {
-    return <MembersPageSkeleton />;
   }
-
-  const openMembers = enrichedMembers.filter(m => m.status === 'Opened');
-  const closedMembers = enrichedMembers.filter(m => m.status === 'Closed');
 
   return (
     <div>
@@ -119,16 +74,23 @@ export default function MembersPage() {
         </Link>
       </div>
 
-      <Tabs defaultValue="opened">
+      <Tabs defaultValue="Opened" value={status} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="opened">Opened</TabsTrigger>
-          <TabsTrigger value="closed">Closed</TabsTrigger>
+          <TabsTrigger value="Opened">Opened</TabsTrigger>
+          <TabsTrigger value="Closed">Closed</TabsTrigger>
         </TabsList>
-        <TabsContent value="opened" className="mt-4">
-          <MemberTable data={openMembers} listType="opened" />
-        </TabsContent>
-        <TabsContent value="closed" className="mt-4">
-          <MemberTable data={closedMembers} listType="closed" />
+        <TabsContent value={status} className="mt-4">
+          <MemberTable 
+            data={data} 
+            listType={status === 'Opened' ? 'opened' : 'closed'} 
+            isLoading={isLoading}
+            pagination={{
+                currentPage: page,
+                totalPages: totalPages,
+                onPageChange: setPage
+            }}
+            onSearch={handleSearch}
+          />
         </TabsContent>
       </Tabs>
     </div>
