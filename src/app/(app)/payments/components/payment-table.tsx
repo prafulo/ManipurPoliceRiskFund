@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Payment } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -63,6 +63,22 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
     onSearch(localSearch);
   };
 
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, pagination.currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(pagination.totalPages, start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <Card>
       <CardContent className="p-0">
@@ -76,7 +92,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
           <Button type="submit" variant="secondary">Search</Button>
           {isLoading && <Loader2 className="h-4 w-4 animate-spin self-center ml-2" />}
         </form>
-        <div className="border-t">
+        <div className="border-t overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -94,11 +110,11 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                 data.map((payment) => (
                   <TableRow key={payment.id} className={isLoading ? 'opacity-50' : ''}>
                     <TableCell className="font-medium">{payment.memberName}</TableCell>
-                    <TableCell>{payment.membershipCode}</TableCell>
+                    <TableCell className="font-mono text-xs">{payment.membershipCode}</TableCell>
                     <TableCell>{payment.unitName}</TableCell>
                     <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
                     <TableCell>₹{Number(payment.amount).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs">{formatMonths(payment.months)}</TableCell>
+                    <TableCell className="text-[10px] uppercase text-muted-foreground">{formatMonths(payment.months)}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>
                         <DropdownMenu>
@@ -140,26 +156,43 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
             </TableBody>
           </Table>
         </div>
-        <div className="flex items-center justify-between space-x-2 p-4 border-t">
-          <span className="text-sm text-muted-foreground">
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </span>
-          <div className="space-x-2">
+        
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+          <p className="text-sm text-muted-foreground">
+            Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
+          </p>
+          <div className="flex items-center gap-1">
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
+              className="h-8 w-8"
               onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
-              disabled={pagination.currentPage === 1 || isLoading}
+              disabled={pagination.currentPage <= 1 || isLoading}
             >
-              Previous
+              <ChevronLeft className="h-4 w-4" />
             </Button>
+            
+            {getPageNumbers().map(pageNum => (
+              <Button
+                key={pageNum}
+                variant={pagination.currentPage === pageNum ? "default" : "outline"}
+                size="icon"
+                className="h-8 w-8 text-xs"
+                onClick={() => pagination.onPageChange(pageNum)}
+                disabled={isLoading}
+              >
+                {pageNum}
+              </Button>
+            ))}
+
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
+              className="h-8 w-8"
               onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
-              disabled={pagination.currentPage === pagination.totalPages || isLoading}
+              disabled={pagination.currentPage >= pagination.totalPages || isLoading}
             >
-              Next
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

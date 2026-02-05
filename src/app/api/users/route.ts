@@ -1,4 +1,3 @@
-
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
@@ -6,15 +5,40 @@ import { UserRole } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const query = searchParams.get('query') || '';
+
     try {
-        const users = await prisma.user.findMany({
-            orderBy: {
-                name: 'asc'
-            }
-        });
+        const where = query ? {
+            OR: [
+                { name: { contains: query } },
+                { email: { contains: query } }
+            ]
+        } : {};
+
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                skip: (page - 1) * limit,
+                take: limit,
+                orderBy: {
+                    name: 'asc'
+                }
+            }),
+            prisma.user.count({ where })
+        ]);
+
         // Omit password from the response
         const usersWithoutPassword = users.map(({ password, ...user }) => user);
-        return NextResponse.json({ users: usersWithoutPassword });
+        
+        return NextResponse.json({ 
+            users: usersWithoutPassword,
+            total,
+            pages: Math.ceil(total / limit),
+            currentPage: page
+        });
     } catch (error: any) {
         return NextResponse.json({ message: "Failed to fetch users: " + error.message }, { status: 500 });
     }
