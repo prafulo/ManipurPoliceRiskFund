@@ -31,6 +31,7 @@ interface TransferTableProps {
 
 export function TransferTable({ data, isLoading, pagination, onSearch }: TransferTableProps) {
   const [localSearch, setLocalSearch] = React.useState('');
+  const pageSize = 10;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +71,7 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Member Name</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>From Unit</TableHead>
@@ -79,8 +81,11 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.map((transfer) => (
+                data.map((transfer, index) => (
                   <TableRow key={transfer.id} className={isLoading ? 'opacity-50' : ''}>
+                    <TableCell className="text-muted-foreground text-xs">
+                        {((pagination.currentPage - 1) * pageSize) + index + 1}
+                    </TableCell>
                     <TableCell className="font-medium">{transfer.memberName}</TableCell>
                     <TableCell className="font-mono text-xs">{transfer.membershipCode}</TableCell>
                     <TableCell>{transfer.fromUnitName}</TableCell>
@@ -90,7 +95,7 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     {isLoading ? 'Loading...' : 'No transfers found.'}
                   </TableCell>
                 </TableRow>

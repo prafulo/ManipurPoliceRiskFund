@@ -28,6 +28,7 @@ interface ReleaseTableProps {
 
 export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseTableProps) {
   const [localSearch, setLocalSearch] = React.useState('');
+  const pageSize = 10;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +68,7 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Member Name</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Unit</TableHead>
@@ -77,8 +79,11 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.map((release) => (
+                data.map((release, index) => (
                   <TableRow key={release.id} className={isLoading ? 'opacity-50' : ''}>
+                    <TableCell className="text-muted-foreground text-xs">
+                        {((pagination.currentPage - 1) * pageSize) + index + 1}
+                    </TableCell>
                     <TableCell className="font-medium">{release.name}</TableCell>
                     <TableCell className="font-mono text-xs">{release.membershipCode}</TableCell>
                     <TableCell>{release.unitName}</TableCell>
@@ -89,7 +94,7 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     {isLoading ? 'Loading...' : 'No release records found.'}
                   </TableCell>
                 </TableRow>

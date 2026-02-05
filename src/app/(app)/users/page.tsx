@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/select';
 import { useSession } from 'next-auth/react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 type UserWithUnitName = User & { unitName?: string };
 
@@ -79,12 +80,14 @@ export default function ManageUsersPage() {
   const [role, setRole] = useState<UserRole>('UnitAdmin');
   const [unitId, setUnitId] = useState<string | undefined>(undefined);
 
+  const pageSize = 10;
+
   const loadData = useCallback(async () => {
     if (!session) return;
     setIsDataLoading(true);
     try {
         const [usersRes, unitsRes] = await Promise.all([
-            fetch(`/api/users?page=${page}&limit=10&query=${searchQuery}`),
+            fetch(`/api/users?page=${page}&limit=${pageSize}&query=${searchQuery}`),
             fetch('/api/units')
         ]);
         const usersData = await usersRes.json();
@@ -193,7 +196,17 @@ export default function ManageUsersPage() {
 
   const getPageNumbers = () => {
     const pages = [];
-    for (let i = 1; i <= totalPages; i++) pages.push(i);
+    const maxVisible = 5;
+    let start = Math.max(1, page - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
     return pages;
   };
   
@@ -254,10 +267,13 @@ export default function ManageUsersPage() {
         </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead className="w-[50px]">#</TableHead><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
             <TableBody>
-              {users.length > 0 ? users.map(user => (
+              {users.length > 0 ? users.map((user, index) => (
                 <TableRow key={user.id}>
+                  <TableCell className="text-muted-foreground text-xs">
+                    {((page - 1) * pageSize) + index + 1}
+                  </TableCell>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell className="text-xs">{user.email}</TableCell>
                   <TableCell><Badge variant="outline" className="text-[10px]">{user.role}</Badge></TableCell>
@@ -266,11 +282,11 @@ export default function ManageUsersPage() {
                     <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(user)} className="h-8 w-8"><Edit className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={user.id === session?.user.id}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete User?</AlertDialogTitle><AlertDialogDescription>Permanently remove <strong>{user.name}</strong>?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteUser(user.id, user.name)}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete User?</AlertDialogTitle><AlertDialogDescription>Permanently remove <strong>{user.name}</strong>?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogAction onClick={() => handleDeleteUser(user.id, user.name)}>Delete</AlertDialogAction><AlertDialogCancel>Cancel</AlertDialogCancel></AlertDialogFooter></AlertDialogContent>
                     </AlertDialog>
                   </TableCell>
                 </TableRow>
-              )) : <TableRow><TableCell colSpan={5} className="h-24 text-center">No users found.</TableCell></TableRow>}
+              )) : <TableRow><TableCell colSpan={6} className="h-24 text-center">No users found.</TableCell></TableRow>}
             </TableBody>
           </Table>
           

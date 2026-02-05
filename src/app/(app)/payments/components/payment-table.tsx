@@ -49,6 +49,7 @@ interface PaymentTableProps {
 
 export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }: PaymentTableProps) {
   const [localSearch, setLocalSearch] = React.useState('');
+  const pageSize = 10;
 
   const formatMonths = (months: any) => {
     let monthArray: any[];
@@ -96,6 +97,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Member Name</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Unit</TableHead>
@@ -107,8 +109,11 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.map((payment) => (
+                data.map((payment, index) => (
                   <TableRow key={payment.id} className={isLoading ? 'opacity-50' : ''}>
+                    <TableCell className="text-muted-foreground text-xs">
+                        {((pagination.currentPage - 1) * pageSize) + index + 1}
+                    </TableCell>
                     <TableCell className="font-medium">{payment.memberName}</TableCell>
                     <TableCell className="font-mono text-xs">{payment.membershipCode}</TableCell>
                     <TableCell>{payment.unitName}</TableCell>
@@ -138,8 +143,8 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                               <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction onClick={() => onDelete(payment.id)}>Continue</AlertDialogAction>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
                             </AlertDialogFooter>
                          </AlertDialogContent>
                        </AlertDialog>
@@ -148,7 +153,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     {isLoading ? 'Loading...' : 'No payments found.'}
                   </TableCell>
                 </TableRow>

@@ -36,8 +36,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
-import { useSession } from 'next-auth/react';
-import { cn } from '@/lib/utils';
 
 type EnrichedMember = Member & { unitName: string };
 
@@ -57,6 +55,8 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
   const router = useRouter();
   const { toast } = useToast();
   const [localSearch, setLocalSearch] = React.useState('');
+
+  const pageSize = 10;
 
   const handleDeleteMember = async (memberId: string) => {
     try {
@@ -85,6 +85,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
   };
   
   const headers = [
+    { key: 'slno', label: '#' },
     { key: 'membershipCode', label: 'Code' },
     { key: 'name', label: 'Name' },
     { key: 'unitName', label: 'Unit' },
@@ -95,7 +96,6 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
     headers.push({ key: 'closureReason', label: 'Reason' });
   }
 
-  // Generate page numbers to display
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -139,8 +139,11 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.map((member) => (
+                data.map((member, index) => (
                   <TableRow key={member.id} className={isLoading ? 'opacity-50' : ''}>
+                    <TableCell className="text-muted-foreground text-xs">
+                        {((pagination.currentPage - 1) * pageSize) + index + 1}
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{member.membershipCode}</TableCell>
                     <TableCell className="font-medium">{member.name}</TableCell>
                     <TableCell>{member.unitName}</TableCell>
@@ -183,8 +186,8 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
                               <AlertDialogDescription>Permanently delete <strong>{member.name}</strong>?</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction onClick={() => handleDeleteMember(member.id)}>Continue</AlertDialogAction>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
                             </AlertDialogFooter>
                          </AlertDialogContent>
                        </AlertDialog>
@@ -202,7 +205,6 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
           </Table>
         </div>
         
-        {/* Pagination UI */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
           <p className="text-sm text-muted-foreground">
             Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>

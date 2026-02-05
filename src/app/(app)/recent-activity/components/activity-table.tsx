@@ -34,6 +34,8 @@ const typeDisplay: Record<ActivityType, { label: string; icon: React.ElementType
 };
 
 export function ActivityTable({ data, isLoading, pagination }: ActivityTableProps) {
+  const pageSize = 15;
+
   if (isLoading && data.length === 0) {
       return (
           <Card>
@@ -67,6 +69,7 @@ export function ActivityTable({ data, isLoading, pagination }: ActivityTableProp
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Description</TableHead>
@@ -75,11 +78,14 @@ export function ActivityTable({ data, isLoading, pagination }: ActivityTableProp
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.map((activity) => {
+                data.map((activity, index) => {
                   const config = typeDisplay[activity.type];
                   const Icon = config.icon;
                   return (
                     <TableRow key={activity.id} className={isLoading ? 'opacity-50' : ''}>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {((pagination.currentPage - 1) * pageSize) + index + 1}
+                      </TableCell>
                       <TableCell className="whitespace-nowrap">{format(new Date(activity.date), 'PP p')}</TableCell>
                       <TableCell>
                         <Badge variant={config.variant} className="gap-1.5">
@@ -94,7 +100,7 @@ export function ActivityTable({ data, isLoading, pagination }: ActivityTableProp
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     No activities found.
                   </TableCell>
                 </TableRow>
