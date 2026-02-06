@@ -117,7 +117,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
       <CardContent className="p-0">
         <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
           <Input
-            placeholder="Filter by code, name..."
+            placeholder="Filter by code, EIN, name..."
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             className="max-w-sm"

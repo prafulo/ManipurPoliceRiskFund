@@ -46,7 +46,7 @@ const formSchema = z.object({
   fatherName: z.string().min(2, "Father's name must be at least 2 characters."),
   rank: z.string().min(1, "Rank is required."),
   trade: z.string().min(1, "Trade is required."),
-  serviceNumber: z.string().min(1, "Service number is required."),
+  serviceNumber: z.string().min(1, "Employee Identification Number(EIN) is required."),
   dateOfBirth: z.date({ required_error: "Date of birth is required." }),
   dateOfEnrollment: z.date({ required_error: "Date of enrollment is required." }),
   address: z.string().min(5, "Address is required."),
@@ -363,7 +363,7 @@ export function MemberForm({ member }: MemberFormProps) {
               <h3 className="text-xl font-bold font-headline text-primary">Service Details</h3>
               <div className="grid md:grid-cols-4 gap-8">
                 <FormField name="serviceNumber" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Service No.</FormLabel><FormControl><Input placeholder="12345" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Employee Identification Number(EIN)</FormLabel><FormControl><Input placeholder="e.g. 12345" {...field} /></FormControl><FormMessage /></FormItem>
                   )}
                 />
                 <FormField name="badgeNumber" control={form.control} render={({ field }) => (
