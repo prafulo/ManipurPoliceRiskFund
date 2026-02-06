@@ -1,5 +1,17 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+
+function safeParse(val: any) {
+    if (typeof val === 'string') {
+        try {
+            return JSON.parse(val);
+        } catch (e) {
+            return val;
+        }
+    }
+    return val;
+}
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -46,7 +58,7 @@ export async function GET(request: NextRequest) {
             id: p.id,
             memberId: p.memberId,
             amount: Number(p.amount),
-            months: JSON.parse(p.months as string),
+            months: safeParse(p.months) || [],
             paymentDate: p.paymentDate,
             memberName: p.member.name,
             membershipCode: p.member.membershipCode,

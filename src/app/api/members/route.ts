@@ -1,6 +1,18 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { MemberStatus } from '@prisma/client';
+
+function safeParse(val: any) {
+    if (typeof val === 'string') {
+        try {
+            return JSON.parse(val);
+        } catch (e) {
+            return val;
+        }
+    }
+    return val;
+}
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -40,13 +52,12 @@ export async function GET(request: NextRequest) {
             prisma.member.count({ where })
         ]);
 
-        // The database stores JSON, so we need to parse it for each member
         const parsedMembers = members.map(member => ({
             ...member,
             unitName: member.unit.name,
-            nominees: member.nominees ? JSON.parse(member.nominees as string) : [],
-            firstWitness: member.firstWitness ? JSON.parse(member.firstWitness as string) : {},
-            secondWitness: member.secondWitness ? JSON.parse(member.secondWitness as string) : {},
+            nominees: safeParse(member.nominees) || [],
+            firstWitness: safeParse(member.firstWitness) || {},
+            secondWitness: safeParse(member.secondWitness) || {},
         }));
 
         return NextResponse.json({ 

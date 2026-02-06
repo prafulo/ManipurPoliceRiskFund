@@ -1,6 +1,18 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { ClosureReason, MemberPostType, MemberStatus } from '@prisma/client';
+
+function safeParse(val: any) {
+    if (typeof val === 'string') {
+        try {
+            return JSON.parse(val);
+        } catch (e) {
+            return val;
+        }
+    }
+    return val;
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -13,13 +25,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ message: 'Member not found' }, { status: 404 });
         }
 
-        // The database stores JSON, but we parse it before sending to the client
         return NextResponse.json({
           member: {
             ...member,
-            nominees: member.nominees ? JSON.parse(member.nominees as string) : [],
-            firstWitness: member.firstWitness ? JSON.parse(member.firstWitness as string) : {},
-            secondWitness: member.secondWitness ? JSON.parse(member.secondWitness as string) : {},
+            nominees: safeParse(member.nominees) || [],
+            firstWitness: safeParse(member.firstWitness) || {},
+            secondWitness: safeParse(member.secondWitness) || {},
           }
         });
 
@@ -58,9 +69,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             dateApplied: new Date(data.dateApplied),
             receiptDate: new Date(data.receiptDate),
             allotmentDate: new Date(data.allotmentDate),
-            firstWitness: JSON.stringify({ name: data.firstWitnessName, address: data.firstWitnessAddress }),
-            secondWitness: JSON.stringify({ name: data.secondWitnessName, address: data.secondWitnessAddress }),
-            nominees: JSON.stringify(data.nominees),
+            firstWitness: { name: data.firstWitnessName, address: data.firstWitnessAddress },
+            secondWitness: { name: data.secondWitnessName, address: data.secondWitnessAddress },
+            nominees: data.nominees,
         };
 
         await prisma.member.update({
@@ -76,20 +87,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 }
 
-
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        
-        // Prisma will handle cascading deletes for payments and transfers as defined in the schema.
         await prisma.member.delete({
             where: { id: id },
         });
-
-        return NextResponse.json({ message: 'Member and related data deleted successfully' });
-
-    } catch (error: any)
-{
+        return NextResponse.json({ message: 'Member deleted successfully' });
+    } catch (error: any) {
         console.error("Failed to delete member:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }

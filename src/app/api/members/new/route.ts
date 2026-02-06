@@ -1,8 +1,8 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 import type { ClosureReason, MemberPostType, MemberStatus } from '@prisma/client';
-
 
 export async function POST(request: NextRequest) {
     try {
@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
             dateApplied: new Date(data.dateApplied),
             receiptDate: new Date(data.receiptDate),
             allotmentDate: new Date(data.allotmentDate),
-            firstWitness: JSON.stringify({ name: data.firstWitnessName, address: data.firstWitnessAddress }),
-            secondWitness: JSON.stringify({ name: data.secondWitnessName, address: data.secondWitnessAddress }),
-            nominees: JSON.stringify(data.nominees),
+            firstWitness: { name: data.firstWitnessName, address: data.firstWitnessAddress },
+            secondWitness: { name: data.secondWitnessName, address: data.secondWitnessAddress },
+            nominees: data.nominees,
         };
 
         await prisma.member.create({
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'Member created successfully', id: memberId }, { status: 201 });
 
     } catch (error: any) {
-        if (error.code === 'P2002') { // Prisma's unique constraint violation code
-             return NextResponse.json({ message: `A member with the same unique information (e.g., membership code) already exists.` }, { status: 409 });
+        if (error.code === 'P2002') {
+             return NextResponse.json({ message: `A member with the same unique information already exists.` }, { status: 409 });
         }
         console.error("Failed to create member:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });

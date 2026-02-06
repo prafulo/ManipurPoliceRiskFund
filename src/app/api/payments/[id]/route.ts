@@ -1,5 +1,17 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+
+function safeParse(val: any) {
+    if (typeof val === 'string') {
+        try {
+            return JSON.parse(val);
+        } catch (e) {
+            return val;
+        }
+    }
+    return val;
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -25,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 memberId: payment.memberId,
                 amount: Number(payment.amount),
                 paymentDate: payment.paymentDate,
-                months: JSON.parse(payment.months as string),
+                months: safeParse(payment.months) || [],
                 memberName: payment.member.name,
                 membershipCode: payment.member.membershipCode,
                 serviceNumber: payment.member.serviceNumber,
@@ -41,13 +53,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        
         await prisma.payment.delete({
             where: { id: id },
         });
-
         return NextResponse.json({ message: 'Payment deleted successfully' });
-
     } catch (error: any) {
         console.error("Failed to delete payment:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
