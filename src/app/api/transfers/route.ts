@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
         const where = query ? {
             OR: [
                 { member: { name: { contains: query } } },
-                { member: { membershipCode: { contains: query } } }
+                { member: { membershipCode: { contains: query } } },
+                { member: { serviceNumber: { contains: query } } }
             ]
         } : {};
 

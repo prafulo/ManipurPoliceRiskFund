@@ -59,7 +59,7 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
       <CardContent className="p-0">
         <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
           <Input
-            placeholder="Search by name or code..."
+            placeholder="Search by name, code or EIN..."
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             className="max-w-sm"
