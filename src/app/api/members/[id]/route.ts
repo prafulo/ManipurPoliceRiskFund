@@ -2,9 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { ClosureReason, MemberPostType, MemberStatus } from '@prisma/client';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const member = await prisma.member.findUnique({
             where: { id: id },
         });
@@ -28,9 +28,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const data = await request.json();
 
         const memberData = {
@@ -77,9 +77,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         
         // Prisma will handle cascading deletes for payments and transfers as defined in the schema.
         await prisma.member.delete({

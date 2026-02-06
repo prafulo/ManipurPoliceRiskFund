@@ -33,7 +33,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 interface PaymentTableProps {
@@ -51,6 +50,7 @@ interface PaymentTableProps {
 export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }: PaymentTableProps) {
   const router = useRouter();
   const [localSearch, setLocalSearch] = React.useState('');
+  const [paymentToDelete, setPaymentToDelete] = React.useState<string | null>(null);
   const pageSize = 10;
 
   const formatMonths = (months: any) => {
@@ -83,47 +83,47 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
   };
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
-          <Input
-            placeholder="Search by name, code or EIN..."
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className="max-w-sm"
-          />
-          <Button type="submit" variant="secondary">Search</Button>
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin self-center ml-2" />}
-        </form>
-        <div className="border-t overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">Sl. No.</TableHead>
-                <TableHead>Member Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Months Paid</TableHead>
-                <TableHead className="text-right w-[80px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data.map((payment, index) => (
-                  <TableRow key={payment.id} className={isLoading ? 'opacity-50' : ''}>
-                    <TableCell className="text-muted-foreground text-xs">
-                        {((pagination.currentPage - 1) * pageSize) + index + 1}
-                    </TableCell>
-                    <TableCell className="font-medium">{payment.memberName}</TableCell>
-                    <TableCell className="font-mono text-xs">{payment.membershipCode}</TableCell>
-                    <TableCell>{payment.unitName}</TableCell>
-                    <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
-                    <TableCell>Rs. {Number(payment.amount).toFixed(2)}</TableCell>
-                    <TableCell className="text-[10px] uppercase text-muted-foreground">{formatMonths(payment.months)}</TableCell>
-                    <TableCell className="text-right">
-                       <AlertDialog>
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
+            <Input
+              placeholder="Search by name, code or EIN..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="max-w-sm"
+            />
+            <Button type="submit" variant="secondary">Search</Button>
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin self-center ml-2" />}
+          </form>
+          <div className="border-t overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">Sl. No.</TableHead>
+                  <TableHead>Member Name</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Months Paid</TableHead>
+                  <TableHead className="text-right w-[80px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.length > 0 ? (
+                  data.map((payment, index) => (
+                    <TableRow key={payment.id} className={isLoading ? 'opacity-50' : ''}>
+                      <TableCell className="text-muted-foreground text-xs">
+                          {((pagination.currentPage - 1) * pageSize) + index + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">{payment.memberName}</TableCell>
+                      <TableCell className="font-mono text-xs">{payment.membershipCode}</TableCell>
+                      <TableCell>{payment.unitName}</TableCell>
+                      <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
+                      <TableCell>Rs. {Number(payment.amount).toFixed(2)}</TableCell>
+                      <TableCell className="text-[10px] uppercase text-muted-foreground">{formatMonths(payment.months)}</TableCell>
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -132,80 +132,91 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => router.push(`/payments/${payment.id}/receipt`)}>
+                            <DropdownMenuItem onSelect={() => router.push(`/payments/${payment.id}/receipt`)}>
                               View Receipt
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                            </AlertDialogTrigger>
+                            <DropdownMenuItem 
+                              onSelect={() => setPaymentToDelete(payment.id)}
+                              className="text-destructive"
+                            >
+                              Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                         <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete payment record?</AlertDialogTitle>
-                              <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogAction onClick={() => onDelete(payment.id)}>Continue</AlertDialogAction>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            </AlertDialogFooter>
-                         </AlertDialogContent>
-                       </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      {isLoading ? 'Loading...' : 'No payments found.'}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    {isLoading ? 'Loading...' : 'No payments found.'}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
-          <p className="text-sm text-muted-foreground">
-            Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
-              disabled={pagination.currentPage <= 1 || isLoading}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            {getPageNumbers().map(pageNum => (
-              <Button
-                key={pageNum}
-                variant={pagination.currentPage === pageNum ? "default" : "outline"}
-                size="icon"
-                className="h-8 w-8 text-xs"
-                onClick={() => pagination.onPageChange(pageNum)}
-                disabled={isLoading}
-              >
-                {pageNum}
-              </Button>
-            ))}
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
-              disabled={pagination.currentPage >= pagination.totalPages || isLoading}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              {getPageNumbers().map(pageNum => (
+                <Button
+                  key={pageNum}
+                  variant={pagination.currentPage === pageNum ? "default" : "outline"}
+                  size="icon"
+                  className="h-8 w-8 text-xs"
+                  onClick={() => pagination.onPageChange(pageNum)}
+                  disabled={isLoading}
+                >
+                  {pageNum}
+                </Button>
+              ))}
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages || isLoading}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={!!paymentToDelete} onOpenChange={(open) => !open && setPaymentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete payment record?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (paymentToDelete) {
+                onDelete(paymentToDelete);
+                setPaymentToDelete(null);
+              }
+            }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

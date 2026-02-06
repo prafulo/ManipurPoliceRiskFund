@@ -2,9 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const { name } = await request.json();
 
         if (!name) {
@@ -28,9 +28,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         
         const memberCount = await prisma.member.count({
             where: { unitId: id },

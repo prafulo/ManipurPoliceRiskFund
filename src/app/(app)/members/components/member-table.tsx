@@ -33,7 +33,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,6 +54,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
   const router = useRouter();
   const { toast } = useToast();
   const [localSearch, setLocalSearch] = React.useState('');
+  const [memberToDelete, setMemberToDelete] = React.useState<EnrichedMember | null>(null);
 
   const pageSize = 10;
 
@@ -85,7 +85,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
   };
   
   const headers = [
-    { key: 'slno', label: '#' },
+    { key: 'slno', label: 'Sl. No.' },
     { key: 'membershipCode', label: 'Code' },
     { key: 'name', label: 'Name' },
     { key: 'unitName', label: 'Unit' },
@@ -113,50 +113,50 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
   };
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
-          <Input
-            placeholder="Filter by code, EIN, name..."
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className="max-w-sm"
-          />
-          <Button type="submit" variant="secondary">Search</Button>
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin self-center ml-2" />}
-        </form>
-        <div className="border-t overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {headers.map(header => (
-                  <TableHead key={header.key}>
-                    {header.label}
-                  </TableHead>
-                ))}
-                <TableHead className="text-right w-[80px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data.map((member, index) => (
-                  <TableRow key={member.id} className={isLoading ? 'opacity-50' : ''}>
-                    <TableCell className="text-muted-foreground text-xs">
-                        {((pagination.currentPage - 1) * pageSize) + index + 1}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{member.membershipCode}</TableCell>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>{member.unitName}</TableCell>
-                    <TableCell>
-                      <Badge variant={member.status === 'Opened' ? 'default' : 'destructive'} className={member.status === 'Opened' ? 'bg-green-600 hover:bg-green-700' : ''}>
-                        {member.status}
-                      </Badge>
-                    </TableCell>
-                    {listType === 'closed' && (
-                        <TableCell>{member.closureReason}</TableCell>
-                    )}
-                    <TableCell className="text-right">
-                       <AlertDialog>
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
+            <Input
+              placeholder="Filter by code, EIN, name..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="max-w-sm"
+            />
+            <Button type="submit" variant="secondary">Search</Button>
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin self-center ml-2" />}
+          </form>
+          <div className="border-t overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {headers.map(header => (
+                    <TableHead key={header.key}>
+                      {header.label}
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right w-[80px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.length > 0 ? (
+                  data.map((member, index) => (
+                    <TableRow key={member.id} className={isLoading ? 'opacity-50' : ''}>
+                      <TableCell className="text-muted-foreground text-xs">
+                          {((pagination.currentPage - 1) * pageSize) + index + 1}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{member.membershipCode}</TableCell>
+                      <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell>{member.unitName}</TableCell>
+                      <TableCell>
+                        <Badge variant={member.status === 'Opened' ? 'default' : 'destructive'} className={member.status === 'Opened' ? 'bg-green-600 hover:bg-green-700' : ''}>
+                          {member.status}
+                        </Badge>
+                      </TableCell>
+                      {listType === 'closed' && (
+                          <TableCell>{member.closureReason}</TableCell>
+                      )}
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -165,86 +165,97 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => router.push(`/members/${member.id}`)}>
+                            <DropdownMenuItem onSelect={() => router.push(`/members/${member.id}`)}>
                               View/Edit Profile
                             </DropdownMenuItem>
                             {member.status === 'Opened' && (
                               <>
-                                <DropdownMenuItem onClick={() => router.push(`/payments/new?memberId=${member.id}`)}>Add Payment</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => router.push(`/transfers/new?memberId=${member.id}`)}>Transfer Unit</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => router.push(`/payments/new?memberId=${member.id}`)}>Add Payment</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => router.push(`/transfers/new?memberId=${member.id}`)}>Transfer Unit</DropdownMenuItem>
                               </>
                             )}
                             <DropdownMenuSeparator />
-                             <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-destructive">Delete Member</DropdownMenuItem>
-                            </AlertDialogTrigger>
+                            <DropdownMenuItem 
+                              onSelect={() => setMemberToDelete(member)}
+                              className="text-destructive"
+                            >
+                              Delete Member
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Member Profile?</AlertDialogTitle>
-                              <AlertDialogDescription>Permanently delete <strong>{member.name}</strong>?</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogAction onClick={() => handleDeleteMember(member.id)}>Continue</AlertDialogAction>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            </AlertDialogFooter>
-                         </AlertDialogContent>
-                       </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={headers.length + 1} className="h-24 text-center">
+                      {isLoading ? 'Loading...' : 'No members found.'}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={headers.length + 1} className="h-24 text-center">
-                    {isLoading ? 'Loading...' : 'No members found.'}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
-          <p className="text-sm text-muted-foreground">
-            Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
-              disabled={pagination.currentPage <= 1 || isLoading}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            {getPageNumbers().map(pageNum => (
-              <Button
-                key={pageNum}
-                variant={pagination.currentPage === pageNum ? "default" : "outline"}
-                size="icon"
-                className="h-8 w-8 text-xs"
-                onClick={() => pagination.onPageChange(pageNum)}
-                disabled={isLoading}
-              >
-                {pageNum}
-              </Button>
-            ))}
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
-              disabled={pagination.currentPage >= pagination.totalPages || isLoading}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              {getPageNumbers().map(pageNum => (
+                <Button
+                  key={pageNum}
+                  variant={pagination.currentPage === pageNum ? "default" : "outline"}
+                  size="icon"
+                  className="h-8 w-8 text-xs"
+                  onClick={() => pagination.onPageChange(pageNum)}
+                  disabled={isLoading}
+                >
+                  {pageNum}
+                </Button>
+              ))}
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages || isLoading}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={!!memberToDelete} onOpenChange={(open) => !open && setMemberToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Member Profile?</AlertDialogTitle>
+            <AlertDialogDescription>Permanently delete <strong>{memberToDelete?.name}</strong>?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (memberToDelete) {
+                handleDeleteMember(memberToDelete.id);
+                setMemberToDelete(null);
+              }
+            }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
