@@ -13,7 +13,7 @@ enum UserRole {
   UnitAdmin
 }
 
-enum MembershipStatus {
+enum MemberStatus {
   Opened
   Closed
 }
@@ -40,65 +40,65 @@ model User {
   unitId    String?
   unit      Unit?    @relation(fields: [unitId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Unit {
-  id        String     @id @default(uuid())
-  name      String     @unique
-  members   Member[]
-  users     User[]
-  fromTransfers Transfer[] @relation("FromUnit")
-  toTransfers   Transfer[] @relation("ToUnit")
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id            String     @id @default(uuid())
+  name          String     @unique
+  members       Member[]
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
+  users         User[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now()) @updatedAt
 }
 
 model Rank {
   id        String   @id @default(uuid())
   name      String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Member {
-  id                    String           @id @default(uuid())
-  membershipCode        String           @unique
+  id                    String          @id @default(uuid())
+  membershipCode        String          @unique
   name                  String
   fatherName            String
   rank                  String
   trade                 String
-  serviceNumber         String
+  serviceNumber         String          @unique
   badgeNumber           String
   bloodGroup            String
-  memberPostType        MemberPostType
+  memberPostType        MemberPostType  @default(Substantive)
   joiningRank           String
   dateOfBirth           DateTime
   dateOfEnrollment      DateTime
   superannuationDate    DateTime
   dateOfDischarge       DateTime?
-  address               String           @db.Text
+  address               String          @db.Text
   phone                 String
   unitId                String
-  unit                  Unit             @relation(fields: [unitId], references: [id])
-  status                MembershipStatus @default(Opened)
+  unit                  Unit            @relation(fields: [unitId], references: [id])
+  status                MemberStatus    @default(Opened)
   closureReason         ClosureReason?
-  closureNotes          String?          @db.Text
+  closureNotes          String?         @db.Text
   subscriptionStartDate DateTime
-  nominees              Json?
-  firstWitness          Json?
-  secondWitness         Json?
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
   payments              Payment[]
   transfers             Transfer[]
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
   releaseDate           DateTime?
-  releaseAmount         Decimal?         @db.Decimal(10, 2)
-  releaseNotes          String?          @db.Text
+  releaseAmount         Decimal?        @db.Decimal(10, 2)
+  releaseNotes          String?         @db.Text
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @default(now()) @updatedAt
 }
 
 model Payment {
@@ -109,7 +109,7 @@ model Payment {
   paymentDate DateTime @default(now())
   months      Json
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model Transfer {
@@ -122,9 +122,10 @@ model Transfer {
   toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
   transferDate DateTime @default(now())
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }
 
 model Setting {
   key   String @id
-  value String @db.Text
+  value String
 }

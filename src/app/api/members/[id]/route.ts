@@ -71,7 +71,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             allotmentDate: new Date(data.allotmentDate),
             firstWitness: { name: data.firstWitnessName, address: data.firstWitnessAddress },
             secondWitness: { name: data.secondWitnessName, address: data.secondWitnessAddress },
-            nominees: data.nominees,
+            nominees: data.nominees, // Send object directly to Json field
         };
 
         await prisma.member.update({
