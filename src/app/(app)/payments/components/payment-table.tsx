@@ -118,7 +118,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                     <TableCell className="font-mono text-xs">{payment.membershipCode}</TableCell>
                     <TableCell>{payment.unitName}</TableCell>
                     <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
-                    <TableCell>₹{Number(payment.amount).toFixed(2)}</TableCell>
+                    <TableCell>Rs. {Number(payment.amount).toFixed(2)}</TableCell>
                     <TableCell className="text-[10px] uppercase text-muted-foreground">{formatMonths(payment.months)}</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>

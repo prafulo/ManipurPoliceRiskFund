@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
         payments.forEach(p => allActivities.push({
             id: `p-${p.id}`, type: 'payment', date: p.paymentDate,
-            description: `Payment from ${p.member.name}`, details: `₹${Number(p.amount).toFixed(2)} received.`
+            description: `Payment from ${p.member.name}`, details: `Rs. ${Number(p.amount).toFixed(2)} received.`
         }));
 
         transfers.forEach(t => allActivities.push({

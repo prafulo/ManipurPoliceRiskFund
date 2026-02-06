@@ -88,7 +88,7 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
                     <TableCell className="font-mono text-xs">{release.membershipCode}</TableCell>
                     <TableCell>{release.unitName}</TableCell>
                     <TableCell>{release.releaseDate ? format(new Date(release.releaseDate), 'PP') : ''}</TableCell>
-                    <TableCell>₹{release.releaseAmount ? Number(release.releaseAmount).toFixed(2) : '0.00'}</TableCell>
+                    <TableCell>Rs. {release.releaseAmount ? Number(release.releaseAmount).toFixed(2) : '0.00'}</TableCell>
                     <TableCell className="max-w-xs text-[10px] text-muted-foreground uppercase">{release.releaseNotes}</TableCell>
                   </TableRow>
                 ))
