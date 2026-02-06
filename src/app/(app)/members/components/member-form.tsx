@@ -28,7 +28,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { format, addYears, isValid } from 'date-fns';
-import type { Member, Unit } from '@/lib/types';
+import type { Member, Unit, Rank } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -106,7 +106,6 @@ type MemberFormProps = {
 function memberToForm(member: Member) {
     const formValues: any = {};
     
-    // Iterate over all keys in the Member type to be safe
     for (const key in member) {
         const memberKey = key as keyof Member;
         const value = member[memberKey];
@@ -116,18 +115,16 @@ function memberToForm(member: Member) {
         } else if (value instanceof Date) {
             formValues[memberKey] = value;
         } else if (value === null || value === undefined) {
-             // Handle optional fields: convert null/undefined to empty string for controlled components
              if (['closureReason', 'closureNotes', 'parentDepartment'].includes(memberKey)) {
                 formValues[memberKey] = '';
              } else {
-                formValues[memberKey] = undefined; // For optional dates
+                formValues[memberKey] = undefined;
              }
         } else {
             formValues[memberKey] = value;
         }
     }
 
-    // Convert date strings to Date objects
     const dateFields: (keyof Member)[] = ['dateOfBirth', 'dateOfEnrollment', 'superannuationDate', 'dateOfDischarge', 'subscriptionStartDate', 'dateApplied', 'receiptDate', 'allotmentDate', 'createdAt', 'updatedAt'];
     dateFields.forEach(field => {
         if (formValues[field] && typeof formValues[field] === 'string') {
@@ -135,7 +132,6 @@ function memberToForm(member: Member) {
         }
     });
 
-    // Handle nested witness objects
     if (member.firstWitness) {
         formValues.firstWitnessName = (member.firstWitness as any).name || '';
         formValues.firstWitnessAddress = (member.firstWitness as any).address || '';
@@ -151,7 +147,6 @@ function memberToForm(member: Member) {
         formValues.secondWitnessAddress = '';
     }
 
-    // Handle nominees - which could be a JSON string or an array
     let nomineesArray = [];
     if (typeof member.nominees === 'string') {
         try {
@@ -174,15 +169,21 @@ export function MemberForm({ member }: MemberFormProps) {
   const router = useRouter();
   
   const [units, setUnits] = useState<Unit[]>([]);
+  const [ranks, setRanks] = useState<Rank[]>([]);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadUnits() {
-        const res = await fetch('/api/units');
-        const data = await res.json();
-        setUnits(data.units);
+    async function loadInitialData() {
+        const [unitsRes, ranksRes] = await Promise.all([
+            fetch('/api/units'),
+            fetch('/api/ranks')
+        ]);
+        const unitsData = await unitsRes.json();
+        const ranksData = await ranksRes.json();
+        setUnits(unitsData.units || []);
+        setRanks(ranksData.ranks || []);
     }
-    loadUnits();
+    loadInitialData();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -219,9 +220,7 @@ export function MemberForm({ member }: MemberFormProps) {
 
   const selectedUnitId = form.watch("unitId");
   const dob = form.watch("dateOfBirth");
-  const superannuationDate = form.watch("superannuationDate");
 
-  // Automatically calculate superannuation date based on DOB (60 years)
   useEffect(() => {
     if (dob) {
       const birthDate = new Date(dob);
@@ -370,12 +369,24 @@ export function MemberForm({ member }: MemberFormProps) {
                     <FormItem><FormLabel>Badge No.</FormLabel><FormControl><Input placeholder="BN123" {...field} /></FormControl><FormMessage /></FormItem>
                   )}
                 />
-                <FormField name="joiningRank" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Joining Rank</FormLabel><FormControl><Input placeholder="Recruit" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormField control={form.control} name="joiningRank" render={({ field }) => (
+                    <FormItem><FormLabel>Joining Rank</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select rank" /></SelectTrigger></FormControl>
+                        <SelectContent>{(ranks || []).map(rank => (<SelectItem key={rank.id} value={rank.name}>{rank.name}</SelectItem>))}</SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
-                 <FormField name="rank" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Present Rank</FormLabel><FormControl><Input placeholder="Sergeant" {...field} /></FormControl><FormMessage /></FormItem>
+                 <FormField control={form.control} name="rank" render={({ field }) => (
+                    <FormItem><FormLabel>Present Rank</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select rank" /></SelectTrigger></FormControl>
+                        <SelectContent>{(ranks || []).map(rank => (<SelectItem key={rank.id} value={rank.name}>{rank.name}</SelectItem>))}</SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
                 <FormField name="trade" control={form.control} render={({ field }) => (

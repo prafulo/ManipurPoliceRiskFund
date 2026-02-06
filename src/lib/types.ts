@@ -8,6 +8,11 @@ export type Unit = {
   name: string;
 };
 
+export type Rank = {
+  id: string;
+  name: string;
+};
+
 export type Nominee = {
   name: string;
   relation: string;

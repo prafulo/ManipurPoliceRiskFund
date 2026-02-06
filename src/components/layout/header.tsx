@@ -15,7 +15,8 @@ import {
   Building,
   DollarSign,
   Database,
-  ArchiveRestore
+  ArchiveRestore,
+  Award
 } from 'lucide-react';
 import {
   Sheet,
@@ -52,6 +53,7 @@ const navItems = [
 
 const settingsNavItems = [
     { href: '/settings/units', label: 'Units', icon: Building },
+    { href: '/settings/ranks', label: 'Ranks', icon: Award },
     { href: '/settings/financial', label: 'Financial', icon: DollarSign },
     { href: '/settings/database', label: 'Database', icon: Database, adminOnly: true },
 ];
