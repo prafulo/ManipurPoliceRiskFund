@@ -28,8 +28,6 @@ export type User = {
     unitId?: string | null;
 };
 
-// This type represents the data structure as used in the components.
-// It will differ slightly from the direct database schema (e.g., Timestamps vs. Dates/Strings).
 export type Member = {
   id: string;
   membershipCode: string;
@@ -68,8 +66,6 @@ export type Member = {
   allotmentDate: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
-
-  // New fields for recording the release
   releaseDate?: Date | string | null;
   releaseAmount?: number | null;
   releaseNotes?: string | null;
@@ -105,7 +101,6 @@ export type SubscriptionRelease = {
   releaseDate: Date | string;
   notes?: string;
   createdAt: Date | string;
-  // For display in table
   memberName?: string;
   membershipCode?: string;
   unitName?: string;
@@ -114,10 +109,10 @@ export type SubscriptionRelease = {
 export type ActivityType = 'new-member' | 'payment' | 'transfer';
 
 export type Activity = {
-  id: string; // e.g. "payment-xyz123"
+  id: string;
   type: ActivityType;
   date: Date | string;
   description: string;
   details: string;
-  amount?: number | null; // For payments
+  amount?: number | null;
 };

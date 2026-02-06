@@ -41,17 +41,10 @@ model User {
 }
 
 model Unit {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  members   Member[]
-  users     User[]
-  transfersFrom Transfer[] @relation("FromUnit")
-  transfersTo   Transfer[] @relation("ToUnit")
-}
-
-model Rank {
-  id   String @id @default(uuid())
-  name String @unique
+  id      String   @id @default(uuid())
+  name    String   @unique
+  members Member[]
+  users   User[]
 }
 
 model Member {
@@ -85,14 +78,13 @@ model Member {
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
+  releaseDate           DateTime?
+  releaseAmount         Decimal?       @db.Decimal(10, 2)
+  releaseNotes          String?        @db.Text
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
   payments              Payment[]
   transfers             Transfer[]
-  
-  releaseDate           DateTime?
-  releaseAmount         Decimal?       @db.Decimal(10, 2)
-  releaseNotes          String?        @db.Text
 }
 
 model Payment {
@@ -100,7 +92,7 @@ model Payment {
   memberId    String
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime
+  paymentDate DateTime @default(now())
   months      Json
 }
 
@@ -112,11 +104,16 @@ model Transfer {
   fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
   toUnitId     String
   toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
-  transferDate DateTime
+  transferDate DateTime @default(now())
   createdAt    DateTime @default(now())
 }
 
 model Setting {
   key   String @id
   value String
+}
+
+model Rank {
+  id   String @id @default(uuid())
+  name String @unique
 }

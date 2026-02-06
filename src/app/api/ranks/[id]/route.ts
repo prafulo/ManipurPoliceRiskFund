@@ -30,9 +30,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     try {
         const { id } = await params;
         
-        // Note: Existing members with this rank string will still have it as a string.
-        // In a strictly relational system we'd check usage, but here ranks are stored as strings in Members.
-        
         await prisma.rank.delete({
             where: { id: id }
         });

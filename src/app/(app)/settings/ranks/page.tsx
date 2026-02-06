@@ -33,12 +33,10 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Rank } from '@/lib/types';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 export default function ManageRanksPage() {
   const [ranks, setRanks] = useState<Rank[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   const [editingRank, setEditingRank] = useState<Rank | null>(null);
   const [rankName, setRankName] = useState('');
@@ -49,7 +47,7 @@ export default function ManageRanksPage() {
         try {
             const res = await fetch('/api/ranks');
             const data = await res.json();
-            setRanks(data.ranks);
+            setRanks(data.ranks || []);
         } catch (error) {
             console.error(error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch ranks.'})
@@ -89,7 +87,7 @@ export default function ManageRanksPage() {
         setEditingRank(null);
         
         const updatedRanks = await (await fetch('/api/ranks')).json();
-        setRanks(updatedRanks.ranks);
+        setRanks(updatedRanks.ranks || []);
 
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -125,7 +123,7 @@ export default function ManageRanksPage() {
   };
   
   if (isLoading) {
-    return <div>Loading ranks...</div>;
+    return <div className="p-8 text-center">Loading ranks...</div>;
   }
 
   return (
@@ -174,8 +172,8 @@ export default function ManageRanksPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(ranks || []).length > 0 ? (
-                ranks!.map(rank => (
+              {ranks.length > 0 ? (
+                ranks.map(rank => (
                   <TableRow key={rank.id}>
                     <TableCell className="font-medium">{rank.name}</TableCell>
                     <TableCell className="text-right">
@@ -193,7 +191,7 @@ export default function ManageRanksPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Rank?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete the rank <strong>{rank.name}</strong>? Existing members will retain this rank as text, but it won't be available for new selections.
+                                Are you sure you want to delete the rank <strong>{rank.name}</strong>? Existing members will retain this rank text, but it won't be available for new selections.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -204,7 +202,6 @@ export default function ManageRanksPage() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-
                     </TableCell>
                   </TableRow>
                 ))
