@@ -31,7 +31,7 @@ enum MemberPostType {
 }
 
 model User {
-  id       String   @id @default(uuid())
+  id       String   @id
   email    String   @unique
   name     String
   password String
@@ -41,22 +41,21 @@ model User {
 }
 
 model Unit {
-  id            String     @id @default(uuid())
+  id            String     @id
   name          String     @unique
   members       Member[]
   users         User[]
-  // Opposite relation fields for Transfer
   transfersFrom Transfer[] @relation("FromUnit")
   transfersTo   Transfer[] @relation("ToUnit")
 }
 
 model Rank {
-  id   String @id @default(uuid())
+  id   String @id
   name String @unique
 }
 
 model Member {
-  id                    String         @id @default(uuid())
+  id                    String         @id
   membershipCode        String         @unique
   name                  String
   fatherName            String
@@ -65,13 +64,13 @@ model Member {
   serviceNumber         String
   badgeNumber           String
   bloodGroup            String
-  memberPostType        MemberPostType
+  memberPostType        MemberPostType @default(Substantive)
   joiningRank           String
   dateOfBirth           DateTime
   dateOfEnrollment      DateTime
   superannuationDate    DateTime
   dateOfDischarge       DateTime?
-  address               String         @db.Text
+  address               String
   phone                 String
   unitId                String
   unit                  Unit           @relation(fields: [unitId], references: [id])
@@ -79,9 +78,9 @@ model Member {
   closureReason         ClosureReason?
   closureNotes          String?        @db.Text
   subscriptionStartDate DateTime
-  nominees              String?        @db.Text // Stored as JSON string
-  firstWitness          String?        @db.Text // Stored as JSON string
-  secondWitness         String?        @db.Text // Stored as JSON string
+  nominees              Json?
+  firstWitness          Json?
+  secondWitness         Json?
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
@@ -91,21 +90,22 @@ model Member {
   payments              Payment[]
   transfers             Transfer[]
   releaseDate           DateTime?
-  releaseAmount         Decimal?
+  releaseAmount         Decimal?       @db.Decimal(10, 2)
   releaseNotes          String?        @db.Text
 }
 
 model Payment {
-  id          String   @id @default(uuid())
+  id          String   @id
   memberId    String
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  amount      Decimal
+  amount      Decimal  @db.Decimal(10, 2)
   paymentDate DateTime @default(now())
-  months      String   @db.Text // Stored as JSON string array of dates
+  months      Json
+  createdAt   DateTime @default(now())
 }
 
 model Transfer {
-  id           String   @id @default(uuid())
+  id           String   @id
   memberId     String
   member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnitId   String
@@ -117,7 +117,6 @@ model Transfer {
 }
 
 model Setting {
-  id    String @id @default(uuid())
-  key   String @unique
+  key   String @id
   value String
 }
