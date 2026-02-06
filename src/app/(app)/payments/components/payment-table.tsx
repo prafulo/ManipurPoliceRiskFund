@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import type { Payment } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -48,6 +49,7 @@ interface PaymentTableProps {
 }
 
 export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }: PaymentTableProps) {
+  const router = useRouter();
   const [localSearch, setLocalSearch] = React.useState('');
   const pageSize = 10;
 
@@ -97,7 +99,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">#</TableHead>
+                <TableHead className="w-[50px]">Sl. No.</TableHead>
                 <TableHead>Member Name</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Unit</TableHead>
@@ -130,7 +132,9 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>View Receipt</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/payments/${payment.id}/receipt`)}>
+                              View Receipt
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <AlertDialogTrigger asChild>
                                 <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
