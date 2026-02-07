@@ -7,14 +7,14 @@ export async function POST(request: NextRequest) {
     let name = 'Unknown';
     try {
         const body = await request.json();
-        name = body.name;
+        name = body.name || 'Unknown';
         const title = body.title;
 
-        if (!name) {
+        if (!name || name === 'Unknown') {
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
         }
 
-        const newUnit = await prisma.unit.create({
+        const newUnit = await prisma.create({
             data: {
                 id: uuidv4(),
                 name: name,

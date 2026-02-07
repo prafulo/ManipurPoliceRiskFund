@@ -2,7 +2,11 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { ClosureReason, MemberPostType, MemberStatus } from '@prisma/client';
 
+/**
+ * Safely parses data that might already be an object (from Prisma Json fields)
+ */
 function safeParse(val: any) {
+    if (typeof val === 'object' && val !== null) return val;
     if (typeof val === 'string') {
         try {
             return JSON.parse(val);

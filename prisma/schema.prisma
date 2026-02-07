@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,17 +20,17 @@ enum MemberStatus {
   Closed
 }
 
-enum MemberPostType {
-  Officiating
-  Temporary
-  Substantive
-}
-
 enum ClosureReason {
   Retirement
   Death
   Doubling
   Expelled
+}
+
+enum MemberPostType {
+  Officiating
+  Temporary
+  Substantive
 }
 
 model User {
@@ -44,8 +47,8 @@ model User {
 
 model Unit {
   id            String     @id @default(uuid())
-  name          String     @unique
-  title         String?    @db.VarChar(255)
+  name          String     @unique // The short code (e.g. 1MR)
+  title         String?    // The full title (e.g. 1st Manipur Rifles)
   members       Member[]
   users         User[]
   transfersFrom Transfer[] @relation("FromUnit")
@@ -77,7 +80,7 @@ model Member {
   dateOfEnrollment      DateTime
   superannuationDate    DateTime
   dateOfDischarge       DateTime?
-  address               String
+  address               String         @db.Text
   phone                 String
   unitId                String
   unit                  Unit           @relation(fields: [unitId], references: [id])
@@ -85,9 +88,9 @@ model Member {
   closureReason         ClosureReason?
   closureNotes          String?        @db.Text
   subscriptionStartDate DateTime
-  nominees              Json
-  firstWitness          Json
-  secondWitness         Json
+  nominees              Json           // Store as JSON array
+  firstWitness          Json           // Store as JSON {name, address}
+  secondWitness         Json           // Store as JSON {name, address}
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
@@ -102,14 +105,14 @@ model Member {
 }
 
 model Payment {
-  id             String   @id @default(uuid())
-  memberId       String
-  member         Member   @relation(fields: [memberId], references: [id])
-  amount         Decimal  @db.Decimal(10, 2)
-  paymentDate    DateTime @default(now())
-  months         Json
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now()) @updatedAt
+  id          String   @id @default(uuid())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id])
+  amount      Decimal  @db.Decimal(10, 2)
+  paymentDate DateTime @default(now())
+  months      Json     // Store as JSON array of month strings/dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model Transfer {
@@ -126,13 +129,16 @@ model Transfer {
 }
 
 model Setting {
-  key   String @id
-  value String @db.Text
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Signature {
-  id           String @id @default("singleton")
+  id           String   @id @default("singleton")
   name         String
   designation  String
   organization String
+  updatedAt    DateTime @default(now()) @updatedAt
 }
