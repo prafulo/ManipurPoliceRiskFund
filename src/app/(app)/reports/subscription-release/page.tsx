@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import type { Member, Payment } from '@/lib/types';
+import type { Member, Payment, Signature } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -33,6 +33,7 @@ interface ReportRow {
 export default function SubscriptionReleaseReportPage() {
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [allPayments, setAllPayments] = useState<Payment[]>([]);
+  const [signature, setSignature] = useState<Signature | null>(null);
 
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
@@ -46,15 +47,17 @@ export default function SubscriptionReleaseReportPage() {
   useEffect(() => {
     async function loadData() {
         try {
-            const [membersRes, paymentsRes, settingsRes] = await Promise.all([
+            const [membersRes, paymentsRes, settingsRes, signatureRes] = await Promise.all([
                 fetch('/api/members'),
                 fetch('/api/payments'),
                 fetch('/api/settings'),
+                fetch('/api/signature'),
             ]);
-            const [membersData, paymentsData, settingsData] = await Promise.all([
+            const [membersData, paymentsData, settingsData, signatureData] = await Promise.all([
                 membersRes.json(),
                 paymentsRes.json(),
                 settingsRes.json(),
+                signatureRes.json(),
             ]);
             setAllMembers(membersData.members || []);
             const parsedPayments = (paymentsData.payments || []).map((p: any) => ({
@@ -62,6 +65,7 @@ export default function SubscriptionReleaseReportPage() {
                 amount: Number(p.amount)
             }));
             setAllPayments(parsedPayments);
+            setSignature(signatureData);
             const expiredAmount = settingsData.find((s:any) => s.key === 'expiredReleaseAmount');
             if (expiredAmount) {
                 setExpiredReleaseAmount(Number(expiredAmount.value));
@@ -188,7 +192,7 @@ export default function SubscriptionReleaseReportPage() {
                         )}
                     </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
+                    <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                         initialFocus
                         mode="range"
@@ -211,7 +215,7 @@ export default function SubscriptionReleaseReportPage() {
         <Card>
             <CardContent className="p-0">
                  <div className="text-center p-4 print:block hidden">
-                    <h2 className="text-xl font-bold">Member Subscription Payment Release Statement</h2>
+                    <h2 className="text-xl font-bold uppercase">Member Subscription Payment Release Statement</h2>
                     <h3 className="text-lg">For Retired / Expired Members {dateRangeString}</h3>
                 </div>
                 <Table>
@@ -265,11 +269,13 @@ export default function SubscriptionReleaseReportPage() {
                 </Table>
             </CardContent>
         </Card>
-        <div className="text-right mt-12 print:block hidden">
-            <p>(Ningshen Worngam), IPS</p>
-            <p>Dy. IG of Police (Telecom),</p>
-            <p>Manipur, Imphal.</p>
-        </div>
+        {signature && (
+            <div className="text-right mt-12 print:block hidden">
+                <p className="font-bold">{signature.name}</p>
+                <p>{signature.designation}</p>
+                <p>{signature.organization}</p>
+            </div>
+        )}
     </div>
   );
 }

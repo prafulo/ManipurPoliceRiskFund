@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import type { Member, units as Unit, Payment } from '@/lib/types';
+import type { Member, Unit, Payment, Signature } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -42,6 +42,7 @@ export default function PaymentHistoryReportPage() {
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [allPayments, setAllPayments] = useState<Payment[]>([]);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
+  const [signature, setSignature] = useState<Signature | null>(null);
   
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
@@ -52,17 +53,19 @@ export default function PaymentHistoryReportPage() {
   useEffect(() => {
     async function loadData() {
         try {
-            const [membersRes, paymentsRes, unitsRes, settingsRes] = await Promise.all([
+            const [membersRes, paymentsRes, unitsRes, settingsRes, signatureRes] = await Promise.all([
                 fetch('/api/members'),
                 fetch('/api/payments'),
                 fetch('/api/units'),
                 fetch('/api/settings'),
+                fetch('/api/signature'),
             ]);
-            const [membersData, paymentsData, unitsData, settingsData] = await Promise.all([
+            const [membersData, paymentsData, unitsData, settingsData, signatureData] = await Promise.all([
                 membersRes.json(),
                 paymentsRes.json(),
                 unitsRes.json(),
                 settingsRes.json(),
+                signatureRes.json(),
             ]);
             setAllMembers(membersData.members);
             const parsedPayments = paymentsData.payments.map((p: any) => ({
@@ -71,6 +74,7 @@ export default function PaymentHistoryReportPage() {
             }));
             setAllPayments(parsedPayments);
             setAllUnits(unitsData.units);
+            setSignature(signatureData);
             const subAmount = settingsData.find((s:any) => s.key === 'subscriptionAmount');
             if (subAmount) {
                 setSubscriptionAmount(Number(subAmount.value));
@@ -224,7 +228,7 @@ export default function PaymentHistoryReportPage() {
         <Card>
             <CardContent className="p-0">
                  <div className="text-center p-4 print:block hidden">
-                    <h2 className="text-xl font-bold">Member Payment History for {reportDateString}</h2>
+                    <h2 className="text-xl font-bold uppercase">Member Payment History for {reportDateString}</h2>
                     <h3 className="text-lg">Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</h3>
                 </div>
                 <Table>
@@ -286,11 +290,13 @@ export default function PaymentHistoryReportPage() {
         <div className="mt-4 text-right pr-4 font-semibold print:block hidden">
             <p>Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
         </div>
-        <div className="text-right mt-12 print:block hidden">
-            <p>(Ningshen Worngam), IPS</p>
-            <p>Dy. IG of Police (Telecom),</p>
-            <p>Manipur, Imphal.</p>
-        </div>
+        {signature && (
+            <div className="text-right mt-12 print:block hidden">
+                <p className="font-bold">{signature.name}</p>
+                <p>{signature.designation}</p>
+                <p>{signature.organization}</p>
+            </div>
+        )}
     </div>
   );
 }

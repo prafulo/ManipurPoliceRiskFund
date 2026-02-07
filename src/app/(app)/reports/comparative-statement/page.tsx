@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import type { Member, Unit, Transfer } from '@/lib/types';
+import type { Member, Unit, Transfer, Signature } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -35,29 +35,32 @@ interface ReportRow {
 const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
 
 async function fetchData() {
-    const [membersRes, transfersRes, unitsRes] = await Promise.all([
+    const [membersRes, transfersRes, unitsRes, signatureRes] = await Promise.all([
         fetch('/api/members'),
         fetch('/api/transfers'),
-        fetch('/api/units')
+        fetch('/api/units'),
+        fetch('/api/signature')
     ]);
     if (!membersRes.ok || !transfersRes.ok || !unitsRes.ok) {
         throw new Error('Failed to fetch initial data');
     }
-    const [membersData, transfersData, unitsData] = await Promise.all([
+    const [membersData, transfersData, unitsData, signatureData] = await Promise.all([
         membersRes.json(),
         transfersRes.json(),
-        unitsRes.json()
+        unitsRes.json(),
+        signatureRes.json()
     ]);
     return {
         members: membersData.members.map((m: Member) => ({ ...m, allotmentDate: toDate(m.allotmentDate), dateOfDischarge: m.dateOfDischarge ? toDate(m.dateOfDischarge) : null })),
         transfers: transfersData.transfers.map((t: Transfer) => ({ ...t, transferDate: toDate(t.transferDate) })),
         units: unitsData.units,
+        signature: signatureData
     };
 }
 
 
 export default function ComparativeStatementPage() {
-  const [allData, setAllData] = useState<{ members: Member[], transfers: Transfer[], units: Unit[] } | null>(null);
+  const [allData, setAllData] = useState<{ members: Member[], transfers: Transfer[], units: Unit[], signature: Signature | null } | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
 
   const [reportData, setReportData] = useState<ReportRow[]>([]);
@@ -225,7 +228,7 @@ export default function ComparativeStatementPage() {
             </div>
         </div>
          <div className="text-center p-4 print:block hidden mb-4">
-            <h2 className="text-xl font-bold">COMPARATIVE TABLES FOR THE MONTH(S) OF {dateRangeString.toUpperCase()}</h2>
+            <h2 className="text-xl font-bold uppercase">COMPARATIVE TABLES FOR THE MONTH(S) OF {dateRangeString.toUpperCase()}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {reportLoading ? (
@@ -276,11 +279,13 @@ export default function ComparativeStatementPage() {
                 <p>No data for this period.</p>
             )}
         </div>
-        <div className="text-right mt-12 print:block hidden">
-            <p>(Ningshen Worngam), IPS</p>
-            <p>Dy. IG of Police (Telecom),</p>
-            <p>Manipur, Imphal.</p>
-        </div>
+        {allData?.signature && (
+            <div className="text-right mt-12 print:block hidden">
+                <p className="font-bold">{allData.signature.name}</p>
+                <p>{allData.signature.designation}</p>
+                <p>{allData.signature.organization}</p>
+            </div>
+        )}
     </div>
   );
 }

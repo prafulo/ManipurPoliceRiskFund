@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Member, Unit } from '@/lib/types';
+import type { Member, Unit, Signature } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -32,6 +32,7 @@ interface ReportRow {
 export default function StatementReportPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [signature, setSignature] = useState<Signature | null>(null);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -49,16 +50,19 @@ export default function StatementReportPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [membersRes, unitsRes] = await Promise.all([
+        const [membersRes, unitsRes, signatureRes] = await Promise.all([
             fetch('/api/members'),
-            fetch('/api/units')
+            fetch('/api/units'),
+            fetch('/api/signature')
         ]);
-        const [membersData, unitsData] = await Promise.all([
+        const [membersData, unitsData, signatureData] = await Promise.all([
             membersRes.json(),
-            unitsRes.json()
+            unitsRes.json(),
+            signatureRes.json()
         ]);
         setMembers(membersData?.members || []);
         setUnits(unitsData?.units || []);
+        setSignature(signatureData);
       } catch (error) {
         console.error("Failed to load report data:", error);
         setMembers([]);
@@ -208,7 +212,7 @@ export default function StatementReportPage() {
         <Card>
             <CardContent className="p-0">
                  <div className="text-center p-4 print:block hidden">
-                    <h2 className="text-xl font-bold">Statement of data entered and deleted during {dateRangeString}.</h2>
+                    <h2 className="text-xl font-bold uppercase">Statement of data entered and deleted during {dateRangeString}.</h2>
                 </div>
                 <Table>
                     <TableHeader>
@@ -269,11 +273,13 @@ export default function StatementReportPage() {
                 </Table>
             </CardContent>
         </Card>
-        <div className="text-right mt-12 print:block hidden">
-            <p>(Ningshen Worngam), IPS</p>
-            <p>Dy. IG of Police (Telecom),</p>
-            <p>Manipur, Imphal.</p>
-        </div>
+        {signature && (
+            <div className="text-right mt-12 print:block hidden">
+                <p className="font-bold">{signature.name}</p>
+                <p>{signature.designation}</p>
+                <p>{signature.organization}</p>
+            </div>
+        )}
     </div>
   );
 }

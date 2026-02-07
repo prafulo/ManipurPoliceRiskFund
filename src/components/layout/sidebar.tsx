@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Settings, FileText, CreditCard, ArrowRightLeft, UserPlus, ChevronRight, Building, DollarSign, Database, Users2, ArchiveRestore, Award } from 'lucide-react';
+import { Home, Users, Settings, FileText, CreditCard, ArrowRightLeft, UserPlus, ChevronRight, Building, DollarSign, Database, Users2, ArchiveRestore, Award, PenTool } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from '../logo';
 import { useSession } from 'next-auth/react';
@@ -23,6 +23,7 @@ const settingsNavItems = [
     { href: '/settings/units', label: 'Units', icon: Building },
     { href: '/settings/ranks', label: 'Ranks', icon: Award },
     { href: '/settings/financial', label: 'Financial', icon: DollarSign },
+    { href: '/settings/signature', label: 'Signature', icon: PenTool },
     { href: '/settings/database', label: 'Database', icon: Database, adminOnly: true },
 ];
 

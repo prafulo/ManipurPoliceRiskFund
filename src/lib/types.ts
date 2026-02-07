@@ -106,6 +106,13 @@ export type SubscriptionRelease = {
   unitName?: string;
 };
 
+export type Signature = {
+  id: string;
+  name: string;
+  designation: string;
+  organization: string;
+};
+
 export type ActivityType = 'new-member' | 'payment' | 'transfer';
 
 export type Activity = {

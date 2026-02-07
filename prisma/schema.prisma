@@ -1,3 +1,5 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -47,9 +49,9 @@ model Unit {
   id            String     @id @default(uuid())
   name          String     @unique
   members       Member[]
+  users         User[]
   transfersFrom Transfer[] @relation("FromUnit")
   transfersTo   Transfer[] @relation("ToUnit")
-  users         User[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @default(now()) @updatedAt
 }
@@ -62,52 +64,55 @@ model Rank {
 }
 
 model Member {
-  id                    String          @id @default(uuid())
-  membershipCode        String          @unique
+  id                    String         @id @default(uuid())
+  membershipCode        String         @unique
   name                  String
   fatherName            String
   rank                  String
   trade                 String
-  serviceNumber         String          @unique
+  serviceNumber         String         @unique
   badgeNumber           String
   bloodGroup            String
-  memberPostType        MemberPostType  @default(Substantive)
+  memberPostType        MemberPostType @default(Substantive)
   joiningRank           String
   dateOfBirth           DateTime
   dateOfEnrollment      DateTime
   superannuationDate    DateTime
   dateOfDischarge       DateTime?
-  address               String          @db.Text
+  address               String         @db.Text
   phone                 String
   unitId                String
-  unit                  Unit            @relation(fields: [unitId], references: [id])
-  status                MemberStatus    @default(Opened)
+  unit                  Unit           @relation(fields: [unitId], references: [id])
+  status                MemberStatus   @default(Opened)
   closureReason         ClosureReason?
-  closureNotes          String?         @db.Text
+  closureNotes          String?        @db.Text
   subscriptionStartDate DateTime
-  nominees              Json
-  firstWitness          Json
-  secondWitness         Json
+  nominees              Json // Array of Nominee objects
+  firstWitness          Json // { name, address }
+  secondWitness         Json // { name, address }
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @default(now()) @updatedAt
+  
+  // Subscription Release fields
+  releaseDate           DateTime?
+  releaseAmount         Decimal?       @db.Decimal(15, 2)
+  releaseNotes          String?        @db.Text
+
   payments              Payment[]
   transfers             Transfer[]
-  releaseDate           DateTime?
-  releaseAmount         Decimal?        @db.Decimal(10, 2)
-  releaseNotes          String?         @db.Text
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @default(now()) @updatedAt
 }
 
 model Payment {
   id          String   @id @default(uuid())
   memberId    String
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  amount      Decimal  @db.Decimal(10, 2)
+  amount      Decimal  @db.Decimal(15, 2)
   paymentDate DateTime @default(now())
-  months      Json
+  months      Json     // Array of dates
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 }
@@ -126,6 +131,16 @@ model Transfer {
 }
 
 model Setting {
-  key   String @id
-  value String
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Signature {
+  id           String   @id @default("singleton")
+  name         String
+  designation  String
+  organization String
+  updatedAt    DateTime @default(now()) @updatedAt
 }
