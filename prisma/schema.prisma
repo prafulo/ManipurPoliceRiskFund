@@ -15,7 +15,7 @@ enum UserRole {
   UnitAdmin
 }
 
-enum MemberStatus {
+enum MembershipStatus {
   Opened
   Closed
 }
@@ -33,10 +33,23 @@ enum ClosureReason {
   Expelled
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole @default(UnitAdmin)
+  unitId    String?
+  unit      Unit?    @relation(fields: [unitId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
 model Unit {
   id            String     @id @default(uuid())
   name          String     @unique
   members       Member[]
+  users         User[]
   transfersFrom Transfer[] @relation("FromUnit")
   transfersTo   Transfer[] @relation("ToUnit")
   createdAt     DateTime   @default(now())
@@ -45,49 +58,49 @@ model Unit {
 
 model Rank {
   id        String   @id @default(uuid())
-  name      String   @unique
+  name      String     @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Member {
-  id                    String          @id @default(uuid())
-  membershipCode        String          @unique
+  id                    String           @id @default(uuid())
+  membershipCode        String           @unique
   name                  String
   fatherName            String
   rank                  String
   trade                 String
-  serviceNumber         String          @unique
+  serviceNumber         String
   badgeNumber           String
   bloodGroup            String
-  memberPostType        MemberPostType
+  memberPostType        MemberPostType   @default(Substantive)
   joiningRank           String
   dateOfBirth           DateTime
   dateOfEnrollment      DateTime
   superannuationDate    DateTime
   dateOfDischarge       DateTime?
-  address               String          @db.Text
+  address               String           @db.Text
   phone                 String
   unitId                String
-  unit                  Unit            @relation(fields: [unitId], references: [id])
-  status                MemberStatus    @default(Opened)
+  unit                  Unit             @relation(fields: [unitId], references: [id])
+  status                MembershipStatus @default(Opened)
   closureReason         ClosureReason?
-  closureNotes          String?         @db.Text
+  closureNotes          String?          @db.Text
   subscriptionStartDate DateTime
-  nominees              Json // Array of Nominee objects
-  firstWitness          Json // { name, address }
-  secondWitness         Json // { name, address }
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
-  releaseDate           DateTime?
-  releaseAmount         Decimal?        @db.Decimal(10, 2)
-  releaseNotes          String?         @db.Text
   payments              Payment[]
   transfers             Transfer[]
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @default(now()) @updatedAt
+  releaseDate           DateTime?
+  releaseAmount         Decimal?         @db.Decimal(10, 2)
+  releaseNotes          String?          @db.Text
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now()) @updatedAt
 }
 
 model Payment {
@@ -96,7 +109,7 @@ model Payment {
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(10, 2)
   paymentDate DateTime @default(now())
-  months      Json // Array of ISO strings or Date objects
+  months      Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 }
@@ -114,29 +127,14 @@ model Transfer {
   updatedAt    DateTime @default(now()) @updatedAt
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole @default(UnitAdmin)
-  unitId    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-}
-
 model Setting {
-  key       String   @id
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  key   String @id
+  value String
 }
 
 model Signature {
-  id           String   @id @default("singleton")
+  id           String @id @default("singleton")
   name         String
   designation  String
   organization String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
 }

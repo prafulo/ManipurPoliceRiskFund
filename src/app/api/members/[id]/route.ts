@@ -1,4 +1,3 @@
-
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { ClosureReason, MemberPostType, MemberStatus } from '@prisma/client';
@@ -71,7 +70,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             allotmentDate: new Date(data.allotmentDate),
             firstWitness: { name: data.firstWitnessName, address: data.firstWitnessAddress },
             secondWitness: { name: data.secondWitnessName, address: data.secondWitnessAddress },
-            nominees: data.nominees, // Send object directly to Json field
+            nominees: data.nominees,
         };
 
         await prisma.member.update({
