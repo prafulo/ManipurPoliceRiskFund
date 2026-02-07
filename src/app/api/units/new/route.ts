@@ -4,8 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
+    let name = 'Unknown';
     try {
-        const { name, title } = await request.json();
+        const body = await request.json();
+        name = body.name;
+        const title = body.title;
 
         if (!name) {
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });

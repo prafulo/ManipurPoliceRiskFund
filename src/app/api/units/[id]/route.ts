@@ -2,15 +2,18 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    let name = 'Unknown';
     try {
         const { id } = await params;
-        const { name, title } = await request.json();
+        const body = await request.json();
+        name = body.name;
+        const title = body.title;
 
         if (!name) {
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
         }
 
-        const result = await prisma.unit.update({
+        await prisma.unit.update({
             where: { id: id },
             data: { 
                 name: name,

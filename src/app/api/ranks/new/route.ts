@@ -3,8 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
+    let name = 'Unknown';
     try {
-        const { name } = await request.json();
+        const body = await request.json();
+        name = body.name;
 
         if (!name) {
             return NextResponse.json({ message: 'Rank name is required' }, { status: 400 });

@@ -2,9 +2,11 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    let name = 'Unknown';
     try {
         const { id } = await params;
-        const { name } = await request.json();
+        const body = await request.json();
+        name = body.name;
 
         if (!name) {
             return NextResponse.json({ message: 'Rank name is required' }, { status: 400 });
