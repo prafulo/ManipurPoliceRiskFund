@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -30,6 +33,87 @@ enum ClosureReason {
   Expelled
 }
 
+model Unit {
+  id            String     @id @default(uuid())
+  name          String     @unique
+  members       Member[]
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now()) @updatedAt
+}
+
+model Rank {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Member {
+  id                    String          @id @default(uuid())
+  membershipCode        String          @unique
+  name                  String
+  fatherName            String
+  rank                  String
+  trade                 String
+  serviceNumber         String          @unique
+  badgeNumber           String
+  bloodGroup            String
+  memberPostType        MemberPostType
+  joiningRank           String
+  dateOfBirth           DateTime
+  dateOfEnrollment      DateTime
+  superannuationDate    DateTime
+  dateOfDischarge       DateTime?
+  address               String          @db.Text
+  phone                 String
+  unitId                String
+  unit                  Unit            @relation(fields: [unitId], references: [id])
+  status                MemberStatus    @default(Opened)
+  closureReason         ClosureReason?
+  closureNotes          String?         @db.Text
+  subscriptionStartDate DateTime
+  nominees              Json // Array of Nominee objects
+  firstWitness          Json // { name, address }
+  secondWitness         Json // { name, address }
+  parentDepartment      String?
+  dateApplied           DateTime
+  receiptDate           DateTime
+  allotmentDate         DateTime
+  releaseDate           DateTime?
+  releaseAmount         Decimal?        @db.Decimal(10, 2)
+  releaseNotes          String?         @db.Text
+  payments              Payment[]
+  transfers             Transfer[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @default(now()) @updatedAt
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(10, 2)
+  paymentDate DateTime @default(now())
+  months      Json // Array of ISO strings or Date objects
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Transfer {
+  id           String   @id @default(uuid())
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  fromUnitId   String
+  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
+  toUnitId     String
+  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
+  transferDate DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -37,103 +121,22 @@ model User {
   password  String
   role      UserRole @default(UnitAdmin)
   unitId    String?
-  unit      Unit?    @relation(fields: [unitId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-}
-
-model Unit {
-  id            String     @id @default(uuid())
-  name          String     @unique
-  members       Member[]
-  transfersFrom Transfer[] @relation("FromUnit")
-  transfersTo   Transfer[] @relation("ToUnit")
-  users         User[]
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @default(now())
-}
-
-model Member {
-  id                    String         @id @default(uuid())
-  membershipCode        String         @unique
-  name                  String
-  fatherName            String
-  rank                  String
-  trade                 String
-  serviceNumber         String         @unique
-  badgeNumber           String
-  bloodGroup            String
-  memberPostType        MemberPostType @default(Substantive)
-  joiningRank           String
-  dateOfBirth           DateTime
-  dateOfEnrollment      DateTime
-  superannuationDate    DateTime
-  dateOfDischarge       DateTime?
-  address               String         @db.Text
-  phone                 String
-  unitId                String
-  unit                  Unit           @relation(fields: [unitId], references: [id])
-  status                MemberStatus   @default(Opened)
-  closureReason         ClosureReason?
-  closureNotes          String?        @db.Text
-  subscriptionStartDate DateTime
-  nominees              Json           // Array of Nominee objects
-  firstWitness          Json           // {name, address}
-  secondWitness         Json           // {name, address}
-  parentDepartment      String?
-  dateApplied           DateTime
-  receiptDate           DateTime
-  allotmentDate         DateTime
-  payments              Payment[]
-  transfers             Transfer[]
-  releaseDate           DateTime?
-  releaseAmount         Decimal?       @db.Decimal(10, 2)
-  releaseNotes          String?        @db.Text
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @default(now())
-}
-
-model Rank {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-}
-
-model Payment {
-  id          String   @id @default(uuid())
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id])
-  amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime @default(now())
-  months      Json     // Array of date strings or dates
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-}
-
-model Transfer {
-  id           String   @id @default(uuid())
-  memberId     String
-  member       Member   @relation(fields: [memberId], references: [id])
-  fromUnitId   String
-  fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
-  toUnitId     String
-  toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
-  transferDate DateTime @default(now())
-  createdAt    DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Setting {
   key       String   @id
   value     String
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Signature {
-  id           String @id @default("singleton")
+  id           String   @id @default("singleton")
   name         String
   designation  String
   organization String
-  updatedAt    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }
