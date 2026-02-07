@@ -1,5 +1,5 @@
 'use client';
-import Link from 'link';
+import Link from 'next/link';
 import {
   Menu,
   UserCircle,
@@ -89,10 +89,10 @@ export function Header() {
           <nav className="grid gap-2 text-base font-medium">
             <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
               <Logo className="h-6 w-6" />
-              <span className="text-primary font-headline">
+              <div className="text-primary font-headline text-sm leading-tight">
                 <div>Manipur Police</div>
                 <div>Risk Fund</div>
-              </span>
+              </div>
             </Link>
             {navItems.map((item) => {
               if (item.adminOnly && role !== 'SuperAdmin') {
@@ -154,7 +154,7 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 relative">
                 <UserCircle className="h-8 w-8" />
-                <div className="text-left">
+                <div className="text-left hidden sm:block">
                   <p className="text-sm font-medium">{user?.name || role}</p>
                   {unit && <p className="text-xs text-muted-foreground">{unit} Unit</p>}
                 </div>
