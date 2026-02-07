@@ -6,6 +6,7 @@ export type MemberPostType = "Officiating" | "Temporary" | "Substantive";
 export type Unit = {
   id: string;
   name: string;
+  title?: string | null;
 };
 
 export type Rank = {

@@ -37,6 +37,7 @@ model User {
   password  String
   role      UserRole @default(UnitAdmin)
   unitId    String?
+  unit      Unit?    @relation(fields: [unitId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }
@@ -44,16 +45,18 @@ model User {
 model Unit {
   id            String     @id @default(uuid())
   name          String     @unique
-  members       Member[]
-  transfersFrom Transfer[] @relation("FromUnit")
-  transfersTo   Transfer[] @relation("ToUnit")
+  title         String?    // Full form title (e.g. 1st Manipur Rifles)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @default(now()) @updatedAt
+  members       Member[]
+  users         User[]
+  transfersFrom Transfer[] @relation("FromUnit")
+  transfersTo   Transfer[] @relation("ToUnit")
 }
 
 model Rank {
   id        String   @id @default(uuid())
-  name      String     @unique
+  name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }
@@ -82,20 +85,20 @@ model Member {
   closureReason         ClosureReason?
   closureNotes          String?        @db.Text
   subscriptionStartDate DateTime
-  nominees              Json           // Array of objects
-  firstWitness          Json           // {name, address}
-  secondWitness         Json           // {name, address}
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
-  payments              Payment[]
-  transfers             Transfer[]
   releaseDate           DateTime?
   releaseAmount         Decimal?       @db.Decimal(10, 2)
   releaseNotes          String?        @db.Text
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @default(now()) @updatedAt
+  payments              Payment[]
+  transfers             Transfer[]
 }
 
 model Payment {
@@ -104,7 +107,7 @@ model Payment {
   member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount      Decimal  @db.Decimal(10, 2)
   paymentDate DateTime @default(now())
-  months      Json     // Array of dates
+  months      Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 }
@@ -124,8 +127,7 @@ model Transfer {
 
 model Setting {
   key       String   @id
-  value     String
-  createdAt DateTime @default(now())
+  value     String   @db.Text
   updatedAt DateTime @default(now()) @updatedAt
 }
 

@@ -1,11 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const { name } = await request.json();
+        const { name, title } = await request.json();
 
         if (!name) {
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
@@ -13,20 +12,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
         const result = await prisma.unit.update({
             where: { id: id },
-            data: { name: name },
+            data: { 
+                name: name,
+                title: title || null
+            },
         });
         
         return NextResponse.json({ message: 'Unit updated successfully' });
 
     } catch (error: any) {
-       if (error.code === 'P2002') { // Prisma unique constraint violation
+       if (error.code === 'P2002') {
              return NextResponse.json({ message: `Unit name "${name}" already exists.` }, { status: 409 });
         }
         console.error("Failed to update unit:", error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
-
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
