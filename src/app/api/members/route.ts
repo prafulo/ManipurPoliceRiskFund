@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import type { MemberStatus } from '@prisma/client';
 
 /**
- * Safely parses data that might already be an object (from Prisma Json fields)
+ * Safely handles Json fields from Prisma which can return objects or strings.
  */
 function safeParse(val: any) {
     if (typeof val === 'object' && val !== null) return val;
@@ -11,10 +11,10 @@ function safeParse(val: any) {
         try {
             return JSON.parse(val);
         } catch (e) {
-            return val;
+            return [];
         }
     }
-    return val;
+    return [];
 }
 
 export async function GET(request: NextRequest) {
@@ -58,9 +58,9 @@ export async function GET(request: NextRequest) {
         const parsedMembers = members.map(member => ({
             ...member,
             unitName: member.unit.name,
-            nominees: safeParse(member.nominees) || [],
-            firstWitness: safeParse(member.firstWitness) || {},
-            secondWitness: safeParse(member.secondWitness) || {},
+            nominees: safeParse(member.nominees),
+            firstWitness: safeParse(member.firstWitness),
+            secondWitness: safeParse(member.secondWitness),
         }));
 
         return NextResponse.json({ 

@@ -8,6 +8,7 @@ import { MemberTable } from "./components/member-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { ImportMembersDialog } from "./components/import-members-dialog";
 
 export default function MembersPage() {
   const [data, setData] = React.useState<any[]>([]);
@@ -61,17 +62,20 @@ export default function MembersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight font-headline">Members</h2>
           <p className="text-muted-foreground">Manage your organization's members.</p>
         </div>
-        <Link href="/members/new">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Member
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <ImportMembersDialog />
+          <Link href="/members/new">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Member
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Tabs defaultValue="Opened" value={status} onValueChange={handleTabChange}>

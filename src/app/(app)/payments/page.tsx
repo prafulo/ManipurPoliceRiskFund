@@ -9,6 +9,7 @@ import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { ImportPaymentsDialog } from "./components/import-payments-dialog";
 
 export default function PaymentsPage() {
   const { toast } = useToast();
@@ -81,12 +82,13 @@ export default function PaymentsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight font-headline">Payments</h2>
           <p className="text-muted-foreground">Manage member subscription payments.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <ImportPaymentsDialog />
             <Link href="/payments/bulk">
               <Button variant="outline">
                 <FileSpreadsheet className="mr-2 h-4 w-4" />

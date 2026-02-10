@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -47,8 +44,8 @@ model User {
 
 model Unit {
   id            String     @id @default(uuid())
-  name          String     @unique // The short code (e.g. 1MR)
-  title         String?    // The full title (e.g. 1st Manipur Rifles)
+  name          String     @unique
+  title         String?
   members       Member[]
   users         User[]
   transfersFrom Transfer[] @relation("FromUnit")
@@ -65,32 +62,32 @@ model Rank {
 }
 
 model Member {
-  id                    String         @id @default(uuid())
-  membershipCode        String         @unique
+  id                    String          @id @default(uuid())
+  membershipCode        String          @unique
   name                  String
   fatherName            String
   rank                  String
   trade                 String
-  serviceNumber         String         @unique
+  serviceNumber         String          @unique
   badgeNumber           String
   bloodGroup            String
-  memberPostType        MemberPostType @default(Substantive)
+  memberPostType        MemberPostType
   joiningRank           String
   dateOfBirth           DateTime
   dateOfEnrollment      DateTime
   superannuationDate    DateTime
   dateOfDischarge       DateTime?
-  address               String         @db.Text
+  address               String          @db.Text
   phone                 String
   unitId                String
-  unit                  Unit           @relation(fields: [unitId], references: [id])
-  status                MemberStatus   @default(Opened)
+  unit                  Unit            @relation(fields: [unitId], references: [id])
+  status                MemberStatus    @default(Opened)
   closureReason         ClosureReason?
-  closureNotes          String?        @db.Text
+  closureNotes          String?         @db.Text
   subscriptionStartDate DateTime
-  nominees              Json           // Store as JSON array
-  firstWitness          Json           // Store as JSON {name, address}
-  secondWitness         Json           // Store as JSON {name, address}
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
@@ -98,27 +95,27 @@ model Member {
   payments              Payment[]
   transfers             Transfer[]
   releaseDate           DateTime?
-  releaseAmount         Decimal?       @db.Decimal(10, 2)
-  releaseNotes          String?        @db.Text
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @default(now()) @updatedAt
+  releaseAmount         Decimal?        @db.Decimal(10, 2)
+  releaseNotes          String?         @db.Text
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @default(now()) @updatedAt
 }
 
 model Payment {
-  id          String   @id @default(uuid())
-  memberId    String
-  member      Member   @relation(fields: [memberId], references: [id])
-  amount      Decimal  @db.Decimal(10, 2)
-  paymentDate DateTime @default(now())
-  months      Json     // Store as JSON array of month strings/dates
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  id             String   @id @default(uuid())
+  memberId       String
+  member         Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  amount         Decimal  @db.Decimal(10, 2)
+  paymentDate    DateTime @default(now())
+  months         Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
 }
 
 model Transfer {
   id           String   @id @default(uuid())
   memberId     String
-  member       Member   @relation(fields: [memberId], references: [id])
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   fromUnitId   String
   fromUnit     Unit     @relation("FromUnit", fields: [fromUnitId], references: [id])
   toUnitId     String
@@ -129,16 +126,13 @@ model Transfer {
 }
 
 model Setting {
-  key       String   @id
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  key   String @id
+  value String @db.Text
 }
 
 model Signature {
-  id           String   @id @default("singleton")
+  id           String @id @default("singleton")
   name         String
   designation  String
   organization String
-  updatedAt    DateTime @default(now()) @updatedAt
 }
