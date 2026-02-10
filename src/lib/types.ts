@@ -1,3 +1,4 @@
+
 export type MembershipStatus = "Opened" | "Closed";
 export type ClosureReason = "Retirement" | "Death" | "Doubling" | "Expelled" | "";
 export type UserRole = "SuperAdmin" | "UnitAdmin";
@@ -93,18 +94,6 @@ export type Transfer = {
   toUnitName?: string;
   transferDate: Date | string;
   createdAt?: Date | string;
-};
-
-export type SubscriptionRelease = {
-  id: string;
-  memberId: string;
-  amount: number;
-  releaseDate: Date | string;
-  notes?: string;
-  createdAt: Date | string;
-  memberName?: string;
-  membershipCode?: string;
-  unitName?: string;
 };
 
 export type Signature = {

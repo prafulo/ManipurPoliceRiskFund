@@ -1,3 +1,4 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,7 +12,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Missing required transfer data' }, { status: 400 });
         }
 
-        // Fetch Member and Target Unit to perform the code update
         const [member, toUnit] = await Promise.all([
             prisma.member.findUnique({ where: { id: memberId } }),
             prisma.unit.findUnique({ where: { id: toUnitId } })
@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Member or Target Unit not found' }, { status: 404 });
         }
 
-        // Update prefix of code (e.g. PHQ-30001-0225 -> 1MR-30001-0225)
+        // Automatic Membership Code Update logic
         const codeParts = member.membershipCode.split('-');
         let newMembershipCode = member.membershipCode;
         
         if (codeParts.length === 3) {
-            codeParts[0] = toUnit.name;
+            codeParts[0] = toUnit.name; // Replace 1MR with 2MR etc.
             newMembershipCode = codeParts.join('-');
         }
 
