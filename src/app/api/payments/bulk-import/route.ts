@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
                     memberId: member.id,
                     amount: data.amount,
                     paymentDate: new Date(data.paymentDate || new Date()),
-                    months: JSON.stringify(monthsArray),
+                    months: monthsArray,
                 }
             }));
         }

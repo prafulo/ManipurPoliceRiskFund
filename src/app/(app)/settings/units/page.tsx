@@ -33,13 +33,10 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Unit } from '@/lib/types';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
 
 export default function ManageUnitsPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [unitName, setUnitName] = useState('');

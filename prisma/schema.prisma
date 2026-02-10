@@ -45,7 +45,7 @@ model User {
 model Unit {
   id            String     @id @default(uuid())
   name          String     @unique
-  title         String?
+  title         String?    // Full form title (e.g. 1st Manipur Rifles)
   members       Member[]
   users         User[]
   transfersFrom Transfer[] @relation("FromUnit")
@@ -71,7 +71,7 @@ model Member {
   serviceNumber         String          @unique
   badgeNumber           String
   bloodGroup            String
-  memberPostType        MemberPostType
+  memberPostType        MemberPostType  @default(Substantive)
   joiningRank           String
   dateOfBirth           DateTime
   dateOfEnrollment      DateTime
@@ -85,17 +85,17 @@ model Member {
   closureReason         ClosureReason?
   closureNotes          String?         @db.Text
   subscriptionStartDate DateTime
-  nominees              Json
-  firstWitness          Json
-  secondWitness         Json
+  nominees              Json            // Array of nominees
+  firstWitness          Json            // {name, address}
+  secondWitness         Json            // {name, address}
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
   payments              Payment[]
   transfers             Transfer[]
-  releaseDate           DateTime?
-  releaseAmount         Decimal?        @db.Decimal(10, 2)
+  releaseDate           DateTime?       // For subscription payout
+  releaseAmount         Decimal?        @db.Decimal(15, 2)
   releaseNotes          String?         @db.Text
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @default(now()) @updatedAt
@@ -105,9 +105,9 @@ model Payment {
   id             String   @id @default(uuid())
   memberId       String
   member         Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  amount         Decimal  @db.Decimal(10, 2)
+  amount         Decimal  @db.Decimal(15, 2)
   paymentDate    DateTime @default(now())
-  months         Json
+  months         Json     // Array of dates representing months paid
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt
 }
@@ -126,13 +126,16 @@ model Transfer {
 }
 
 model Setting {
-  key   String @id
-  value String @db.Text
+  key       String   @id
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Signature {
-  id           String @id @default("singleton")
+  id           String   @id @default("singleton")
   name         String
   designation  String
   organization String
+  updatedAt    DateTime @default(now()) @updatedAt
 }

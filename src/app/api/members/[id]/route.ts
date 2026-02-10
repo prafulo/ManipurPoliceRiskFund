@@ -2,17 +2,10 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { ClosureReason, MemberPostType, MemberStatus } from '@prisma/client';
 
-/**
- * Safely parses data that might already be an object (from Prisma Json fields)
- */
 function safeParse(val: any) {
     if (typeof val === 'object' && val !== null) return val;
     if (typeof val === 'string') {
-        try {
-            return JSON.parse(val);
-        } catch (e) {
-            return val;
-        }
+        try { return JSON.parse(val); } catch (e) { return val; }
     }
     return val;
 }
@@ -52,8 +45,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             fatherName: data.fatherName,
             rank: data.rank,
             trade: data.trade,
-            serviceNumber: data.serviceNumber,
-            badgeNumber: data.badgeNumber,
+            serviceNumber: String(data.serviceNumber),
+            badgeNumber: String(data.badgeNumber),
             bloodGroup: data.bloodGroup,
             memberPostType: data.memberPostType as MemberPostType,
             joiningRank: data.joiningRank,
@@ -62,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             superannuationDate: new Date(data.superannuationDate),
             dateOfDischarge: data.dateOfDischarge ? new Date(data.dateOfDischarge) : null,
             address: data.address,
-            phone: data.phone,
+            phone: String(data.phone),
             unitId: data.unitId,
             status: data.status as MemberStatus,
             closureReason: (data.closureReason || null) as ClosureReason | null,

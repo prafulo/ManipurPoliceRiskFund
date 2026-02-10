@@ -4,11 +4,7 @@ import { prisma } from '@/lib/prisma';
 function safeParse(val: any) {
     if (typeof val === 'object' && val !== null) return val;
     if (typeof val === 'string') {
-        try {
-            return JSON.parse(val);
-        } catch (e) {
-            return [];
-        }
+        try { return JSON.parse(val); } catch (e) { return []; }
     }
     return [];
 }
@@ -39,17 +35,11 @@ export async function GET(request: NextRequest) {
                             name: true,
                             membershipCode: true,
                             serviceNumber: true,
-                            unit: {
-                                select: {
-                                    name: true
-                                }
-                            }
+                            unit: { select: { name: true } }
                         }
                     }
                 },
-                orderBy: {
-                    paymentDate: 'desc'
-                }
+                orderBy: { paymentDate: 'desc' }
             }),
             prisma.payment.count({ where })
         ]);

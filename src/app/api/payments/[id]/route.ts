@@ -2,12 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 function safeParse(val: any) {
+    if (typeof val === 'object' && val !== null) return val;
     if (typeof val === 'string') {
-        try {
-            return JSON.parse(val);
-        } catch (e) {
-            return val;
-        }
+        try { return JSON.parse(val); } catch (e) { return val; }
     }
     return val;
 }

@@ -1,7 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
-import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
     let name = 'Unknown';
@@ -14,15 +13,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Unit name is required' }, { status: 400 });
         }
 
-        const newUnit = await prisma.create({
+        const newUnit = await prisma.unit.create({
             data: {
                 id: uuidv4(),
                 name: name,
                 title: title || null,
             }
         });
-
-        revalidatePath("/settings/units");
 
         return NextResponse.json(newUnit, { status: 201 });
 

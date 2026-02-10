@@ -2,17 +2,10 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { MemberStatus } from '@prisma/client';
 
-/**
- * Safely handles Json fields from Prisma which can return objects or strings.
- */
 function safeParse(val: any) {
     if (typeof val === 'object' && val !== null) return val;
     if (typeof val === 'string') {
-        try {
-            return JSON.parse(val);
-        } catch (e) {
-            return [];
-        }
+        try { return JSON.parse(val); } catch (e) { return []; }
     }
     return [];
 }
@@ -43,14 +36,8 @@ export async function GET(request: NextRequest) {
                 where,
                 skip: (page - 1) * limit,
                 take: limit,
-                orderBy: {
-                    createdAt: 'desc'
-                },
-                include: {
-                    unit: {
-                        select: { name: true }
-                    }
-                }
+                orderBy: { createdAt: 'desc' },
+                include: { unit: { select: { name: true } } }
             }),
             prisma.member.count({ where })
         ]);

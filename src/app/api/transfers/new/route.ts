@@ -21,22 +21,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Member or Target Unit not found' }, { status: 404 });
         }
 
-        // Construct new membership code based on requirements
-        // Format: UNITCODE-SERIAL-DATE (e.g., 1MR-30002-0226)
+        // Update prefix of code (e.g. PHQ-30001-0225 -> 1MR-30001-0225)
         const codeParts = member.membershipCode.split('-');
         let newMembershipCode = member.membershipCode;
         
         if (codeParts.length === 3) {
-            // Replace the first part (unit identifier) with the destination unit name
             codeParts[0] = toUnit.name;
             newMembershipCode = codeParts.join('-');
         }
 
         const transferId = uuidv4();
 
-        // Use a transaction to create the transfer record and update the member simultaneously
         await prisma.$transaction([
-            // 1. Create the transfer record
             prisma.transfer.create({
                 data: {
                     id: transferId,
@@ -46,7 +42,6 @@ export async function POST(request: NextRequest) {
                     transferDate: new Date(transferDate),
                 }
             }),
-            // 2. Update the member's unit assignment and generated code
             prisma.member.update({
                 where: { id: memberId },
                 data: {
