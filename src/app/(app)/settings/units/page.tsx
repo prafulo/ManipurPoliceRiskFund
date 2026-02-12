@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -60,7 +61,8 @@ export default function ManageUnitsPage() {
   }, [toast]);
 
   const handleAddOrUpdateUnit = async () => {
-    if (!unitName.trim()) {
+    const nameToSave = unitName.trim();
+    if (!nameToSave) {
         toast({ variant: 'destructive', title: 'Error', description: 'Unit code/name cannot be empty.' });
         return;
     }
@@ -72,40 +74,42 @@ export default function ManageUnitsPage() {
         const res = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: unitName, title: unitTitle })
+            body: JSON.stringify({ name: nameToSave, title: unitTitle })
         });
+        const result = await res.json();
+
         if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Failed to save unit.');
+            throw new Error(result.message || 'Failed to save unit.');
         }
 
         toast({
             title: `Unit ${editingUnit ? 'Updated' : 'Added'}`,
-            description: `The unit "${unitName}" has been saved.`
+            description: `The unit "${nameToSave}" has been saved.`
         });
         
         setUnitName('');
         setUnitTitle('');
         setEditingUnit(null);
         
-        const updatedUnits = await (await fetch('/api/units')).json();
-        setUnits(updatedUnits.units || []);
+        const updatedRes = await fetch('/api/units');
+        const updatedData = await updatedRes.json();
+        setUnits(updatedData.units || []);
 
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
   };
 
-  const handleDeleteUnit = async (unitId: string, unitName: string) => {
+  const handleDeleteUnit = async (unitId: string, name: string) => {
     try {
         const res = await fetch(`/api/units/${unitId}`, { method: 'DELETE' });
+        const result = await res.json();
         if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Failed to delete unit.');
+            throw new Error(result.message || 'Failed to delete unit.');
         }
         toast({
             title: 'Unit Deleted',
-            description: `The unit "${unitName}" has been deleted.`
+            description: `The unit "${name}" has been deleted.`
         });
         setUnits(prev => prev.filter(u => u.id !== unitId));
 

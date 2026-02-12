@@ -18,17 +18,17 @@ enum MemberStatus {
   Closed
 }
 
+enum MemberPostType {
+  Officiating
+  Temporary
+  Substantive
+}
+
 enum ClosureReason {
   Retirement
   Death
   Doubling
   Expelled
-}
-
-enum MemberPostType {
-  Officiating
-  Temporary
-  Substantive
 }
 
 model User {
@@ -38,6 +38,7 @@ model User {
   password  String
   role      UserRole @default(UnitAdmin)
   unitId    String?
+  unit      Unit?    @relation(fields: [unitId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }
@@ -45,8 +46,9 @@ model User {
 model Unit {
   id            String     @id @default(uuid())
   name          String     @unique
-  title         String?
+  title         String?    // Full Unit Title (e.g. 1st Manipur Rifles)
   members       Member[]
+  users         User[]
   transfersFrom Transfer[] @relation("FromUnit")
   transfersTo   Transfer[] @relation("ToUnit")
   createdAt     DateTime   @default(now())
@@ -57,7 +59,7 @@ model Rank {
   id        String   @id @default(uuid())
   name      String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime   @default(now()) @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Member {
@@ -67,7 +69,7 @@ model Member {
   fatherName            String
   rank                  String
   trade                 String
-  serviceNumber         String          @unique
+  serviceNumber         String          @unique // EIN
   badgeNumber           String
   bloodGroup            String
   memberPostType        MemberPostType  @default(Substantive)
@@ -84,18 +86,18 @@ model Member {
   closureReason         ClosureReason?
   closureNotes          String?         @db.Text
   subscriptionStartDate DateTime
-  nominees              Json?
-  firstWitness          Json?
-  secondWitness         Json?
+  nominees              Json            // Array of nominees
+  firstWitness          Json            // {name, address}
+  secondWitness         Json            // {name, address}
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
   allotmentDate         DateTime
+  payments              Payment[]
+  transfers             Transfer[]
   releaseDate           DateTime?
   releaseAmount         Decimal?        @db.Decimal(10, 2)
   releaseNotes          String?         @db.Text
-  payments              Payment[]
-  transfers             Transfer[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @default(now()) @updatedAt
 }
@@ -106,7 +108,7 @@ model Payment {
   member         Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount         Decimal  @db.Decimal(10, 2)
   paymentDate    DateTime @default(now())
-  months         Json?
+  months         Json     // Array of dates paid for
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt
 }
@@ -121,16 +123,21 @@ model Transfer {
   toUnit       Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
   transferDate DateTime @default(now())
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }
 
 model Setting {
-  key   String @id
-  value String @db.Text
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Signature {
-  id           String @id @default("singleton")
+  id           String   @id @default("singleton")
   name         String
   designation  String
   organization String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }

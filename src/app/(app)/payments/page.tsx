@@ -1,11 +1,12 @@
+
 'use client';
 
+import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { PaymentTable } from "./components/payment-table";
 import type { Payment } from "@/lib/types";
-import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";

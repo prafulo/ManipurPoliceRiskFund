@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -60,7 +61,6 @@ export function ImportMembersDialog() {
           throw new Error('The selected file is empty.');
         }
 
-        // Map column names to database fields
         const formattedData = rows.map(row => ({
           name: row['Name'],
           fatherName: row['Father Name'],
