@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         let newMembershipCode = member.membershipCode;
         
         if (codeParts.length === 3) {
-            codeParts[0] = toUnit.name; // Replace 1MR with 2MR etc.
+            codeParts[0] = toUnit.name; // Replace source unit prefix with destination prefix
             newMembershipCode = codeParts.join('-');
         }
 

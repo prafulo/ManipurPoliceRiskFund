@@ -18,17 +18,17 @@ enum MemberStatus {
   Closed
 }
 
-enum MemberPostType {
-  Officiating
-  Temporary
-  Substantive
-}
-
 enum ClosureReason {
   Retirement
   Death
   Doubling
   Expelled
+}
+
+enum MemberPostType {
+  Officiating
+  Temporary
+  Substantive
 }
 
 model User {
@@ -46,7 +46,7 @@ model User {
 model Unit {
   id            String     @id @default(uuid())
   name          String     @unique
-  title         String?    // Full Unit Title (e.g. 1st Manipur Rifles)
+  title         String?
   members       Member[]
   users         User[]
   transfersFrom Transfer[] @relation("FromUnit")
@@ -69,7 +69,7 @@ model Member {
   fatherName            String
   rank                  String
   trade                 String
-  serviceNumber         String          @unique // EIN
+  serviceNumber         String          @unique
   badgeNumber           String
   bloodGroup            String
   memberPostType        MemberPostType  @default(Substantive)
@@ -86,9 +86,9 @@ model Member {
   closureReason         ClosureReason?
   closureNotes          String?         @db.Text
   subscriptionStartDate DateTime
-  nominees              Json            // Array of nominees
-  firstWitness          Json            // {name, address}
-  secondWitness         Json            // {name, address}
+  nominees              Json
+  firstWitness          Json
+  secondWitness         Json
   parentDepartment      String?
   dateApplied           DateTime
   receiptDate           DateTime
@@ -108,7 +108,7 @@ model Payment {
   member         Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount         Decimal  @db.Decimal(10, 2)
   paymentDate    DateTime @default(now())
-  months         Json     // Array of dates paid for
+  months         Json
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt
 }
@@ -128,8 +128,7 @@ model Transfer {
 
 model Setting {
   key       String   @id
-  value     String
-  createdAt DateTime @default(now())
+  value     String   @db.Text
   updatedAt DateTime @default(now()) @updatedAt
 }
 
@@ -138,6 +137,5 @@ model Signature {
   name         String
   designation  String
   organization String
-  createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
 }
