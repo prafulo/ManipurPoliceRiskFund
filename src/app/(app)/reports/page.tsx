@@ -37,17 +37,33 @@ export default function ReportsPage() {
         </Card>
          <Card>
           <CardHeader>
-            <CardTitle>Payment History</CardTitle>
-            <CardDescription>Member-wise payment history, arrears, and totals for a selected period.</CardDescription>
+            <CardTitle>Payment History (Unit)</CardTitle>
+            <CardDescription>Unit-wise payment history, arrears, and totals for a selected period.</CardDescription>
           </CardHeader>
           <CardContent>
              <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
-              <p className="text-sm text-center text-muted-foreground">Generates a detailed breakdown of subscriptions, arrears, payments, and balances for each member.</p>
+              <p className="text-sm text-center text-muted-foreground">Generates a detailed breakdown of subscriptions, arrears, payments, and balances for all members in a unit.</p>
             </div>
           </CardContent>
            <CardFooter>
             <Link href="/reports/payment-history">
               <Button>Generate Report</Button>
+            </Link>
+          </CardFooter>
+        </Card>
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle>Individual Statement</CardTitle>
+            <CardDescription>Complete subscription payment history for a specific member.</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <div className="h-32 flex items-center justify-center bg-primary/10 rounded-md border border-primary/10">
+              <p className="text-sm text-center text-primary font-medium">Generate and print a personalized payment statement for an individual member for any period.</p>
+            </div>
+          </CardContent>
+           <CardFooter>
+            <Link href="/reports/individual-payment-history">
+              <Button className="w-full">Generate Statement</Button>
             </Link>
           </CardFooter>
         </Card>
@@ -111,7 +127,7 @@ export default function ReportsPage() {
           </CardContent>
            <CardFooter>
             <Link href="/recent-activity">
-              <Button>View Activity Log</Button>
+              <Button variant="outline" className="w-full">View Activity Log</Button>
             </Link>
           </CardFooter>
         </Card>
