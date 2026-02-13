@@ -1,4 +1,3 @@
-
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,7 +8,7 @@ export async function POST(request: NextRequest) {
         const data = await request.json();
         const memberId = uuidv4();
 
-        const newMember = {
+        const memberData = {
             id: memberId,
             membershipCode: data.membershipCode,
             name: data.name,
@@ -41,8 +40,23 @@ export async function POST(request: NextRequest) {
             nominees: data.nominees,
         };
 
-        await prisma.member.create({
-            data: newMember
+        // We use a transaction to ensure member creation and serial increment happen together
+        await prisma.$transaction(async (tx) => {
+            // Create the member
+            await tx.member.create({ data: memberData });
+
+            // Increment the global serial setting
+            const currentSetting = await tx.setting.findUnique({
+                where: { key: 'membershipCodeStartSerial' }
+            });
+            
+            const nextSerial = currentSetting ? parseInt(currentSetting.value) + 1 : 30002;
+            
+            await tx.setting.upsert({
+                where: { key: 'membershipCodeStartSerial' },
+                update: { value: String(nextSerial) },
+                create: { key: 'membershipCodeStartSerial', value: String(nextSerial) }
+            });
         });
 
         return NextResponse.json({ message: 'Member created successfully', id: memberId }, { status: 201 });

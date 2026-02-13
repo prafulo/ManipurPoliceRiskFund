@@ -12,23 +12,12 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const lastMember = await prisma.member.findFirst({
-            where: { unitId: unitId },
-            orderBy: { createdAt: 'desc' },
-            select: { membershipCode: true }
+        // Fetch global starting serial from settings
+        const setting = await prisma.setting.findUnique({
+            where: { key: 'membershipCodeStartSerial' }
         });
         
-        let nextSerial = 30001; // Starting serial number
-
-        if (lastMember && lastMember.membershipCode) {
-             const parts = lastMember.membershipCode.split('-');
-             if (parts.length === 3) {
-                 const lastSerial = parseInt(parts[1], 10);
-                 if (!isNaN(lastSerial)) {
-                    nextSerial = lastSerial + 1;
-                 }
-             }
-        }
+        let nextSerial = setting ? parseInt(setting.value) : 30001;
         
         const datePart = format(new Date(), 'MMyy');
         const nextCode = `${unitName}-${nextSerial}-${datePart}`;
