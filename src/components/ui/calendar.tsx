@@ -32,14 +32,14 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1 table-fixed",
-        head_row: "grid grid-cols-7 gap-1",
-        head_cell: "text-muted-foreground text-xs font-normal text-center w-9",
-        row: "grid grid-cols-7 gap-1 mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+        table: "w-full border-collapse",
+        head_row: "flex w-full",
+        head_cell: "flex-1 text-muted-foreground text-xs font-normal text-center",
+        row: "flex w-full mt-2",
+        cell: "flex-1 h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 mx-auto"
         ),
         day_range_end: "day-range-end",
         day_selected:
