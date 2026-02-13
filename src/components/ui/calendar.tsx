@@ -37,9 +37,9 @@ function Calendar({
         tbody: "block w-full",
         head_row: "flex w-full",
         head_cell:
-          "flex-1 text-muted-foreground text-xs font-normal text-center min-w-[36px]",
+          "flex-1 min-w-[36px] flex items-center justify-center text-muted-foreground text-xs font-normal tracking-normal",
         row: "flex w-full mt-2",
-        cell: "flex-1 h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 min-w-[36px]",
+        cell: "flex-1 min-w-[36px] flex items-center justify-center h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100 mx-auto"
