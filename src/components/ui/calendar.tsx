@@ -17,9 +17,8 @@ function Calendar({
 }: CalendarProps) {
   return (
     <DayPicker
-      weekStartsOn={1}
       showOutsideDays={showOutsideDays}
-      className={cn("p-4 bg-background border rounded-xl shadow-sm", className)}
+      className={cn("p-4 bg-background border rounded-xl shadow-md", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -35,7 +34,8 @@ function Calendar({
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse",
         head_row: "grid grid-cols-7 mb-2",
-        head_cell: "text-muted-foreground font-medium text-[0.75rem] uppercase tracking-wider text-center",
+        head_cell:
+          "text-muted-foreground font-medium text-[0.75rem] uppercase tracking-wider text-center",
         row: "grid grid-cols-7 w-full mt-1",
         cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:z-20",
         day: cn(
