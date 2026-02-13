@@ -1,5 +1,5 @@
 'use client';
-import Link from 'link';
+import Link from 'next/link';
 import {
   Menu,
   UserCircle,
