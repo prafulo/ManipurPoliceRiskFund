@@ -1,4 +1,3 @@
-
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
 
             if (existing) continue;
 
-            // Calculate superannuation if not provided (DOB + 60 years)
+            // Use imported superannuation date if provided, otherwise DOB + 60
             const dob = new Date(data.dateOfBirth);
             const superannuationDate = data.superannuationDate 
                 ? new Date(data.superannuationDate) 
