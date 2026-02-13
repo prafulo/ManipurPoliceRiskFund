@@ -1,3 +1,4 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
@@ -47,6 +48,12 @@ export async function POST(request: NextRequest) {
 
             if (existing) continue;
 
+            // Calculate superannuation if not provided (DOB + 60 years)
+            const dob = new Date(data.dateOfBirth);
+            const superannuationDate = data.superannuationDate 
+                ? new Date(data.superannuationDate) 
+                : new Date(new Date(dob).setFullYear(dob.getFullYear() + 60));
+
             results.push(prisma.member.create({
                 data: {
                     id: uuidv4(),
@@ -60,9 +67,9 @@ export async function POST(request: NextRequest) {
                     bloodGroup: data.bloodGroup,
                     memberPostType: (data.memberPostType || 'Substantive') as MemberPostType,
                     joiningRank: data.joiningRank,
-                    dateOfBirth: new Date(data.dateOfBirth),
+                    dateOfBirth: dob,
                     dateOfEnrollment: new Date(data.dateOfEnrollment),
-                    superannuationDate: new Date(new Date(data.dateOfBirth).setFullYear(new Date(data.dateOfBirth).getFullYear() + 60)),
+                    superannuationDate: superannuationDate,
                     address: data.address,
                     phone: String(data.phone || ''),
                     unitId: unitId,

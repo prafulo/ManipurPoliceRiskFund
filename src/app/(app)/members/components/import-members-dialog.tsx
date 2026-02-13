@@ -28,12 +28,12 @@ export function ImportMembersDialog() {
     const headers = [
       'Name', 'Father Name', 'Rank', 'Trade', 'EIN (Service No)', 'Badge No',
       'Blood Group', 'Post Type (Officiating/Temporary/Substantive)', 'Joining Rank',
-      'DOB (YYYY-MM-DD)', 'Enrollment Date (YYYY-MM-DD)', 'Address', 'Phone',
+      'DOB (YYYY-MM-DD)', 'Enrollment Date (YYYY-MM-DD)', 'Superannuation Date (YYYY-MM-DD)', 'Address', 'Phone',
       'Unit Name', 'Status (Opened/Closed)', 'Subscription Start (YYYY-MM-DD)',
       'Date Applied (YYYY-MM-DD)', 'Receipt Date (YYYY-MM-DD)', 'Allotment Date (YYYY-MM-DD)'
     ];
     const data = [
-      ['John Doe', 'Richard Doe', 'Sub-Inspector', 'General', '123456', 'B-101', 'O+', 'Substantive', 'Constable', '1985-05-20', '2010-01-15', 'Police HQ, Imphal', '9876543210', 'PHQ', 'Opened', '2010-02-01', '2009-12-01', '2009-12-15', '2010-01-01']
+      ['John Doe', 'Richard Doe', 'Sub-Inspector', 'General', '123456', 'B-101', 'O+', 'Substantive', 'Constable', '1985-05-20', '2010-01-15', '2045-05-20', 'Police HQ, Imphal', '9876543210', 'PHQ', 'Opened', '2010-02-01', '2009-12-01', '2009-12-15', '2010-01-01']
     ];
     
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
@@ -73,6 +73,7 @@ export function ImportMembersDialog() {
           joiningRank: row['Joining Rank'],
           dateOfBirth: row['DOB (YYYY-MM-DD)'],
           dateOfEnrollment: row['Enrollment Date (YYYY-MM-DD)'],
+          superannuationDate: row['Superannuation Date (YYYY-MM-DD)'],
           address: row['Address'],
           phone: String(row['Phone'] || ''),
           unitName: row['Unit Name'],
