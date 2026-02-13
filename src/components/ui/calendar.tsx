@@ -18,54 +18,70 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-4 bg-background border rounded-xl shadow-md", className)}
+      className={cn(
+        "p-5 bg-card border border-border/60 rounded-2xl shadow-lg ring-1 ring-black/[0.03]",
+        className
+      )}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center px-8",
-        caption_label: "text-sm font-semibold tracking-tight",
-        caption_dropdowns: "flex justify-center gap-1 font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
+        months:
+          "flex flex-col sm:flex-row gap-6",
+        month: "space-y-5",
+        caption:
+          "flex justify-center pt-1.5 pb-2 relative items-center px-10 border-b border-border/40 mb-1",
+        caption_label:
+          "text-sm font-bold tracking-tight text-foreground",
+        caption_dropdowns: "flex justify-center gap-2.5 font-semibold",
+        nav: "flex items-center gap-1",
+        button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity"
+          "h-8 w-8 bg-card p-0 opacity-60 hover:opacity-100 hover:bg-accent/40 border-border/50 rounded-lg transition-all duration-200 absolute left-1.5"
         ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse",
-        head_row: "grid grid-cols-7 mb-2",
-        head_cell:
-          "text-muted-foreground font-medium text-[0.75rem] uppercase tracking-wider text-center",
-        row: "grid grid-cols-7 w-full mt-1",
-        cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:z-20",
-        day: cn(
+        button_next: cn(
+          buttonVariants({ variant: "outline" }),
+          "h-8 w-8 bg-card p-0 opacity-60 hover:opacity-100 hover:bg-accent/40 border-border/50 rounded-lg transition-all duration-200 absolute right-1.5"
+        ),
+        months_container: "w-full border-collapse space-y-1",
+        month_grid: "w-full border-collapse space-y-1",
+        weekdays: "flex justify-between items-center mb-1",
+        weekday:
+          "text-muted-foreground/70 rounded-md w-10 font-semibold text-[0.65rem] uppercase tracking-widest flex items-center justify-center select-none",
+        week: "flex w-full mt-0.5 justify-between gap-0.5",
+        day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
+          "h-10 w-10 p-0 font-medium text-sm aria-selected:opacity-100 hover:bg-accent/30 hover:text-accent-foreground rounded-xl transition-all duration-150"
         ),
-        day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-lg shadow-sm font-semibold",
-        day_today: "bg-accent/50 text-accent-foreground font-bold",
-        day_outside:
-          "day-outside text-muted-foreground opacity-40 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        day_disabled: "text-muted-foreground opacity-50 cursor-not-allowed",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        vhidden: "hidden",
-        dropdown: "bg-transparent text-sm font-medium focus:outline-none cursor-pointer hover:text-primary transition-colors",
-        dropdown_month: "mr-1",
-        dropdown_year: "ml-1",
-        dropdown_icon: "hidden",
+        day: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-xl [&:has([aria-selected].day-outside)]:bg-accent/40 [&:has([aria-selected])]:bg-accent/20 first:[&:has([aria-selected])]:rounded-l-xl last:[&:has([aria-selected])]:rounded-r-xl focus-within:relative focus-within:z-20",
+        range_end: "day-range-end",
+        selected:
+          "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl shadow-md ring-2 ring-primary/25 font-bold",
+        today:
+          "bg-accent/30 text-accent-foreground font-extrabold ring-1 ring-accent/50 rounded-xl",
+        outside:
+          "day-outside text-muted-foreground/40 opacity-40 aria-selected:bg-accent/30 aria-selected:text-muted-foreground aria-selected:opacity-25",
+        disabled:
+          "text-muted-foreground/40 opacity-40 cursor-not-allowed line-through",
+        range_middle:
+          "aria-selected:bg-accent/20 aria-selected:text-accent-foreground",
+        hidden: "invisible",
+        dropdown_root: "flex gap-2.5",
+        dropdown:
+          "appearance-none px-3.5 py-1.5 text-sm font-bold bg-card text-foreground border border-border/60 rounded-lg shadow-sm hover:bg-accent/20 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-primary cursor-pointer transition-all duration-200",
+        dropdown_month: "",
+        dropdown_year: "",
+        dropdown_icon: "ml-1 h-4 w-4 opacity-40",
         ...classNames,
       }}
       components={{
-        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-        IconRight: () => <ChevronRight className="h-4 w-4" />,
+        Chevron: (props) => {
+          if (props.orientation === "left") {
+            return <ChevronLeft className="h-4 w-4" />
+          }
+          return <ChevronRight className="h-4 w-4" />
+        },
       }}
-      captionLayout="dropdown-buttons"
-      fromYear={1900}
-      toYear={new Date().getFullYear() + 20}
+      captionLayout="dropdown"
+      startMonth={new Date(1900, 0)}
+      endMonth={new Date(new Date().getFullYear() + 20, 11)}
       {...props}
     />
   )
