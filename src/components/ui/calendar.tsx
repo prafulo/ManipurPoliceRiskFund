@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -22,7 +21,7 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        months: "flex flex-col sm:flex-row gap-4",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
         caption_label: "text-sm font-medium",
@@ -33,11 +32,10 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        table: "w-full border-collapse table-fixed",
-        head_row: "",
-        row: "",
-        head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] text-center",
+        table: "w-full border-collapse space-y-1",
+        head_row: "grid grid-cols-7",
+        head_cell: "text-muted-foreground text-xs font-normal text-center",
+        row: "grid grid-cols-7 mt-2",
         cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
