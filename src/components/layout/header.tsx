@@ -1,6 +1,5 @@
-
 'use client';
-import Link from 'next/link';
+import Link from 'link';
 import {
   Menu,
   UserCircle,
@@ -18,7 +17,8 @@ import {
   Database,
   ArchiveRestore,
   Award,
-  PenTool
+  PenTool,
+  Hash
 } from 'lucide-react';
 import {
   Sheet,
@@ -57,6 +57,7 @@ const settingsNavItems = [
     { href: '/settings/units', label: 'Units', icon: Building },
     { href: '/settings/ranks', label: 'Ranks', icon: Award },
     { href: '/settings/financial', label: 'Financial', icon: DollarSign },
+    { href: '/settings/membership-code', label: 'Member Code', icon: Hash },
     { href: '/settings/signature', label: 'Signature', icon: PenTool },
     { href: '/settings/database', label: 'Database', icon: Database, adminOnly: true },
 ];

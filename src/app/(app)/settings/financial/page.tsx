@@ -15,8 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from 'next-auth/react';
 import type { UserRole } from '@/lib/types';
-import { Separator } from '@/components/ui/separator';
-import { Hash } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 
 export default function FinancialSettingsPage() {
@@ -25,7 +24,6 @@ export default function FinancialSettingsPage() {
 
   const [subscriptionAmount, setSubscriptionAmount] = useState<number | ''>('');
   const [expiredReleaseAmount, setExpiredReleaseAmount] = useState<number | ''>('');
-  const [membershipCodeStartSerial, setMembershipCodeStartSerial] = useState<number | ''>('');
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -44,10 +42,6 @@ export default function FinancialSettingsPage() {
 
         const expiredAmount = settings.find((s: any) => s.key === 'expiredReleaseAmount');
         if (expiredAmount) setExpiredReleaseAmount(Number(expiredAmount.value));
-
-        const codeSerial = settings.find((s: any) => s.key === 'membershipCodeStartSerial');
-        if (codeSerial) setMembershipCodeStartSerial(Number(codeSerial.value));
-        else setMembershipCodeStartSerial(30001); // Default
 
       } catch (error: any) {
         toast({
@@ -72,7 +66,6 @@ export default function FinancialSettingsPage() {
         body: JSON.stringify({
           subscriptionAmount,
           expiredReleaseAmount,
-          membershipCodeStartSerial,
         }),
       });
 
@@ -83,7 +76,7 @@ export default function FinancialSettingsPage() {
 
       toast({
         title: "Settings Saved",
-        description: `Settings have been updated successfully.`,
+        description: `Financial settings have been updated successfully.`,
       });
 
     } catch (error: any) {
@@ -100,14 +93,14 @@ export default function FinancialSettingsPage() {
   return (
     <div className="space-y-8 max-w-4xl">
       <div className="mb-6">
-        <h2 className="text-3xl font-bold tracking-tight font-headline">System & Financial Settings</h2>
-        <p className="text-muted-foreground">Manage subscription amounts and system-wide configurations.</p>
+        <h2 className="text-3xl font-bold tracking-tight font-headline">Financial Settings</h2>
+        <p className="text-muted-foreground">Manage subscription amounts and benefit release configurations.</p>
       </div>
 
        <Card>
         <CardHeader>
-          <CardTitle>Financial Settings</CardTitle>
-          <CardDescription>Manage subscription and benefit amounts.</CardDescription>
+          <CardTitle>Global Rates</CardTitle>
+          <CardDescription>Manage the standard amounts used across the system.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {loading ? (
@@ -149,49 +142,14 @@ export default function FinancialSettingsPage() {
             </div>
           )}
         </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Hash className="h-5 w-5 text-primary" />
-            Membership Code Configuration
-          </CardTitle>
-          <CardDescription>Manage the dynamic serial number used in member identification codes.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-           {loading ? (
-             <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-10 w-full" />
-             </div>
-           ) : (
-             <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="start-serial">Next Global Serial Number</Label>
-                <Input 
-                  type="number" 
-                  id="start-serial" 
-                  placeholder="30001" 
-                  value={membershipCodeStartSerial} 
-                  onChange={(e) => setMembershipCodeStartSerial(Number(e.target.value))}
-                  disabled={userRole !== 'SuperAdmin'}
-                />
-                <p className="text-sm text-muted-foreground pt-1">
-                  The middle part of the code (e.g. PHQ-<strong>30001</strong>-0225). 
-                  Updating this resets the flow globally for all units.
-                </p>
-              </div>
-           )}
-        </CardContent>
         {userRole === 'SuperAdmin' && (
             <CardFooter className="border-t px-6 py-4">
                 <Button onClick={handleSave} disabled={loading || isSaving}>
-                    {isSaving ? 'Saving...' : 'Save All Settings'}
+                    {isSaving ? 'Saving...' : <><Save className="mr-2 h-4 w-4" /> Save Financial Settings</>}
                 </Button>
             </CardFooter>
         )}
       </Card>
-      
     </div>
   );
 }
