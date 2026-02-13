@@ -33,10 +33,13 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse",
+        thead: "block w-full",
+        tbody: "block w-full",
         head_row: "flex w-full",
-        head_cell: "flex-1 text-muted-foreground text-xs font-normal text-center",
+        head_cell:
+          "flex-1 text-muted-foreground text-xs font-normal text-center min-w-[36px]",
         row: "flex w-full mt-2",
-        cell: "flex-1 h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+        cell: "flex-1 h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 min-w-[36px]",
         day: cn(
           buttonVariants({ variant: "ghost" }),
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100 mx-auto"
