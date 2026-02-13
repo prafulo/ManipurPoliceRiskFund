@@ -86,7 +86,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
     <>
       <Card>
         <CardContent className="p-0">
-          <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
+          <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2 print:hidden">
             <Input
               placeholder="Search by name, code or EIN..."
               value={localSearch}
@@ -107,7 +107,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                   <TableHead>Date</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Months Paid</TableHead>
-                  <TableHead className="text-right w-[80px]">Actions</TableHead>
+                  <TableHead className="text-right w-[80px] print:hidden">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -123,7 +123,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
                       <TableCell>{format(new Date(payment.paymentDate), 'PP')}</TableCell>
                       <TableCell>Rs. {Number(payment.amount).toFixed(2)}</TableCell>
                       <TableCell className="text-[10px] uppercase text-muted-foreground">{formatMonths(payment.months)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right print:hidden">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -158,7 +158,7 @@ export function PaymentTable({ data, onDelete, isLoading, pagination, onSearch }
             </Table>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t print:hidden">
             <p className="text-sm text-muted-foreground">
               Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
             </p>

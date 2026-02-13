@@ -221,7 +221,7 @@ export default function ManageUsersPage() {
 
   return (
     <div className="space-y-8 max-w-4xl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between print:hidden">
         <div>
             <h2 className="text-3xl font-bold tracking-tight font-headline">Manage Users</h2>
             <p className="text-muted-foreground">Add, edit, or remove user accounts.</p>
@@ -258,16 +258,20 @@ export default function ManageUsersPage() {
       </Dialog>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between print:hidden">
           <div><CardTitle>Existing Users</CardTitle><CardDescription>Manage application access.</CardDescription></div>
           <div className="flex items-center gap-2">
             <Input placeholder="Search..." value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setPage(1); }} className="w-48 h-8" />
             {isDataLoading && <Loader2 className="h-4 w-4 animate-spin" />}
           </div>
         </CardHeader>
+        <CardHeader className="hidden print:block text-center border-b pb-4">
+            <CardTitle>Registered System Users</CardTitle>
+            <CardDescription>Official user account manifest.</CardDescription>
+        </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader><TableRow><TableHead className="w-[50px]">#</TableHead><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Unit</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead className="w-[50px]">#</TableHead><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Unit</TableHead><TableHead className="text-right print:hidden">Actions</TableHead></TableRow></TableHeader>
             <TableBody>
               {users.length > 0 ? users.map((user, index) => (
                 <TableRow key={user.id}>
@@ -278,7 +282,7 @@ export default function ManageUsersPage() {
                   <TableCell className="text-xs">{user.email}</TableCell>
                   <TableCell><Badge variant="outline" className="text-[10px]">{user.role}</Badge></TableCell>
                   <TableCell>{user.unitName || '-'}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right print:hidden">
                     <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(user)} className="h-8 w-8"><Edit className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={user.id === session?.user.id}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
@@ -290,7 +294,7 @@ export default function ManageUsersPage() {
             </TableBody>
           </Table>
           
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t print:hidden">
             <p className="text-xs text-muted-foreground">Page {page} of {totalPages}</p>
             <div className="flex items-center gap-1">
               <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPage(page - 1)} disabled={page <= 1 || isDataLoading}><ChevronLeft className="h-4 w-4" /></Button>

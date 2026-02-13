@@ -116,7 +116,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
     <>
       <Card>
         <CardContent className="p-0">
-          <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
+          <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2 print:hidden">
             <Input
               placeholder="Filter by code, EIN, name..."
               value={localSearch}
@@ -135,7 +135,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
                       {header.label}
                     </TableHead>
                   ))}
-                  <TableHead className="text-right w-[80px]">Actions</TableHead>
+                  <TableHead className="text-right w-[80px] print:hidden">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -156,7 +156,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
                       {listType === 'closed' && (
                           <TableCell>{member.closureReason}</TableCell>
                       )}
-                      <TableCell className="text-right">
+                      <TableCell className="text-right print:hidden">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -197,7 +197,7 @@ export function MemberTable({ data, listType = 'opened', isLoading, pagination, 
             </Table>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t print:hidden">
             <p className="text-sm text-muted-foreground">
               Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
             </p>

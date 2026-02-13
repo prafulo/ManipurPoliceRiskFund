@@ -54,7 +54,7 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
   return (
     <Card>
       <CardContent className="p-0">
-        <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2">
+        <form onSubmit={handleSearchSubmit} className="p-4 flex gap-2 print:hidden">
           <Input
             placeholder="Search by name, code or EIN..."
             value={localSearch}
@@ -103,7 +103,7 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
           </Table>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t print:hidden">
           <p className="text-sm text-muted-foreground">
             Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
           </p>
