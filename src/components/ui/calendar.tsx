@@ -36,9 +36,9 @@ function Calendar({
           buttonVariants({ variant: "outline" }),
           "h-8 w-8 bg-card p-0 opacity-60 hover:opacity-100 hover:bg-accent/40 border-border/50 rounded-lg transition-all duration-200 absolute right-1.5"
         ),
-        month_grid: "w-full border-collapse space-y-1",
+        month_grid: "w-full space-y-1",
         weekdays: "grid grid-cols-7 mb-1",
-        weekday: "text-muted-foreground/70 w-10 font-semibold text-[0.65rem] uppercase tracking-widest flex items-center justify-center select-none",
+        weekday: "text-muted-foreground/70 font-semibold text-[0.65rem] uppercase tracking-widest flex items-center justify-center select-none py-2",
         week: "grid grid-cols-7 w-full mt-0.5 gap-0.5",
         day: "h-10 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
         day_button: cn(
