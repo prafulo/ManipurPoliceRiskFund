@@ -40,11 +40,11 @@ function Calendar({
         weekdays: "grid grid-cols-7 mb-1",
         weekday: "text-muted-foreground/70 w-10 font-semibold text-[0.65rem] uppercase tracking-widest flex items-center justify-center select-none",
         week: "grid grid-cols-7 w-full mt-0.5 gap-0.5",
+        day: "h-10 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
           "h-10 w-10 p-0 font-medium text-sm aria-selected:opacity-100 hover:bg-accent/30 hover:text-accent-foreground rounded-xl transition-all duration-150"
         ),
-        day: "h-10 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
         selected: "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl shadow-md ring-2 ring-primary/25 font-bold",
         today: "bg-accent/30 text-accent-foreground font-extrabold ring-1 ring-accent/50 rounded-xl",
         outside: "day-outside text-muted-foreground/40 opacity-40 aria-selected:bg-accent/30 aria-selected:text-muted-foreground aria-selected:opacity-25",

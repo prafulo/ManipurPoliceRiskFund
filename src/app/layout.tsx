@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { SessionProvider } from 'next-auth/react';
+import { AuthProvider } from '@/components/auth-provider';
 
 export const metadata: Metadata = {
   title: 'Manipur Police Risk Fund',
@@ -24,9 +24,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <SessionProvider>
+        <AuthProvider>
           {children}
-        </SessionProvider>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

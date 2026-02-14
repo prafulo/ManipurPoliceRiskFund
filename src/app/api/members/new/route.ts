@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
             nominees: data.nominees,
         };
 
-        // We use a transaction to ensure member creation and serial increment happen together
+        // Use a transaction to ensure member creation and serial increment happen together
         await prisma.$transaction(async (tx) => {
             // Create the member
             await tx.member.create({ data: memberData });
