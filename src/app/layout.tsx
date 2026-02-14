@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Manipur Police Risk Fund',
   description: 'Membership Subscription Software',
   icons: {
-    icon: '/Logo.png',
+    icon: '/logo.png',
   },
 };
 
