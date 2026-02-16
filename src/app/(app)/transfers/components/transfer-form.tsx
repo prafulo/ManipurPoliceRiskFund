@@ -106,7 +106,8 @@ export function TransferForm({}: TransferFormProps) {
   const filteredMembers = members.filter(member => 
     member.status === 'Opened' && 
     (member.name.toLowerCase().includes(memberSearch.toLowerCase()) || 
-     member.membershipCode.toLowerCase().includes(memberSearch.toLowerCase()))
+     member.membershipCode.toLowerCase().includes(memberSearch.toLowerCase()) ||
+     member.serviceNumber.toLowerCase().includes(memberSearch.toLowerCase()))
   );
 
 
@@ -190,7 +191,7 @@ export function TransferForm({}: TransferFormProps) {
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                           <div className="p-2 border-b">
                             <Input 
-                              placeholder="Search by name or code..."
+                              placeholder="Search by name, code or EIN..."
                               className="h-9"
                               value={memberSearch}
                               onChange={(e) => setMemberSearch(e.target.value)}
@@ -217,7 +218,9 @@ export function TransferForm({}: TransferFormProps) {
                                   />
                                   <div>
                                     <div>{member.name}</div>
-                                    <div className="text-xs text-muted-foreground">{member.membershipCode}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {member.membershipCode} • EIN: {member.serviceNumber}
+                                    </div>
                                   </div>
                                 </div>
                               )) : (
