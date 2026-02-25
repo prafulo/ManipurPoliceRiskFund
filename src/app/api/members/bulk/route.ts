@@ -31,13 +31,28 @@ export async function POST(request: NextRequest) {
                 if (!unitId) continue;
 
                 // Check if service number already exists
-                const existing = await tx.member.findUnique({
+                const existingServiceNumber = await tx.member.findUnique({
                     where: { serviceNumber: String(data.serviceNumber) }
                 });
-                if (existing) continue;
+                if (existingServiceNumber) continue;
 
-                // Generate code using current global serial
-                const code = `${data.unitName}-${currentGlobalSerial}-${datePart}`;
+                // Check if provided membership code already exists (if provided)
+                if (data.membershipCode) {
+                    const existingCode = await tx.member.findUnique({
+                        where: { membershipCode: String(data.membershipCode) }
+                    });
+                    if (existingCode) continue;
+                }
+
+                // Handle Membership Code logic
+                let code = data.membershipCode;
+                let usedAutoSerial = false;
+
+                if (!code) {
+                    // Generate code using current global serial if not provided
+                    code = `${data.unitName}-${currentGlobalSerial}-${datePart}`;
+                    usedAutoSerial = true;
+                }
 
                 const dob = new Date(data.dateOfBirth);
                 const superannuationDate = (data.superannuationDate && data.superannuationDate !== '') 
@@ -47,7 +62,7 @@ export async function POST(request: NextRequest) {
                 await tx.member.create({
                     data: {
                         id: uuidv4(),
-                        membershipCode: code,
+                        membershipCode: String(code),
                         name: data.name,
                         fatherName: data.fatherName,
                         rank: data.rank,
@@ -74,7 +89,9 @@ export async function POST(request: NextRequest) {
                     }
                 });
 
-                currentGlobalSerial++;
+                if (usedAutoSerial) {
+                    currentGlobalSerial++;
+                }
                 importedCount++;
             }
 

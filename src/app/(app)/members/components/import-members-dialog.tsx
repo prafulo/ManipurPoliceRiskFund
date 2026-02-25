@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -26,14 +25,14 @@ export function ImportMembersDialog() {
 
   const downloadTemplate = () => {
     const headers = [
-      'Name', 'Father Name', 'Rank', 'Trade', 'EIN (Service No)', 'Badge No',
+      'Membership Code (Optional)', 'Name', 'Father Name', 'Rank', 'Trade', 'EIN (Service No)', 'Badge No',
       'Blood Group', 'Post Type (Officiating/Temporary/Substantive)', 'Joining Rank',
       'DOB (YYYY-MM-DD)', 'Enrollment Date (YYYY-MM-DD)', 'Superannuation Date (YYYY-MM-DD)', 'Address', 'Phone',
       'Unit Name', 'Status (Opened/Closed)', 'Subscription Start (YYYY-MM-DD)',
       'Date Applied (YYYY-MM-DD)', 'Receipt Date (YYYY-MM-DD)', 'Allotment Date (YYYY-MM-DD)'
     ];
     const data = [
-      ['John Doe', 'Richard Doe', 'Sub-Inspector', 'General', '123456', 'B-101', 'O+', 'Substantive', 'Constable', '1985-05-20', '2010-01-15', '2045-05-20', 'Police HQ, Imphal', '9876543210', 'PHQ', 'Opened', '2010-02-01', '2009-12-01', '2009-12-15', '2010-01-01']
+      ['PHQ-12345-0225', 'John Doe', 'Richard Doe', 'Sub-Inspector', 'General', '123456', 'B-101', 'O+', 'Substantive', 'Constable', '1985-05-20', '2010-01-15', '2045-05-20', 'Police HQ, Imphal', '9876543210', 'PHQ', 'Opened', '2010-02-01', '2009-12-01', '2009-12-15', '2010-01-01']
     ];
     
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
@@ -62,6 +61,7 @@ export function ImportMembersDialog() {
         }
 
         const formattedData = rows.map(row => ({
+          membershipCode: row['Membership Code (Optional)'],
           name: row['Name'],
           fatherName: row['Father Name'],
           rank: row['Rank'],
@@ -161,7 +161,7 @@ export function ImportMembersDialog() {
           </div>
         </div>
         <DialogFooter className="text-xs text-muted-foreground text-center sm:text-left">
-          Note: Membership codes will be auto-generated based on the provided Unit Name.
+          Note: Membership codes will be auto-generated only if the Code column is left empty.
         </DialogFooter>
       </DialogContent>
     </Dialog>
