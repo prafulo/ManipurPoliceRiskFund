@@ -281,7 +281,7 @@ export default function IndividualPaymentHistoryPage() {
                                         <TableHead className="w-[60px]">Sl. No.</TableHead>
                                         <TableHead>Payment Date</TableHead>
                                         <TableHead>Subscription Period (Months)</TableHead>
-                                        <TableHead className="text-right">Amount (₹)</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -309,7 +309,7 @@ export default function IndividualPaymentHistoryPage() {
                                 <TableFooter className="bg-muted/30">
                                     <TableRow className="font-bold">
                                         <TableCell colSpan={3} className="text-right uppercase text-[10px] tracking-widest">Grand Total Received</TableCell>
-                                        <TableCell className="text-right text-lg text-primary">₹ {totalAmount.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right text-lg text-primary">{totalAmount.toFixed(2)}</TableCell>
                                     </TableRow>
                                 </TableFooter>
                             </Table>
