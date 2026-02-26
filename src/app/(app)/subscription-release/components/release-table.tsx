@@ -88,7 +88,7 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
                     <TableCell className="font-mono text-xs">{release.membershipCode}</TableCell>
                     <TableCell>{release.unitName}</TableCell>
                     <TableCell>{release.releaseDate ? format(new Date(release.releaseDate), 'PP') : ''}</TableCell>
-                    <TableCell>Rs. {release.releaseAmount ? Number(release.releaseAmount).toFixed(2) : '0.00'}</TableCell>
+                    <TableCell>{release.releaseAmount ? Number(release.releaseAmount).toFixed(2) : '0.00'}</TableCell>
                     <TableCell className="max-w-xs text-[10px] text-muted-foreground uppercase">{release.releaseNotes}</TableCell>
                   </TableRow>
                 ))
@@ -103,7 +103,7 @@ export function ReleaseTable({ data, isLoading, pagination, onSearch }: ReleaseT
           </Table>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t print:hidden">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
           <p className="text-sm text-muted-foreground">
             Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
           </p>

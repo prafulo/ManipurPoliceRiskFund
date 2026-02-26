@@ -25,7 +25,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/select';
 
 interface ReportRow {
   memberCode: string;
@@ -179,13 +179,17 @@ export default function PaymentHistoryReportPage() {
         <style dangerouslySetInnerHTML={{ __html: `
             @media print {
                 @page { size: landscape; margin: 10mm; }
-                /* Fix for table visibility on multiple pages */
+                /* Ensure grid handles hidden sidebar properly */
+                body { background: white !important; }
                 div[data-radix-scroll-area-viewport], .overflow-auto {
                     overflow: visible !important;
                     height: auto !important;
                     position: relative !important;
                 }
                 .print\\:hidden { display: none !important; }
+                /* Reset layout for print */
+                main { display: block !important; padding: 0 !important; }
+                .grid { display: block !important; }
             }
         `}} />
         
@@ -259,12 +263,13 @@ export default function PaymentHistoryReportPage() {
                             <TableHead className="text-right">Total Payable</TableHead>
                             <TableHead className="text-right print:hidden">Recv.</TableHead>
                             <TableHead className="text-right print:hidden">Balance</TableHead>
+                            <TableHead className="hidden print:table-cell">Remark</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {reportLoading ? (
                              <TableRow>
-                                <TableCell colSpan={10} className="h-24 text-center">
+                                <TableCell colSpan={11} className="h-24 text-center">
                                     Generating report...
                                 </TableCell>
                             </TableRow>
@@ -281,11 +286,12 @@ export default function PaymentHistoryReportPage() {
                                     <TableCell className="text-right font-semibold">{row.totalPayable.toFixed(2)}</TableCell>
                                     <TableCell className="text-right text-green-600 print:hidden">{row.received.toFixed(2)}</TableCell>
                                     <TableCell className="text-right font-semibold print:hidden">{row.balance.toFixed(2)}</TableCell>
+                                    <TableCell className="hidden print:table-cell"></TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={10} className="h-24 text-center">
+                                <TableCell colSpan={11} className="h-24 text-center">
                                     No members found for the selected criteria.
                                 </TableCell>
                             </TableRow>
@@ -299,6 +305,7 @@ export default function PaymentHistoryReportPage() {
                             <TableCell className="text-right">{totals.totalPayable.toFixed(2)}</TableCell>
                             <TableCell className="text-right print:hidden">{totals.received.toFixed(2)}</TableCell>
                             <TableCell className="text-right print:hidden">{totals.balance.toFixed(2)}</TableCell>
+                            <TableCell className="hidden print:table-cell"></TableCell>
                          </TableRow>
                     </TableFooter>
                 </Table>

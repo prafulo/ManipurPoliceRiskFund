@@ -36,7 +36,7 @@ export function Sidebar() {
   const isSettingsOpen = pathname.startsWith('/settings');
 
   return (
-    <aside className="hidden md:flex w-64 flex-col bg-card border-r">
+    <aside className="hidden md:flex w-64 flex-col bg-card border-r print:hidden">
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3">
           <Logo className="w-8 h-8" />

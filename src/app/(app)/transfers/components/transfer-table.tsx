@@ -104,7 +104,7 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
           </Table>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t print:hidden">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
           <p className="text-sm text-muted-foreground">
             Showing Page <span className="font-medium text-foreground">{pagination.currentPage}</span> of <span className="font-medium text-foreground">{pagination.totalPages}</span>
           </p>
