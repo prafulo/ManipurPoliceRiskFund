@@ -29,6 +29,7 @@ import {
 
 interface ReportRow {
   memberCode: string;
+  ein: string;
   rank: string;
   name: string;
   subscription: number;
@@ -129,6 +130,7 @@ export default function PaymentHistoryReportPage() {
       
       return {
         memberCode: member.membershipCode,
+        ein: member.serviceNumber,
         rank: member.rank,
         name: member.name,
         subscription,
@@ -174,6 +176,19 @@ export default function PaymentHistoryReportPage() {
 
   return (
     <div>
+        <style dangerouslySetInnerHTML={{ __html: `
+            @media print {
+                @page { size: landscape; margin: 10mm; }
+                /* Fix for table visibility on multiple pages */
+                div[data-radix-scroll-area-viewport], .overflow-auto {
+                    overflow: visible !important;
+                    height: auto !important;
+                    position: relative !important;
+                }
+                .print\\:hidden { display: none !important; }
+            }
+        `}} />
+        
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight font-headline">Member Payment History</h2>
@@ -225,7 +240,7 @@ export default function PaymentHistoryReportPage() {
                 </Button>
             </div>
         </div>
-        <Card>
+        <Card className="print:border-none print:shadow-none">
             <CardContent className="p-0">
                  <div className="text-center p-4 print:block hidden">
                     <h2 className="text-xl font-bold uppercase">Member Payment History for {reportDateString}</h2>
@@ -236,19 +251,20 @@ export default function PaymentHistoryReportPage() {
                         <TableRow>
                             <TableHead className="w-[60px]">Sl. No.</TableHead>
                             <TableHead>Mem. Code</TableHead>
+                            <TableHead>EIN</TableHead>
                             <TableHead>Rank</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead className="text-right">Subs</TableHead>
                             <TableHead className="text-right">Arrear</TableHead>
                             <TableHead className="text-right">Total Payable</TableHead>
-                            <TableHead className="text-right">Recv.</TableHead>
-                            <TableHead className="text-right">Balance</TableHead>
+                            <TableHead className="text-right print:hidden">Recv.</TableHead>
+                            <TableHead className="text-right print:hidden">Balance</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {reportLoading ? (
                              <TableRow>
-                                <TableCell colSpan={9} className="h-24 text-center">
+                                <TableCell colSpan={10} className="h-24 text-center">
                                     Generating report...
                                 </TableCell>
                             </TableRow>
@@ -257,18 +273,19 @@ export default function PaymentHistoryReportPage() {
                                 <TableRow key={index}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>{row.memberCode}</TableCell>
+                                    <TableCell>{row.ein}</TableCell>
                                     <TableCell>{row.rank}</TableCell>
                                     <TableCell>{row.name}</TableCell>
                                     <TableCell className="text-right">{row.subscription.toFixed(2)}</TableCell>
                                     <TableCell className="text-right">{row.arrear.toFixed(2)}</TableCell>
                                     <TableCell className="text-right font-semibold">{row.totalPayable.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right text-green-600">{row.received.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right font-semibold">{row.balance.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right text-green-600 print:hidden">{row.received.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-semibold print:hidden">{row.balance.toFixed(2)}</TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={9} className="h-24 text-center">
+                                <TableCell colSpan={10} className="h-24 text-center">
                                     No members found for the selected criteria.
                                 </TableCell>
                             </TableRow>
@@ -276,12 +293,12 @@ export default function PaymentHistoryReportPage() {
                     </TableBody>
                     <TableFooter>
                          <TableRow className="font-bold bg-muted/50">
-                            <TableCell colSpan={4} className="text-right">TOTAL</TableCell>
+                            <TableCell colSpan={5} className="text-right">TOTAL</TableCell>
                             <TableCell className="text-right">{totals.subscription.toFixed(2)}</TableCell>
                             <TableCell className="text-right">{totals.arrear.toFixed(2)}</TableCell>
                             <TableCell className="text-right">{totals.totalPayable.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">{totals.received.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">{totals.balance.toFixed(2)}</TableCell>
+                            <TableCell className="text-right print:hidden">{totals.received.toFixed(2)}</TableCell>
+                            <TableCell className="text-right print:hidden">{totals.balance.toFixed(2)}</TableCell>
                          </TableRow>
                     </TableFooter>
                 </Table>
