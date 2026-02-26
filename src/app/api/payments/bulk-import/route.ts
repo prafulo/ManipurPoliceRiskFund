@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
                     memberId: member.id,
                     amount: data.amount,
                     paymentDate: new Date(data.paymentDate || new Date()),
-                    months: monthsArray,
+                    months: JSON.stringify(monthsArray), // Use stringify for consistency with manual route
                 }
             }));
         }

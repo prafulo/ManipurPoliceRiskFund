@@ -1,4 +1,3 @@
-
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { MemberStatus } from '@prisma/client';
@@ -17,6 +16,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const query = searchParams.get('query') || '';
     const status = searchParams.get('status') as MemberStatus | undefined;
+    const all = searchParams.get('all') === 'true';
 
     try {
         const where: any = {
@@ -32,14 +32,19 @@ export async function GET(request: NextRequest) {
             ]
         };
 
+        const findOptions: any = {
+            where,
+            orderBy: { createdAt: 'desc' },
+            include: { unit: { select: { name: true } } }
+        };
+
+        if (!all) {
+            findOptions.skip = (page - 1) * limit;
+            findOptions.take = limit;
+        }
+
         const [members, total] = await Promise.all([
-            prisma.member.findMany({
-                where,
-                skip: (page - 1) * limit,
-                take: limit,
-                orderBy: { createdAt: 'desc' },
-                include: { unit: { select: { name: true } } }
-            }),
+            prisma.member.findMany(findOptions),
             prisma.member.count({ where })
         ]);
 

@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const query = searchParams.get('query') || '';
+    const all = searchParams.get('all') === 'true';
 
     try {
         const where = query ? {
@@ -16,20 +17,25 @@ export async function GET(request: NextRequest) {
             ]
         } : {};
 
+        const findOptions: any = {
+            where,
+            include: {
+                member: { select: { name: true, membershipCode: true } },
+                fromUnit: { select: { name: true } },
+                toUnit: { select: { name: true } },
+            },
+            orderBy: {
+                transferDate: 'desc'
+            }
+        };
+
+        if (!all) {
+            findOptions.skip = (page - 1) * limit;
+            findOptions.take = limit;
+        }
+
         const [transfers, total] = await Promise.all([
-            prisma.transfer.findMany({
-                where,
-                skip: (page - 1) * limit,
-                take: limit,
-                include: {
-                    member: { select: { name: true, membershipCode: true } },
-                    fromUnit: { select: { name: true } },
-                    toUnit: { select: { name: true } },
-                },
-                orderBy: {
-                    transferDate: 'desc'
-                }
-            }),
+            prisma.transfer.findMany(findOptions),
             prisma.transfer.count({ where })
         ]);
 

@@ -36,8 +36,8 @@ const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() 
 
 async function fetchData() {
     const [membersRes, transfersRes, unitsRes, signatureRes] = await Promise.all([
-        fetch('/api/members'),
-        fetch('/api/transfers'),
+        fetch('/api/members?all=true'),
+        fetch('/api/transfers?all=true'),
         fetch('/api/units'),
         fetch('/api/signature')
     ]);
@@ -46,7 +46,7 @@ async function fetchData() {
     }
     const [membersData, transfersData, unitsData, signatureData] = await Promise.all([
         membersRes.json(),
-        transfersRes.json(),
+        transfersData.json(),
         unitsRes.json(),
         signatureRes.json()
     ]);

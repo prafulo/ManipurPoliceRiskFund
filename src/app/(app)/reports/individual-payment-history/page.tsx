@@ -43,8 +43,8 @@ export default function IndividualPaymentHistoryPage() {
     async function loadData() {
         try {
             const [membersRes, paymentsRes, unitsRes, signatureRes] = await Promise.all([
-                fetch('/api/members'),
-                fetch('/api/payments'),
+                fetch('/api/members?all=true'),
+                fetch('/api/payments?all=true'),
                 fetch('/api/units'),
                 fetch('/api/signature'),
             ]);
@@ -233,7 +233,7 @@ export default function IndividualPaymentHistoryPage() {
             <Card className="print:shadow-none print:border-none">
                 <CardContent className="p-8 md:p-12 space-y-8">
                     {/* Header - Shown in print, styled for report */}
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 border-b pb-8">
+                    <div className="flex flex-col md:row-row items-center justify-between gap-6 border-b pb-8">
                         <div className="flex items-center gap-4">
                             <Logo className="w-16 h-16" />
                             <div>

@@ -46,8 +46,8 @@ export default function ConsolidatedStatementPage() {
     async function loadData() {
       try {
         const [membersRes, paymentsRes, unitsRes, settingsRes, signatureRes] = await Promise.all([
-          fetch('/api/members'),
-          fetch('/api/payments'),
+          fetch('/api/members?all=true'),
+          fetch('/api/payments?all=true'),
           fetch('/api/units'),
           fetch('/api/settings'),
           fetch('/api/signature'),

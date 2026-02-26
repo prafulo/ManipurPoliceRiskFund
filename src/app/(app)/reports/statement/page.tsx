@@ -51,7 +51,7 @@ export default function StatementReportPage() {
     async function loadData() {
       try {
         const [membersRes, unitsRes, signatureRes] = await Promise.all([
-            fetch('/api/members'),
+            fetch('/api/members?all=true'),
             fetch('/api/units'),
             fetch('/api/signature')
         ]);

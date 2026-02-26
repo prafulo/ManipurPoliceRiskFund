@@ -17,7 +17,7 @@ import { UnitSubscriptionChart } from './components/unit-pie-chart';
 
 async function fetchData() {
   const [membersRes, unitsRes, activitiesRes] = await Promise.all([
-    fetch('/api/members'),
+    fetch('/api/members?all=true'),
     fetch('/api/units'),
     fetch('/api/activities') // Fetches last 3 months by default
   ]);
@@ -70,7 +70,7 @@ function DashboardSkeleton() {
           <CardContent>
             <Skeleton className="h-64 w-full" />
           </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );
