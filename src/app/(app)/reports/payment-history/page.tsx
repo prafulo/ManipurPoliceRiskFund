@@ -44,7 +44,7 @@ export default function PaymentHistoryReportPage() {
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [allPayments, setAllPayments] = useState<Payment[]>([]);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
-  const [signature, setSignature] = useState<Signature | null>(null);
+  const [signatures, setSignatures] = useState<{ sig1?: Signature, sig2?: Signature, sig3?: Signature } | null>(null);
   
   const [reportData, setReportData] = useState<ReportRow[]>([]);
   const [reportLoading, setReportLoading] = useState(true);
@@ -79,7 +79,7 @@ export default function PaymentHistoryReportPage() {
             }));
             setAllPayments(parsedPayments);
             setAllUnits(unitsData.units || []);
-            setSignature(signatureData);
+            setSignatures(signatureData);
             const subAmount = settingsData.find((s:any) => s.key === 'subscriptionAmount');
             if (subAmount) {
                 setSubscriptionAmount(Number(subAmount.value));
@@ -344,12 +344,29 @@ export default function PaymentHistoryReportPage() {
                 <div className="text-right pr-4 font-bold text-lg mt-4">
                     <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
                 </div>
-                {signature && (
-                    <div className="text-right mt-16 print:block hidden">
-                        <div className="inline-block text-center space-y-1 min-w-[250px]">
-                            <p className="font-bold border-t-2 border-muted pt-2 uppercase text-sm">{signature.name}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signature.designation}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signature.organization}</p>
+                
+                {/* 3 Authority Signatures Grid */}
+                {signatures && (
+                    <div className="mt-20 print:block hidden">
+                        <div className="grid grid-cols-3 gap-8">
+                            {/* Signature 1 */}
+                            <div className="text-center space-y-1">
+                                <p className="font-bold border-t-2 border-muted pt-2 uppercase text-xs min-h-[40px] flex items-end justify-center">{signatures.sig1?.name}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig1?.designation}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig1?.organization}</p>
+                            </div>
+                            {/* Signature 2 */}
+                            <div className="text-center space-y-1">
+                                <p className="font-bold border-t-2 border-muted pt-2 uppercase text-xs min-h-[40px] flex items-end justify-center">{signatures.sig2?.name}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig2?.designation}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig2?.organization}</p>
+                            </div>
+                            {/* Signature 3 */}
+                            <div className="text-center space-y-1">
+                                <p className="font-bold border-t-2 border-muted pt-2 uppercase text-xs min-h-[40px] flex items-end justify-center">{signatures.sig3?.name}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig3?.designation}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig3?.organization}</p>
+                            </div>
                         </div>
                     </div>
                 )}
