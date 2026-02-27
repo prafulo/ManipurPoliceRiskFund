@@ -16,7 +16,7 @@ import type { Transfer } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 
-type EnrichedTransfer = Transfer & { fromUnitName: string, toUnitName: string, membershipCode: string };
+type EnrichedTransfer = Transfer & { fromUnitName: string, toUnitName: string, membershipCode: string, serviceNumber: string };
 
 interface TransferTableProps {
   data: EnrichedTransfer[];
@@ -73,6 +73,7 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Member Name</TableHead>
+                <TableHead>EIN</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>From Unit</TableHead>
                 <TableHead>To Unit</TableHead>
@@ -87,6 +88,7 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
                         {((pagination.currentPage - 1) * pageSize) + index + 1}
                     </TableCell>
                     <TableCell className="font-medium">{transfer.memberName}</TableCell>
+                    <TableCell className="font-mono text-xs">{transfer.serviceNumber}</TableCell>
                     <TableCell className="font-mono text-xs">{transfer.membershipCode}</TableCell>
                     <TableCell>{transfer.fromUnitName}</TableCell>
                     <TableCell>{transfer.toUnitName}</TableCell>
@@ -95,7 +97,7 @@ export function TransferTable({ data, isLoading, pagination, onSearch }: Transfe
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     {isLoading ? 'Loading...' : 'No transfers found.'}
                   </TableCell>
                 </TableRow>

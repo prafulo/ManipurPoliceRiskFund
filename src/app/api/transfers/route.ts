@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         const findOptions: any = {
             where,
             include: {
-                member: { select: { name: true, membershipCode: true } },
+                member: { select: { name: true, membershipCode: true, serviceNumber: true } },
                 fromUnit: { select: { name: true } },
                 toUnit: { select: { name: true } },
             },
@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
             createdAt: t.createdAt,
             memberName: t.member.name,
             membershipCode: t.member.membershipCode,
+            serviceNumber: t.member.serviceNumber,
             fromUnitName: t.fromUnit.name,
             toUnitName: t.toUnit.name,
         }));
