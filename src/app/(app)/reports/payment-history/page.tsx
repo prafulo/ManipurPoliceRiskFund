@@ -9,7 +9,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TableFooter
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -222,6 +221,9 @@ export default function PaymentHistoryReportPage() {
                     padding: 8px !important;
                 }
 
+                /* Ensure table footer (totals) only shows at the bottom of everything */
+                tfoot { display: table-footer-group; }
+                
                 /* Restore the signature grid specifically */
                 .print-signature-grid {
                     display: grid !important;
@@ -243,6 +245,7 @@ export default function PaymentHistoryReportPage() {
             }
         `}} />
         
+        {/* Report Controls - Strictly Hidden in Print */}
         <div className="flex flex-col gap-6 print:hidden">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -316,6 +319,7 @@ export default function PaymentHistoryReportPage() {
             <div className="space-y-8">
                 <Card className="print:border-none print:shadow-none overflow-hidden">
                     <CardContent className="p-0">
+                        {/* Official Report Header - Visible only in print */}
                         <div className="text-center p-8 print:flex hidden flex-col items-center border-b mb-6">
                             <Logo className="w-16 h-16 mb-2" />
                             <h2 className="text-2xl font-bold uppercase text-primary">Manipur Police Risk Fund (Demand Note)</h2>
@@ -342,21 +346,33 @@ export default function PaymentHistoryReportPage() {
                             </TableHeader>
                             <TableBody>
                                 {reportData.length > 0 ? (
-                                    reportData.map((row, index) => (
-                                        <TableRow key={index} className="hover:bg-muted/30">
-                                            <TableCell className="text-xs text-muted-foreground">{index + 1}</TableCell>
-                                            <TableCell className="font-mono text-[10px]">{row.memberCode}</TableCell>
-                                            <TableCell className="font-mono text-[10px]">{row.ein}</TableCell>
-                                            <TableCell className="text-[10px] uppercase">{row.rank}</TableCell>
-                                            <TableCell className="font-medium text-xs">{row.name}</TableCell>
-                                            <TableCell className="text-right font-mono text-xs">{row.subscription.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right font-mono text-xs">{row.arrear.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right font-bold font-mono text-xs text-primary">{row.totalPayable.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right text-green-600 font-mono text-xs print:hidden">{row.received.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right font-bold font-mono text-xs print:hidden">{row.balance.toFixed(2)}</TableCell>
-                                            <TableCell className="hidden print:table-cell border-l"></TableCell>
+                                    <>
+                                        {reportData.map((row, index) => (
+                                            <TableRow key={index} className="hover:bg-muted/30">
+                                                <TableCell className="text-xs text-muted-foreground">{index + 1}</TableCell>
+                                                <TableCell className="font-mono text-[10px]">{row.memberCode}</TableCell>
+                                                <TableCell className="font-mono text-[10px]">{row.ein}</TableCell>
+                                                <TableCell className="text-[10px] uppercase">{row.rank}</TableCell>
+                                                <TableCell className="font-medium text-xs">{row.name}</TableCell>
+                                                <TableCell className="text-right font-mono text-xs">{row.subscription.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-mono text-xs">{row.arrear.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-bold font-mono text-xs text-primary">{row.totalPayable.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right text-green-600 font-mono text-xs print:hidden">{row.received.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-bold font-mono text-xs print:hidden">{row.balance.toFixed(2)}</TableCell>
+                                                <TableCell className="hidden print:table-cell border-l"></TableCell>
+                                            </TableRow>
+                                        ))}
+                                        {/* Grand Totals Row - Moved into body to prevent repetition on page breaks */}
+                                        <TableRow className="font-bold bg-muted/50 border-t-2">
+                                            <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
+                                            <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-mono">{totals.arrear.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-mono text-primary">{totals.totalPayable.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right print:hidden font-mono">{totals.received.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right print:hidden font-mono">{totals.balance.toFixed(2)}</TableCell>
+                                            <TableCell className="hidden print:table-cell"></TableCell>
                                         </TableRow>
-                                    ))
+                                    </>
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={11} className="h-32 text-center text-muted-foreground italic">
@@ -365,17 +381,6 @@ export default function PaymentHistoryReportPage() {
                                     </TableRow>
                                 )}
                             </TableBody>
-                            <TableFooter>
-                                <TableRow className="font-bold bg-muted/50">
-                                    <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
-                                    <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right font-mono">{totals.arrear.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right font-mono text-primary">{totals.totalPayable.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right print:hidden font-mono">{totals.received.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right print:hidden font-mono">{totals.balance.toFixed(2)}</TableCell>
-                                    <TableCell className="hidden print:table-cell"></TableCell>
-                                </TableRow>
-                            </TableFooter>
                         </Table>
                     </CardContent>
                 </Card>
