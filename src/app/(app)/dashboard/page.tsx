@@ -70,7 +70,7 @@ function DashboardSkeleton() {
           <CardContent>
             <Skeleton className="h-64 w-full" />
           </CardContent>
-        </div>
+        </Card>
       </div>
     </div>
   );
