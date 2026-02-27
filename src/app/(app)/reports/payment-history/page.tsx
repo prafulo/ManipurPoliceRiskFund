@@ -160,7 +160,6 @@ export default function PaymentHistoryReportPage() {
     if (allMembers.length > 0 && dateRange?.from && dateRange?.to) { 
        generateReport();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, selectedUnit, allMembers, allPayments, subscriptionAmount]); 
 
 
@@ -189,31 +188,58 @@ export default function PaymentHistoryReportPage() {
         <style dangerouslySetInnerHTML={{ __html: `
             @media print {
                 @page { size: landscape; margin: 10mm; }
-                body { background: white !important; }
+                body { margin: 0; padding: 0; background: white !important; width: 100% !important; }
                 .print\\:hidden { display: none !important; }
-                main { display: block !important; padding: 0 !important; margin: 0 !important; }
                 
-                /* Ensure all content is shown across multiple pages */
-                .overflow-auto, .overflow-x-auto, .overflow-hidden {
-                    overflow: visible !important;
-                    height: auto !important;
-                    position: relative !important;
-                }
-
-                /* Fix Grid Stacking - Force 3 columns for signatures */
-                .grid-cols-3 { 
-                    display: grid !important; 
-                    grid-template-columns: repeat(3, 1fr) !important;
+                /* Reset layout constraints */
+                main, .flex-1, .flex, .grid, .grid-cols-1, .md\\:grid-cols-2 {
+                    display: block !important;
                     width: 100% !important;
-                    gap: 2rem !important;
+                    max-width: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    box-shadow: none !important;
+                    border: none !important;
                 }
-
-                /* Ensure tables display as tables */
-                table { border-collapse: collapse !important; width: 100% !important; }
-                tr { display: table-row !important; }
-                td, th { display: table-cell !important; }
 
                 header, aside { display: none !important; }
+
+                /* Force table to full width */
+                .rounded-lg, .border, .overflow-hidden, .overflow-x-auto {
+                    overflow: visible !important;
+                    border: none !important;
+                    width: 100% !important;
+                }
+
+                table { 
+                    width: 100% !important; 
+                    border-collapse: collapse !important; 
+                    table-layout: auto !important;
+                }
+
+                th, td { 
+                    border: 1px solid #e2e8f0 !important; 
+                    padding: 8px !important;
+                }
+
+                /* Restore the signature grid specifically */
+                .print-signature-grid {
+                    display: grid !important;
+                    grid-template-columns: repeat(3, 1fr) !important;
+                    width: 100% !important;
+                    gap: 30px !important;
+                    margin-top: 60px !important;
+                    border: none !important;
+                }
+                
+                .print-signature-grid div {
+                    border: none !important;
+                }
+
+                .print-signature-line {
+                    border-top: 1px solid black !important;
+                    padding-top: 8px !important;
+                }
             }
         `}} />
         
@@ -360,13 +386,12 @@ export default function PaymentHistoryReportPage() {
                             <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
                         </div>
                         
-                        {/* Triple Signature Grid - Forced to single row in print CSS */}
                         {signatures && (
                             <div className="mt-20 px-4 print:mt-32">
-                                <div className="grid grid-cols-3 gap-8">
+                                <div className="grid grid-cols-3 gap-8 print-signature-grid">
                                     {/* Signature 1 */}
                                     <div className="text-center space-y-1">
-                                        <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                        <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig1?.name || ''}</p>
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.designation}</p>
@@ -374,7 +399,7 @@ export default function PaymentHistoryReportPage() {
                                     </div>
                                     {/* Signature 2 */}
                                     <div className="text-center space-y-1">
-                                        <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                        <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig2?.name || ''}</p>
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.designation}</p>
@@ -382,7 +407,7 @@ export default function PaymentHistoryReportPage() {
                                     </div>
                                     {/* Signature 3 */}
                                     <div className="text-center space-y-1">
-                                        <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                        <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig3?.name || ''}</p>
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.designation}</p>
