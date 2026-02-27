@@ -192,15 +192,27 @@ export default function PaymentHistoryReportPage() {
                 body { background: white !important; }
                 .print\\:hidden { display: none !important; }
                 main { display: block !important; padding: 0 !important; margin: 0 !important; }
-                div[data-radix-scroll-area-viewport], .overflow-auto {
+                
+                /* Ensure all content is shown across multiple pages */
+                .overflow-auto, .overflow-x-auto, .overflow-hidden {
                     overflow: visible !important;
                     height: auto !important;
                     position: relative !important;
                 }
+
+                /* Fix Grid Stacking - Force 3 columns for signatures */
                 .grid-cols-3 { 
                     display: grid !important; 
-                    grid-template-columns: repeat(3, minmax(0, 1fr)) !important; 
+                    grid-template-columns: repeat(3, 1fr) !important;
+                    width: 100% !important;
+                    gap: 2rem !important;
                 }
+
+                /* Ensure tables display as tables */
+                table { border-collapse: collapse !important; width: 100% !important; }
+                tr { display: table-row !important; }
+                td, th { display: table-cell !important; }
+
                 header, aside { display: none !important; }
             }
         `}} />
@@ -275,111 +287,113 @@ export default function PaymentHistoryReportPage() {
                 <p className="text-muted-foreground animate-pulse font-medium">Generating report for {selectedUnit === 'all' ? 'All Units' : allUnits.find(u => u.id === selectedUnit)?.name}...</p>
             </div>
         ) : (
-            <Card className="print:border-none print:shadow-none overflow-hidden">
-                <CardContent className="p-0">
-                    <div className="text-center p-8 print:flex hidden flex-col items-center border-b mb-6">
-                        <Logo className="w-16 h-16 mb-2" />
-                        <h2 className="text-2xl font-bold uppercase text-primary">Manipur Police Risk Fund (Demand Note)</h2>
-                        <div className="flex gap-4 text-sm font-medium text-muted-foreground mt-1">
-                            <span>Period: {reportDateString}</span>
-                            <span>Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</span>
+            <div className="space-y-8">
+                <Card className="print:border-none print:shadow-none overflow-hidden">
+                    <CardContent className="p-0">
+                        <div className="text-center p-8 print:flex hidden flex-col items-center border-b mb-6">
+                            <Logo className="w-16 h-16 mb-2" />
+                            <h2 className="text-2xl font-bold uppercase text-primary">Manipur Police Risk Fund (Demand Note)</h2>
+                            <div className="flex gap-4 text-sm font-medium text-muted-foreground mt-1">
+                                <span>Period: {reportDateString}</span>
+                                <span>Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</span>
+                            </div>
                         </div>
-                    </div>
-                    <Table>
-                        <TableHeader className="bg-muted/50">
-                            <TableRow>
-                                <TableHead className="w-[50px]">Sl. No.</TableHead>
-                                <TableHead>Mem. Code</TableHead>
-                                <TableHead>EIN</TableHead>
-                                <TableHead>Rank</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead className="text-right">Subs</TableHead>
-                                <TableHead className="text-right">Arrear</TableHead>
-                                <TableHead className="text-right">Total Payable</TableHead>
-                                <TableHead className="text-right print:hidden">Recv.</TableHead>
-                                <TableHead className="text-right print:hidden">Balance</TableHead>
-                                <TableHead className="hidden print:table-cell w-[120px]">Remark</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {reportData.length > 0 ? (
-                                reportData.map((row, index) => (
-                                    <TableRow key={index} className="hover:bg-muted/30">
-                                        <TableCell className="text-xs text-muted-foreground">{index + 1}</TableCell>
-                                        <TableCell className="font-mono text-[10px]">{row.memberCode}</TableCell>
-                                        <TableCell className="font-mono text-[10px]">{row.ein}</TableCell>
-                                        <TableCell className="text-[10px] uppercase">{row.rank}</TableCell>
-                                        <TableCell className="font-medium text-xs">{row.name}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs">{row.subscription.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs">{row.arrear.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-bold font-mono text-xs text-primary">{row.totalPayable.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right text-green-600 font-mono text-xs print:hidden">{row.received.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-bold font-mono text-xs print:hidden">{row.balance.toFixed(2)}</TableCell>
-                                        <TableCell className="hidden print:table-cell border-l"></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
+                        <Table>
+                            <TableHeader className="bg-muted/50">
                                 <TableRow>
-                                    <TableCell colSpan={11} className="h-32 text-center text-muted-foreground italic">
-                                        No active members found for the selected criteria and period.
-                                    </TableCell>
+                                    <TableHead className="w-[50px]">Sl. No.</TableHead>
+                                    <TableHead>Mem. Code</TableHead>
+                                    <TableHead>EIN</TableHead>
+                                    <TableHead>Rank</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead className="text-right">Subs</TableHead>
+                                    <TableHead className="text-right">Arrear</TableHead>
+                                    <TableHead className="text-right">Total Payable</TableHead>
+                                    <TableHead className="text-right print:hidden">Recv.</TableHead>
+                                    <TableHead className="text-right print:hidden">Balance</TableHead>
+                                    <TableHead className="hidden print:table-cell w-[120px]">Remark</TableHead>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                        <TableFooter>
-                            <TableRow className="font-bold bg-muted/50">
-                                <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
-                                <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
-                                <TableCell className="text-right font-mono">{totals.arrear.toFixed(2)}</TableCell>
-                                <TableCell className="text-right font-mono text-primary">{totals.totalPayable.toFixed(2)}</TableCell>
-                                <TableCell className="text-right print:hidden font-mono">{totals.received.toFixed(2)}</TableCell>
-                                <TableCell className="text-right print:hidden font-mono">{totals.balance.toFixed(2)}</TableCell>
-                                <TableCell className="hidden print:table-cell"></TableCell>
-                            </TableRow>
-                        </TableFooter>
-                    </Table>
-                </CardContent>
-            </Card>
-        )}
+                            </TableHeader>
+                            <TableBody>
+                                {reportData.length > 0 ? (
+                                    reportData.map((row, index) => (
+                                        <TableRow key={index} className="hover:bg-muted/30">
+                                            <TableCell className="text-xs text-muted-foreground">{index + 1}</TableCell>
+                                            <TableCell className="font-mono text-[10px]">{row.memberCode}</TableCell>
+                                            <TableCell className="font-mono text-[10px]">{row.ein}</TableCell>
+                                            <TableCell className="text-[10px] uppercase">{row.rank}</TableCell>
+                                            <TableCell className="font-medium text-xs">{row.name}</TableCell>
+                                            <TableCell className="text-right font-mono text-xs">{row.subscription.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-mono text-xs">{row.arrear.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-bold font-mono text-xs text-primary">{row.totalPayable.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right text-green-600 font-mono text-xs print:hidden">{row.received.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-bold font-mono text-xs print:hidden">{row.balance.toFixed(2)}</TableCell>
+                                            <TableCell className="hidden print:table-cell border-l"></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={11} className="h-32 text-center text-muted-foreground italic">
+                                            No active members found for the selected criteria and period.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                            <TableFooter>
+                                <TableRow className="font-bold bg-muted/50">
+                                    <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
+                                    <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-mono">{totals.arrear.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right font-mono text-primary">{totals.totalPayable.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right print:hidden font-mono">{totals.received.toFixed(2)}</TableCell>
+                                    <TableCell className="text-right print:hidden font-mono">{totals.balance.toFixed(2)}</TableCell>
+                                    <TableCell className="hidden print:table-cell"></TableCell>
+                                </TableRow>
+                            </TableFooter>
+                        </Table>
+                    </CardContent>
+                </Card>
 
-        {!loading && reportData.length > 0 && (
-            <>
-                <div className="text-right pr-4 font-bold text-lg mt-4">
-                    <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
-                </div>
-                
-                {/* 3 Authority Signatures Grid - RETRIEVED FROM SETTINGS */}
-                {signatures && (
-                    <div className="mt-24 px-4">
-                        <div className="grid grid-cols-3 gap-12">
-                            {/* Signature 1 */}
-                            <div className="text-center space-y-1">
-                                <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
-                                    <p className="font-bold uppercase text-xs">{signatures.sig1?.name || 'Authority 1'}</p>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.designation}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.organization}</p>
-                            </div>
-                            {/* Signature 2 */}
-                            <div className="text-center space-y-1">
-                                <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
-                                    <p className="font-bold uppercase text-xs">{signatures.sig2?.name || 'Authority 2'}</p>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.designation}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.organization}</p>
-                            </div>
-                            {/* Signature 3 */}
-                            <div className="text-center space-y-1">
-                                <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
-                                    <p className="font-bold uppercase text-xs">{signatures.sig3?.name || 'Authority 3'}</p>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.designation}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.organization}</p>
-                            </div>
+                {!loading && reportData.length > 0 && (
+                    <div className="space-y-12">
+                        <div className="text-right pr-4 font-bold text-lg">
+                            <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
                         </div>
+                        
+                        {/* Triple Signature Grid - Forced to single row in print CSS */}
+                        {signatures && (
+                            <div className="mt-20 px-4 print:mt-32">
+                                <div className="grid grid-cols-3 gap-8">
+                                    {/* Signature 1 */}
+                                    <div className="text-center space-y-1">
+                                        <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                            <p className="font-bold uppercase text-xs">{signatures.sig1?.name || ''}</p>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.designation}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.organization}</p>
+                                    </div>
+                                    {/* Signature 2 */}
+                                    <div className="text-center space-y-1">
+                                        <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                            <p className="font-bold uppercase text-xs">{signatures.sig2?.name || ''}</p>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.designation}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.organization}</p>
+                                    </div>
+                                    {/* Signature 3 */}
+                                    <div className="text-center space-y-1">
+                                        <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                            <p className="font-bold uppercase text-xs">{signatures.sig3?.name || ''}</p>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.designation}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.organization}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
-            </>
+            </div>
         )}
     </div>
   );
