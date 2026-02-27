@@ -37,12 +37,12 @@ export default function ReportsPage() {
         </Card>
          <Card>
           <CardHeader>
-            <CardTitle>Payment History (Unit)</CardTitle>
-            <CardDescription>Unit-wise payment history, arrears, and totals for a selected period.</CardDescription>
+            <CardTitle>Member Demand Note</CardTitle>
+            <CardDescription>Unit-wise demand notes, arrears, and totals for a selected period.</CardDescription>
           </CardHeader>
           <CardContent>
              <div className="h-32 flex items-center justify-center bg-muted/50 rounded-md">
-              <p className="text-sm text-center text-muted-foreground">Generates a detailed breakdown of subscriptions, arrears, payments, and balances for all members in a unit.</p>
+              <p className="text-sm text-center text-muted-foreground">Generates a detailed breakdown of subscriptions, arrears, and payable totals for all members in a unit.</p>
             </div>
           </CardContent>
            <CardFooter>

@@ -112,7 +112,6 @@ export default function PaymentHistoryReportPage() {
       const memberPayments = allPayments.filter(p => p.memberId === member.id);
       const subscriptionStartDate = toDate(member.subscriptionStartDate);
 
-      // 1. Calculate Arrears: What was owed minus what was paid BEFORE the selected period
       const monthsUntilPeriodStart = differenceInMonths(reportStartDate, startOfMonth(subscriptionStartDate));
       const totalExpectedBefore = monthsUntilPeriodStart > 0 ? monthsUntilPeriodStart * subscriptionAmount : 0;
 
@@ -122,7 +121,6 @@ export default function PaymentHistoryReportPage() {
 
       const arrear = Math.max(0, totalExpectedBefore - totalReceivedBefore);
 
-      // 2. Subscription for the SELECTED PERIOD
       const memberStart = startOfMonth(subscriptionStartDate);
       const effectiveMonthsInPeriod = eachMonthOfInterval({
           start: reportStartDate,
@@ -131,7 +129,6 @@ export default function PaymentHistoryReportPage() {
       
       const subscription = effectiveMonthsInPeriod * subscriptionAmount;
 
-      // 3. Received during the SELECTED PERIOD
       const receivedThisPeriod = memberPayments
         .filter(p => {
             const pDate = toDate(p.paymentDate);
@@ -208,8 +205,8 @@ export default function PaymentHistoryReportPage() {
         <div className="flex flex-col gap-6 print:hidden">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Member Payment History</h2>
-                    <p className="text-muted-foreground">Select a unit and flexible date range to generate statements.</p>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Member Demand Note</h2>
+                    <p className="text-muted-foreground">Select a unit and flexible date range to generate demand statements.</p>
                 </div>
                 <Button onClick={handlePrint} variant="outline" disabled={loading || reportData.length === 0}>
                     <Printer className="mr-2 h-4 w-4" />
@@ -279,7 +276,7 @@ export default function PaymentHistoryReportPage() {
                 <CardContent className="p-0">
                     <div className="text-center p-8 print:flex hidden flex-col items-center border-b mb-6">
                         <Logo className="w-16 h-16 mb-2" />
-                        <h2 className="text-2xl font-bold uppercase text-primary">Member Payment History Report</h2>
+                        <h2 className="text-2xl font-bold uppercase text-primary">Manipur Police Risk Fund (Demand Note)</h2>
                         <div className="flex gap-4 text-sm font-medium text-muted-foreground mt-1">
                             <span>Period: {reportDateString}</span>
                             <span>Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</span>
