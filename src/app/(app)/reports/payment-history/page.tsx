@@ -345,27 +345,33 @@ export default function PaymentHistoryReportPage() {
                     <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
                 </div>
                 
-                {/* 3 Authority Signatures Grid */}
+                {/* 3 Authority Signatures Grid - RETRIEVED FROM SETTINGS */}
                 {signatures && (
-                    <div className="mt-20 print:block hidden">
-                        <div className="grid grid-cols-3 gap-8">
+                    <div className="mt-24 px-4">
+                        <div className="grid grid-cols-3 gap-12">
                             {/* Signature 1 */}
                             <div className="text-center space-y-1">
-                                <p className="font-bold border-t-2 border-muted pt-2 uppercase text-xs min-h-[40px] flex items-end justify-center">{signatures.sig1?.name}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig1?.designation}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig1?.organization}</p>
+                                <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                    <p className="font-bold uppercase text-xs">{signatures.sig1?.name || 'Authority 1'}</p>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.designation}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.organization}</p>
                             </div>
                             {/* Signature 2 */}
                             <div className="text-center space-y-1">
-                                <p className="font-bold border-t-2 border-muted pt-2 uppercase text-xs min-h-[40px] flex items-end justify-center">{signatures.sig2?.name}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig2?.designation}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig2?.organization}</p>
+                                <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                    <p className="font-bold uppercase text-xs">{signatures.sig2?.name || 'Authority 2'}</p>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.designation}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.organization}</p>
                             </div>
                             {/* Signature 3 */}
                             <div className="text-center space-y-1">
-                                <p className="font-bold border-t-2 border-muted pt-2 uppercase text-xs min-h-[40px] flex items-end justify-center">{signatures.sig3?.name}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig3?.designation}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signatures.sig3?.organization}</p>
+                                <div className="border-t border-black/30 pt-2 min-h-[60px] flex flex-col items-center justify-end">
+                                    <p className="font-bold uppercase text-xs">{signatures.sig3?.name || 'Authority 3'}</p>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.designation}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.organization}</p>
                             </div>
                         </div>
                     </div>
