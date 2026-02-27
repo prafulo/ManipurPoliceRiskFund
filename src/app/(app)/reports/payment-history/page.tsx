@@ -187,29 +187,36 @@ export default function PaymentHistoryReportPage() {
         <style dangerouslySetInnerHTML={{ __html: `
             @media print {
                 @page { size: landscape; margin: 10mm; }
-                body { margin: 0; padding: 0; background: white !important; width: 100% !important; }
-                .print\\:hidden { display: none !important; }
                 
-                /* Reset layout constraints */
-                main, .flex-1, .flex, .grid, .grid-cols-1, .md\\:grid-cols-2 {
+                /* Aggressive hide for layout elements */
+                header, aside, .print\\:hidden, [data-sidebar], .flex-col.gap-6 { 
+                    display: none !important; 
+                }
+
+                body { 
+                    margin: 0 !important; 
+                    padding: 0 !important; 
+                    background: white !important; 
+                    width: 100% !important; 
+                }
+                
+                /* Reset content containers to fill page */
+                main, .flex-1 {
                     display: block !important;
                     width: 100% !important;
-                    max-width: none !important;
                     margin: 0 !important;
                     padding: 0 !important;
                     box-shadow: none !important;
                     border: none !important;
                 }
 
-                header, aside { display: none !important; }
-
-                /* Force table to full width */
                 .rounded-lg, .border, .overflow-hidden, .overflow-x-auto {
                     overflow: visible !important;
                     border: none !important;
                     width: 100% !important;
                 }
 
+                /* Table formatting */
                 table { 
                     width: 100% !important; 
                     border-collapse: collapse !important; 
@@ -218,29 +225,22 @@ export default function PaymentHistoryReportPage() {
 
                 th, td { 
                     border: 1px solid #e2e8f0 !important; 
-                    padding: 8px !important;
+                    padding: 6px !important;
                 }
 
-                /* Ensure table footer (totals) only shows at the bottom of everything */
-                tfoot { display: table-footer-group; }
-                
-                /* Restore the signature grid specifically */
+                /* Signature row forced to 3 columns */
                 .print-signature-grid {
                     display: grid !important;
                     grid-template-columns: repeat(3, 1fr) !important;
                     width: 100% !important;
-                    gap: 30px !important;
-                    margin-top: 60px !important;
+                    gap: 20px !important;
+                    margin-top: 40px !important;
                     border: none !important;
                 }
                 
-                .print-signature-grid div {
-                    border: none !important;
-                }
-
                 .print-signature-line {
                     border-top: 1px solid black !important;
-                    padding-top: 8px !important;
+                    padding-top: 4px !important;
                 }
             }
         `}} />
@@ -313,13 +313,13 @@ export default function PaymentHistoryReportPage() {
 
         {loading ? (
             <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/10">
-                <p className="text-muted-foreground animate-pulse font-medium">Generating report for {selectedUnit === 'all' ? 'All Units' : allUnits.find(u => u.id === selectedUnit)?.name}...</p>
+                <p className="text-muted-foreground animate-pulse font-medium">Generating report...</p>
             </div>
         ) : (
             <div className="space-y-8">
                 <Card className="print:border-none print:shadow-none overflow-hidden">
                     <CardContent className="p-0">
-                        {/* Official Report Header - Visible only in print */}
+                        {/* Official Report Header - Absolute top in print */}
                         <div className="text-center p-8 print:flex hidden flex-col items-center border-b mb-6">
                             <Logo className="w-16 h-16 mb-2" />
                             <h2 className="text-2xl font-bold uppercase text-primary">Manipur Police Risk Fund (Demand Note)</h2>
@@ -328,6 +328,7 @@ export default function PaymentHistoryReportPage() {
                                 <span>Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</span>
                             </div>
                         </div>
+                        
                         <Table>
                             <TableHeader className="bg-muted/50">
                                 <TableRow>
@@ -362,7 +363,7 @@ export default function PaymentHistoryReportPage() {
                                                 <TableCell className="hidden print:table-cell border-l"></TableCell>
                                             </TableRow>
                                         ))}
-                                        {/* Grand Totals Row - Moved into body to prevent repetition on page breaks */}
+                                        {/* Grand Totals Row - Appearing once at the conclusion of TableBody */}
                                         <TableRow className="font-bold bg-muted/50 border-t-2">
                                             <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
                                             <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
