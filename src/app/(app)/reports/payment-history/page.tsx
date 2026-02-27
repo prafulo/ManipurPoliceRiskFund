@@ -16,9 +16,8 @@ import { Button } from '@/components/ui/button';
 import { CalendarIcon, Printer } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, startOfMonth, differenceInMonths, endOfMonth, isWithinInterval, eachMonthOfInterval } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { numberToWords } from '@/lib/utils';
+import { format, startOfMonth, differenceInMonths, endOfMonth, eachMonthOfInterval } from 'date-fns';
+import { cn, numberToWords } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -27,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { DateRange } from 'react-day-picker';
+import { Logo } from '@/components/logo';
 
 interface ReportRow {
   memberCode: string;
@@ -94,7 +94,7 @@ export default function PaymentHistoryReportPage() {
   }, []);
 
   const generateReport = () => {
-    if (!allMembers || !allPayments || !dateRange?.from || !dateRange.to) {
+    if (!allMembers.length || !allUnits.length || !dateRange?.from || !dateRange.to) {
         return;
     }
     setReportLoading(true);
@@ -102,10 +102,6 @@ export default function PaymentHistoryReportPage() {
     const reportStartDate = startOfMonth(dateRange.from);
     const reportEndDate = endOfMonth(dateRange.to);
     
-    // Number of months in the selected period
-    const monthsInRange = differenceInMonths(reportEndDate, reportStartDate) + 1;
-    const periodSubscription = monthsInRange * subscriptionAmount;
-
     const toDate = (timestamp: any): Date => timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
 
     const filteredMembers = selectedUnit === 'all'
@@ -116,19 +112,17 @@ export default function PaymentHistoryReportPage() {
       const memberPayments = allPayments.filter(p => p.memberId === member.id);
       const subscriptionStartDate = toDate(member.subscriptionStartDate);
 
-      // 1. Calculate Expected Subscriptions until the START of the selected period
+      // 1. Calculate Arrears: What was owed minus what was paid BEFORE the selected period
       const monthsUntilPeriodStart = differenceInMonths(reportStartDate, startOfMonth(subscriptionStartDate));
       const totalExpectedBefore = monthsUntilPeriodStart > 0 ? monthsUntilPeriodStart * subscriptionAmount : 0;
 
-      // 2. Calculate Total Received before the start of the period
       const totalReceivedBefore = memberPayments
         .filter(p => toDate(p.paymentDate) < reportStartDate)
         .reduce((sum, p) => sum + p.amount, 0);
 
-      // 3. Arrear is the balance before this period begins
       const arrear = Math.max(0, totalExpectedBefore - totalReceivedBefore);
 
-      // 4. Subscription for this selected period (compact)
+      // 2. Subscription for the SELECTED PERIOD
       const memberStart = startOfMonth(subscriptionStartDate);
       const effectiveMonthsInPeriod = eachMonthOfInterval({
           start: reportStartDate,
@@ -137,7 +131,7 @@ export default function PaymentHistoryReportPage() {
       
       const subscription = effectiveMonthsInPeriod * subscriptionAmount;
 
-      // 5. Received during this period
+      // 3. Received during the SELECTED PERIOD
       const receivedThisPeriod = memberPayments
         .filter(p => {
             const pDate = toDate(p.paymentDate);
@@ -188,97 +182,111 @@ export default function PaymentHistoryReportPage() {
   }
 
   const reportDateString = dateRange?.from && dateRange.to 
-    ? `${format(dateRange.from, 'MMM yyyy')} - ${format(dateRange.to, 'MMM yyyy')}`
+    ? `${format(dateRange.from, 'LLL dd, y')} - ${format(dateRange.to, 'LLL dd, y')}`
     : 'Selected Period';
 
   const loading = !allMembers.length || !allUnits.length || reportLoading;
 
   return (
-    <div>
+    <div className="space-y-6">
         <style dangerouslySetInnerHTML={{ __html: `
             @media print {
                 @page { size: landscape; margin: 10mm; }
                 body { background: white !important; }
+                .print\\:hidden { display: none !important; }
+                main { display: block !important; padding: 0 !important; margin: 0 !important; }
                 div[data-radix-scroll-area-viewport], .overflow-auto {
                     overflow: visible !important;
                     height: auto !important;
                     position: relative !important;
                 }
-                .print\\:hidden { display: none !important; }
-                main { display: block !important; padding: 0 !important; }
                 .grid { display: block !important; }
+                header, aside { display: none !important; }
             }
         `}} />
         
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 print:hidden">
-            <div>
-                <h2 className="text-3xl font-bold tracking-tight font-headline">Member Payment History</h2>
-                <p className="text-muted-foreground">Report for {reportDateString} for unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</p>
-            </div>
-            <div className="flex items-center gap-2">
-                 <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select a unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Units</SelectItem>
-                        {allUnits?.map(unit => (
-                            <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn("w-[280px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateRange?.from ? (
-                            dateRange.to ? (
-                                <>{format(dateRange.from, "LLL yyyy")} - {format(dateRange.to, "LLL yyyy")}</>
-                            ) : (
-                                format(dateRange.from, "LLL yyyy")
-                            )
-                        ) : (
-                            <span>Pick a date range</span>
-                        )}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar
-                            initialFocus
-                            mode="range"
-                            defaultMonth={dateRange?.from}
-                            selected={dateRange}
-                            onSelect={setDateRange}
-                            numberOfMonths={2}
-                        />
-                    </PopoverContent>
-                </Popover>
-                 <Button onClick={generateReport} disabled={reportLoading}>
-                    {reportLoading ? 'Generating...' : 'Generate Report'}
-                 </Button>
-                 <Button onClick={handlePrint} variant="outline">
+        <div className="flex flex-col gap-6 print:hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight font-headline text-primary">Member Payment History</h2>
+                    <p className="text-muted-foreground">Select a unit and flexible date range to generate statements.</p>
+                </div>
+                <Button onClick={handlePrint} variant="outline" disabled={loading || reportData.length === 0}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Print
+                    Print Statement
                 </Button>
             </div>
+
+            <Card className="shadow-sm">
+                <CardContent className="p-6 grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold">1. Select Unit</label>
+                        <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a unit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Units</SelectItem>
+                                {allUnits?.map(unit => (
+                                    <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold">2. Select Period (Flexible)</label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn("w-full justify-start text-left font-normal", !dateRange && "text-muted-foreground")}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {dateRange?.from ? (
+                                        dateRange.to ? (
+                                            <>{format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}</>
+                                        ) : (
+                                            format(dateRange.from, "LLL dd, y")
+                                        )
+                                    ) : (
+                                        <span>Pick a date range</span>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={dateRange?.from}
+                                    selected={dateRange}
+                                    onSelect={setDateRange}
+                                    numberOfMonths={2}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
 
         {loading ? (
             <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/10">
-                <p className="text-muted-foreground animate-pulse">Loading payment records and generating report...</p>
+                <p className="text-muted-foreground animate-pulse font-medium">Generating report for {selectedUnit === 'all' ? 'All Units' : allUnits.find(u => u.id === selectedUnit)?.name}...</p>
             </div>
         ) : (
-            <Card className="print:border-none print:shadow-none">
+            <Card className="print:border-none print:shadow-none overflow-hidden">
                 <CardContent className="p-0">
-                    <div className="text-center p-4 print:block hidden">
-                        <h2 className="text-xl font-bold uppercase">Member Payment History for {reportDateString}</h2>
-                        <h3 className="text-lg">Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</h3>
+                    <div className="text-center p-8 print:flex hidden flex-col items-center border-b mb-6">
+                        <Logo className="w-16 h-16 mb-2" />
+                        <h2 className="text-2xl font-bold uppercase text-primary">Member Payment History Report</h2>
+                        <div className="flex gap-4 text-sm font-medium text-muted-foreground mt-1">
+                            <span>Period: {reportDateString}</span>
+                            <span>Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</span>
+                        </div>
                     </div>
                     <Table>
-                        <TableHeader>
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
                                 <TableHead className="w-[50px]">Sl. No.</TableHead>
                                 <TableHead>Mem. Code</TableHead>
@@ -290,30 +298,30 @@ export default function PaymentHistoryReportPage() {
                                 <TableHead className="text-right">Total Payable</TableHead>
                                 <TableHead className="text-right print:hidden">Recv.</TableHead>
                                 <TableHead className="text-right print:hidden">Balance</TableHead>
-                                <TableHead className="hidden print:table-cell">Remark</TableHead>
+                                <TableHead className="hidden print:table-cell w-[120px]">Remark</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {reportData.length > 0 ? (
                                 reportData.map((row, index) => (
-                                    <TableRow key={index}>
+                                    <TableRow key={index} className="hover:bg-muted/30">
                                         <TableCell className="text-xs text-muted-foreground">{index + 1}</TableCell>
-                                        <TableCell className="font-mono text-xs">{row.memberCode}</TableCell>
-                                        <TableCell className="font-mono text-xs">{row.ein}</TableCell>
-                                        <TableCell className="text-xs">{row.rank}</TableCell>
-                                        <TableCell className="font-medium">{row.name}</TableCell>
-                                        <TableCell className="text-right">{row.subscription.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right">{row.arrear.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-semibold">{row.totalPayable.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right text-green-600 print:hidden">{row.received.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right font-semibold print:hidden">{row.balance.toFixed(2)}</TableCell>
+                                        <TableCell className="font-mono text-[10px]">{row.memberCode}</TableCell>
+                                        <TableCell className="font-mono text-[10px]">{row.ein}</TableCell>
+                                        <TableCell className="text-[10px] uppercase">{row.rank}</TableCell>
+                                        <TableCell className="font-medium text-xs">{row.name}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs">{row.subscription.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs">{row.arrear.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right font-bold font-mono text-xs text-primary">{row.totalPayable.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right text-green-600 font-mono text-xs print:hidden">{row.received.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right font-bold font-mono text-xs print:hidden">{row.balance.toFixed(2)}</TableCell>
                                         <TableCell className="hidden print:table-cell border-l"></TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={11} className="h-32 text-center text-muted-foreground italic">
-                                        No members found for the selected criteria and period.
+                                        No active members found for the selected criteria and period.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -321,11 +329,11 @@ export default function PaymentHistoryReportPage() {
                         <TableFooter>
                             <TableRow className="font-bold bg-muted/50">
                                 <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
-                                <TableCell className="text-right">{totals.subscription.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">{totals.arrear.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">{totals.totalPayable.toFixed(2)}</TableCell>
-                                <TableCell className="text-right print:hidden">{totals.received.toFixed(2)}</TableCell>
-                                <TableCell className="text-right print:hidden">{totals.balance.toFixed(2)}</TableCell>
+                                <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
+                                <TableCell className="text-right font-mono">{totals.arrear.toFixed(2)}</TableCell>
+                                <TableCell className="text-right font-mono text-primary">{totals.totalPayable.toFixed(2)}</TableCell>
+                                <TableCell className="text-right print:hidden font-mono">{totals.received.toFixed(2)}</TableCell>
+                                <TableCell className="text-right print:hidden font-mono">{totals.balance.toFixed(2)}</TableCell>
                                 <TableCell className="hidden print:table-cell"></TableCell>
                             </TableRow>
                         </TableFooter>
@@ -334,17 +342,17 @@ export default function PaymentHistoryReportPage() {
             </Card>
         )}
 
-        {!loading && (
+        {!loading && reportData.length > 0 && (
             <>
-                <div className="mt-4 text-right pr-4 font-semibold print:block hidden">
-                    <p>Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
+                <div className="text-right pr-4 font-bold text-lg mt-4">
+                    <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
                 </div>
                 {signature && (
                     <div className="text-right mt-16 print:block hidden">
                         <div className="inline-block text-center space-y-1 min-w-[250px]">
-                            <p className="font-bold border-t-2 border-muted pt-2 uppercase">{signature.name}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase">{signature.designation}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase">{signature.organization}</p>
+                            <p className="font-bold border-t-2 border-muted pt-2 uppercase text-sm">{signature.name}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signature.designation}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{signature.organization}</p>
                         </div>
                     </div>
                 )}
