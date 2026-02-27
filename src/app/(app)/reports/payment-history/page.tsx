@@ -197,7 +197,7 @@ export default function PaymentHistoryReportPage() {
                     height: auto !important;
                     position: relative !important;
                 }
-                .grid { display: block !important; }
+                .grid-cols-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
                 header, aside { display: none !important; }
             }
         `}} />
