@@ -186,61 +186,89 @@ export default function PaymentHistoryReportPage() {
     <div className="space-y-6">
         <style dangerouslySetInnerHTML={{ __html: `
             @media print {
-                @page { size: landscape; margin: 10mm; }
+                @page { 
+                    size: landscape; 
+                    margin: 10mm; 
+                }
                 
-                /* Aggressive hide for layout elements */
-                header, aside, .print\\:hidden, [data-sidebar], .flex-col.gap-6 { 
+                /* Completely remove all navigation and layout elements */
+                header, aside, nav, footer, .print\\:hidden, 
+                [data-sidebar], [data-mobile], 
+                .flex-col.gap-6 { 
                     display: none !important; 
                 }
 
-                body { 
-                    margin: 0 !important; 
-                    padding: 0 !important; 
-                    background: white !important; 
-                    width: 100% !important; 
-                }
-                
-                /* Reset content containers to fill page */
-                main, .flex-1 {
-                    display: block !important;
+                /* Force full width for main content and all wrappers */
+                body, html, main, .flex-1, #__next, .grid, .flex, div {
                     width: 100% !important;
+                    max-width: none !important;
                     margin: 0 !important;
                     padding: 0 !important;
                     box-shadow: none !important;
                     border: none !important;
-                }
-
-                .rounded-lg, .border, .overflow-hidden, .overflow-x-auto {
                     overflow: visible !important;
-                    border: none !important;
-                    width: 100% !important;
                 }
 
-                /* Table formatting */
+                /* Ensure card and content containers fill the width */
+                .rounded-lg, .border, .shadow-sm, .overflow-hidden, .overflow-x-auto, .Card, .CardContent {
+                    width: 100% !important;
+                    max-width: none !important;
+                    display: block !important;
+                    border: none !important;
+                }
+
+                /* Professional Official Header */
+                .official-print-header {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 100% !important;
+                    margin-bottom: 30px !important;
+                    text-align: center !important;
+                }
+
+                /* Table Reset for full width */
                 table { 
                     width: 100% !important; 
                     border-collapse: collapse !important; 
                     table-layout: auto !important;
+                    margin: 0 !important;
                 }
 
                 th, td { 
-                    border: 1px solid #e2e8f0 !important; 
-                    padding: 6px !important;
+                    border: 1px solid #000 !important; 
+                    padding: 8px 4px !important;
+                    font-size: 9pt !important;
                 }
 
-                /* Signature row forced to 3 columns */
+                th {
+                    background-color: #f8fafc !important;
+                    -webkit-print-color-adjust: exact;
+                }
+
+                /* Triple Signature Section */
                 .print-signature-grid {
                     display: grid !important;
                     grid-template-columns: repeat(3, 1fr) !important;
                     width: 100% !important;
-                    gap: 20px !important;
-                    margin-top: 40px !important;
+                    gap: 30px !important;
+                    margin-top: 60px !important;
                     border: none !important;
                 }
                 
                 .print-signature-line {
-                    border-top: 1px solid black !important;
-                    padding-top: 4px !important;
+                    border-top: 1.5px solid black !important;
+                    padding-top: 6px !important;
+                    width: 80% !important;
+                    margin: 0 auto !important;
+                }
+
+                /* Total line styling */
+                .grand-total-row {
+                    font-weight: bold !important;
+                    background-color: #f1f5f9 !important;
+                    -webkit-print-color-adjust: exact;
                 }
             }
         `}} />
@@ -316,20 +344,20 @@ export default function PaymentHistoryReportPage() {
                 <p className="text-muted-foreground animate-pulse font-medium">Generating report...</p>
             </div>
         ) : (
-            <div className="space-y-8">
-                <Card className="print:border-none print:shadow-none overflow-hidden">
-                    <CardContent className="p-0">
+            <div className="space-y-8 w-full">
+                <Card className="print:border-none print:shadow-none overflow-hidden w-full">
+                    <CardContent className="p-0 w-full">
                         {/* Official Report Header - Absolute top in print */}
-                        <div className="text-center p-8 print:flex hidden flex-col items-center border-b mb-6">
-                            <Logo className="w-16 h-16 mb-2" />
+                        <div className="official-print-header hidden print:flex">
+                            <Logo className="w-20 h-20 mb-3" />
                             <h2 className="text-2xl font-bold uppercase text-primary">Manipur Police Risk Fund (Demand Note)</h2>
-                            <div className="flex gap-4 text-sm font-medium text-muted-foreground mt-1">
+                            <div className="flex gap-6 text-sm font-bold text-muted-foreground mt-2">
                                 <span>Period: {reportDateString}</span>
                                 <span>Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</span>
                             </div>
                         </div>
                         
-                        <Table>
+                        <Table className="w-full">
                             <TableHeader className="bg-muted/50">
                                 <TableRow>
                                     <TableHead className="w-[50px]">Sl. No.</TableHead>
@@ -364,7 +392,7 @@ export default function PaymentHistoryReportPage() {
                                             </TableRow>
                                         ))}
                                         {/* Grand Totals Row - Appearing once at the conclusion of TableBody */}
-                                        <TableRow className="font-bold bg-muted/50 border-t-2">
+                                        <TableRow className="font-bold bg-muted/50 border-t-2 grand-total-row">
                                             <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
                                             <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
                                             <TableCell className="text-right font-mono">{totals.arrear.toFixed(2)}</TableCell>
@@ -387,37 +415,37 @@ export default function PaymentHistoryReportPage() {
                 </Card>
 
                 {!loading && reportData.length > 0 && (
-                    <div className="space-y-12">
-                        <div className="text-right pr-4 font-bold text-lg">
+                    <div className="space-y-12 w-full">
+                        <div className="text-right pr-4 font-bold text-lg w-full">
                             <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
                         </div>
                         
                         {signatures && (
-                            <div className="mt-20 px-4 print:mt-32">
+                            <div className="mt-20 px-4 print:mt-32 w-full">
                                 <div className="grid grid-cols-3 gap-8 print-signature-grid">
                                     {/* Signature 1 */}
                                     <div className="text-center space-y-1">
                                         <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig1?.name || ''}</p>
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.designation}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig1?.organization}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig1?.designation}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig1?.organization}</p>
                                     </div>
                                     {/* Signature 2 */}
                                     <div className="text-center space-y-1">
                                         <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig2?.name || ''}</p>
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.designation}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig2?.organization}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig2?.designation}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig2?.organization}</p>
                                     </div>
                                     {/* Signature 3 */}
                                     <div className="text-center space-y-1">
                                         <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig3?.name || ''}</p>
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.designation}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-medium">{signatures.sig3?.organization}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig3?.designation}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig3?.organization}</p>
                                     </div>
                                 </div>
                             </div>
