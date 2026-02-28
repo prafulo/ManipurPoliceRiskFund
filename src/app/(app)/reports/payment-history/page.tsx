@@ -188,18 +188,19 @@ export default function PaymentHistoryReportPage() {
             @media print {
                 @page { 
                     size: landscape; 
-                    margin: 10mm; 
+                    margin: 5mm; 
                 }
                 
                 /* Completely remove all navigation and layout elements */
                 header, aside, nav, footer, .print\\:hidden, 
                 [data-sidebar], [data-mobile], 
-                .flex-col.gap-6 { 
+                .flex-col.gap-6, .mb-6 { 
                     display: none !important; 
                 }
 
-                /* Force full width for main content and all wrappers */
-                body, html, main, .flex-1, #__next, .grid, .flex, div {
+                /* Force 100% width on all potential containers */
+                body, html, main, .flex-1, #__next, .grid, .flex, div, 
+                .container, .mx-auto, [class*="max-w-"] {
                     width: 100% !important;
                     max-width: none !important;
                     margin: 0 !important;
@@ -207,14 +208,7 @@ export default function PaymentHistoryReportPage() {
                     box-shadow: none !important;
                     border: none !important;
                     overflow: visible !important;
-                }
-
-                /* Ensure card and content containers fill the width */
-                .rounded-lg, .border, .shadow-sm, .overflow-hidden, .overflow-x-auto, .Card, .CardContent {
-                    width: 100% !important;
-                    max-width: none !important;
                     display: block !important;
-                    border: none !important;
                 }
 
                 /* Professional Official Header */
@@ -224,8 +218,9 @@ export default function PaymentHistoryReportPage() {
                     align-items: center !important;
                     justify-content: center !important;
                     width: 100% !important;
-                    margin-bottom: 30px !important;
+                    margin-bottom: 20px !important;
                     text-align: center !important;
+                    padding-top: 10px !important;
                 }
 
                 /* Table Reset for full width */
@@ -238,8 +233,8 @@ export default function PaymentHistoryReportPage() {
 
                 th, td { 
                     border: 1px solid #000 !important; 
-                    padding: 8px 4px !important;
-                    font-size: 9pt !important;
+                    padding: 6px 4px !important;
+                    font-size: 8.5pt !important;
                 }
 
                 th {
@@ -252,15 +247,15 @@ export default function PaymentHistoryReportPage() {
                     display: grid !important;
                     grid-template-columns: repeat(3, 1fr) !important;
                     width: 100% !important;
-                    gap: 30px !important;
-                    margin-top: 60px !important;
+                    gap: 20px !important;
+                    margin-top: 40px !important;
                     border: none !important;
                 }
                 
                 .print-signature-line {
                     border-top: 1.5px solid black !important;
-                    padding-top: 6px !important;
-                    width: 80% !important;
+                    padding-top: 4px !important;
+                    width: 85% !important;
                     margin: 0 auto !important;
                 }
 
@@ -349,9 +344,9 @@ export default function PaymentHistoryReportPage() {
                     <CardContent className="p-0 w-full">
                         {/* Official Report Header - Absolute top in print */}
                         <div className="official-print-header hidden print:flex">
-                            <Logo className="w-20 h-20 mb-3" />
+                            <Logo className="w-20 h-20 mb-2" />
                             <h2 className="text-2xl font-bold uppercase text-primary">Manipur Police Risk Fund (Demand Note)</h2>
-                            <div className="flex gap-6 text-sm font-bold text-muted-foreground mt-2">
+                            <div className="flex gap-6 text-sm font-bold text-muted-foreground mt-1">
                                 <span>Period: {reportDateString}</span>
                                 <span>Unit: {allUnits?.find(u => u.id === selectedUnit)?.name || 'All Units'}</span>
                             </div>
@@ -421,31 +416,31 @@ export default function PaymentHistoryReportPage() {
                         </div>
                         
                         {signatures && (
-                            <div className="mt-20 px-4 print:mt-32 w-full">
+                            <div className="mt-16 px-4 w-full">
                                 <div className="grid grid-cols-3 gap-8 print-signature-grid">
                                     {/* Signature 1 */}
                                     <div className="text-center space-y-1">
-                                        <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
+                                        <div className="print-signature-line min-h-[50px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig1?.name || ''}</p>
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig1?.designation}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig1?.organization}</p>
+                                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{signatures.sig1?.designation}</p>
+                                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{signatures.sig1?.organization}</p>
                                     </div>
                                     {/* Signature 2 */}
                                     <div className="text-center space-y-1">
-                                        <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
+                                        <div className="print-signature-line min-h-[50px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig2?.name || ''}</p>
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig2?.designation}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig2?.organization}</p>
+                                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{signatures.sig2?.designation}</p>
+                                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{signatures.sig2?.organization}</p>
                                     </div>
                                     {/* Signature 3 */}
                                     <div className="text-center space-y-1">
-                                        <div className="print-signature-line min-h-[60px] flex flex-col items-center justify-end">
+                                        <div className="print-signature-line min-h-[50px] flex flex-col items-center justify-end">
                                             <p className="font-bold uppercase text-xs">{signatures.sig3?.name || ''}</p>
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig3?.designation}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{signatures.sig3?.organization}</p>
+                                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{signatures.sig3?.designation}</p>
+                                        <p className="text-[9px] text-muted-foreground uppercase font-bold">{signatures.sig3?.organization}</p>
                                     </div>
                                 </div>
                             </div>
