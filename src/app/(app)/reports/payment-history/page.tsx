@@ -188,13 +188,13 @@ export default function PaymentHistoryReportPage() {
             @media print {
                 @page { 
                     size: landscape; 
-                    margin: 5mm; 
+                    margin: 10mm; 
                 }
                 
-                /* Completely remove all navigation and layout elements */
+                /* Strictly hide all layout, navigation, and profile elements */
                 header, aside, nav, footer, .print\\:hidden, 
                 [data-sidebar], [data-mobile], 
-                .flex-col.gap-6, .mb-6 { 
+                .flex-col.gap-6, .mb-6, [role="menu"], [role="menubar"] { 
                     display: none !important; 
                 }
 
@@ -211,59 +211,57 @@ export default function PaymentHistoryReportPage() {
                     display: block !important;
                 }
 
-                /* Professional Official Header */
+                /* Official Header Setup */
                 .official-print-header {
                     display: flex !important;
                     flex-direction: column !important;
                     align-items: center !important;
                     justify-content: center !important;
                     width: 100% !important;
-                    margin-bottom: 20px !important;
+                    margin-bottom: 30px !important;
                     text-align: center !important;
-                    padding-top: 10px !important;
                 }
 
-                /* Table Reset for full width */
+                /* Borderless Table Reset */
                 table { 
                     width: 100% !important; 
                     border-collapse: collapse !important; 
-                    table-layout: auto !important;
+                    border: none !important;
                     margin: 0 !important;
                 }
 
                 th, td { 
-                    border: 1px solid #000 !important; 
-                    padding: 6px 4px !important;
-                    font-size: 8.5pt !important;
+                    border: none !important; 
+                    padding: 8px 4px !important;
+                    font-size: 9pt !important;
+                    text-align: left;
                 }
 
                 th {
-                    background-color: #f8fafc !important;
-                    -webkit-print-color-adjust: exact;
+                    font-weight: bold !important;
+                    color: #000 !important;
                 }
 
-                /* Triple Signature Section */
+                /* Triple Signature Section in Single Row */
                 .print-signature-grid {
                     display: grid !important;
                     grid-template-columns: repeat(3, 1fr) !important;
                     width: 100% !important;
-                    gap: 20px !important;
-                    margin-top: 40px !important;
+                    gap: 40px !important;
+                    margin-top: 60px !important;
                     border: none !important;
                 }
                 
                 .print-signature-line {
-                    border-top: 1.5px solid black !important;
-                    padding-top: 4px !important;
-                    width: 85% !important;
+                    border-top: 1px solid black !important;
+                    padding-top: 5px !important;
+                    width: 80% !important;
                     margin: 0 auto !important;
                 }
 
-                /* Total line styling */
                 .grand-total-row {
                     font-weight: bold !important;
-                    background-color: #f1f5f9 !important;
-                    -webkit-print-color-adjust: exact;
+                    border-top: 1.5px solid #000 !important;
                 }
             }
         `}} />
@@ -352,54 +350,54 @@ export default function PaymentHistoryReportPage() {
                             </div>
                         </div>
                         
-                        <Table className="w-full">
-                            <TableHeader className="bg-muted/50">
-                                <TableRow>
-                                    <TableHead className="w-[50px]">Sl. No.</TableHead>
-                                    <TableHead>Mem. Code</TableHead>
-                                    <TableHead>EIN</TableHead>
-                                    <TableHead>Rank</TableHead>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead className="text-right">Subs</TableHead>
-                                    <TableHead className="text-right">Arrear</TableHead>
-                                    <TableHead className="text-right">Total Payable</TableHead>
-                                    <TableHead className="text-right print:hidden">Recv.</TableHead>
-                                    <TableHead className="text-right print:hidden">Balance</TableHead>
-                                    <TableHead className="hidden print:table-cell w-[120px]">Remark</TableHead>
+                        <Table className="w-full border-none">
+                            <TableHeader className="bg-muted/50 print:bg-transparent">
+                                <TableRow className="border-none">
+                                    <TableHead className="w-[50px] border-none">Sl. No.</TableHead>
+                                    <TableHead className="border-none">Mem. Code</TableHead>
+                                    <TableHead className="border-none">EIN</TableHead>
+                                    <TableHead className="border-none">Rank</TableHead>
+                                    <TableHead className="border-none">Name</TableHead>
+                                    <TableHead className="text-right border-none">Subs</TableHead>
+                                    <TableHead className="text-right border-none">Arrear</TableHead>
+                                    <TableHead className="text-right border-none">Total Payable</TableHead>
+                                    <TableHead className="text-right print:hidden border-none">Recv.</TableHead>
+                                    <TableHead className="text-right print:hidden border-none">Balance</TableHead>
+                                    <TableHead className="hidden print:table-cell w-[120px] border-none">Remark</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
+                            <TableBody className="border-none">
                                 {reportData.length > 0 ? (
                                     <>
                                         {reportData.map((row, index) => (
-                                            <TableRow key={index} className="hover:bg-muted/30">
-                                                <TableCell className="text-xs text-muted-foreground">{index + 1}</TableCell>
-                                                <TableCell className="font-mono text-[10px]">{row.memberCode}</TableCell>
-                                                <TableCell className="font-mono text-[10px]">{row.ein}</TableCell>
-                                                <TableCell className="text-[10px] uppercase">{row.rank}</TableCell>
-                                                <TableCell className="font-medium text-xs">{row.name}</TableCell>
-                                                <TableCell className="text-right font-mono text-xs">{row.subscription.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right font-mono text-xs">{row.arrear.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right font-bold font-mono text-xs text-primary">{row.totalPayable.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right text-green-600 font-mono text-xs print:hidden">{row.received.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right font-bold font-mono text-xs print:hidden">{row.balance.toFixed(2)}</TableCell>
-                                                <TableCell className="hidden print:table-cell border-l"></TableCell>
+                                            <TableRow key={index} className="hover:bg-muted/30 border-none">
+                                                <TableCell className="text-xs text-muted-foreground border-none">{index + 1}</TableCell>
+                                                <TableCell className="font-mono text-[10px] border-none">{row.memberCode}</TableCell>
+                                                <TableCell className="font-mono text-[10px] border-none">{row.ein}</TableCell>
+                                                <TableCell className="text-[10px] uppercase border-none">{row.rank}</TableCell>
+                                                <TableCell className="font-medium text-xs border-none">{row.name}</TableCell>
+                                                <TableCell className="text-right font-mono text-xs border-none">{row.subscription.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-mono text-xs border-none">{row.arrear.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-bold font-mono text-xs text-primary print:text-black border-none">{row.totalPayable.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right text-green-600 font-mono text-xs print:hidden border-none">{row.received.toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-bold font-mono text-xs print:hidden border-none">{row.balance.toFixed(2)}</TableCell>
+                                                <TableCell className="hidden print:table-cell border-none"></TableCell>
                                             </TableRow>
                                         ))}
-                                        {/* Grand Totals Row - Appearing once at the conclusion of TableBody */}
-                                        <TableRow className="font-bold bg-muted/50 border-t-2 grand-total-row">
-                                            <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest">Grand Totals</TableCell>
-                                            <TableCell className="text-right font-mono">{totals.subscription.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right font-mono">{totals.arrear.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right font-mono text-primary">{totals.totalPayable.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right print:hidden font-mono">{totals.received.toFixed(2)}</TableCell>
-                                            <TableCell className="text-right print:hidden font-mono">{totals.balance.toFixed(2)}</TableCell>
-                                            <TableCell className="hidden print:table-cell"></TableCell>
+                                        {/* Grand Totals Row */}
+                                        <TableRow className="font-bold bg-muted/50 print:bg-transparent border-t-2 border-black grand-total-row">
+                                            <TableCell colSpan={5} className="text-right uppercase text-[10px] tracking-widest border-none">Grand Totals</TableCell>
+                                            <TableCell className="text-right font-mono border-none">{totals.subscription.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-mono border-none">{totals.arrear.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-mono border-none">{totals.totalPayable.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right print:hidden font-mono border-none">{totals.received.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right print:hidden font-mono border-none">{totals.balance.toFixed(2)}</TableCell>
+                                            <TableCell className="hidden print:table-cell border-none"></TableCell>
                                         </TableRow>
                                     </>
                                 ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={11} className="h-32 text-center text-muted-foreground italic">
+                                    <TableRow className="border-none">
+                                        <TableCell colSpan={11} className="h-32 text-center text-muted-foreground italic border-none">
                                             No active members found for the selected criteria and period.
                                         </TableCell>
                                     </TableRow>
@@ -412,7 +410,7 @@ export default function PaymentHistoryReportPage() {
                 {!loading && reportData.length > 0 && (
                     <div className="space-y-12 w-full">
                         <div className="text-right pr-4 font-bold text-lg w-full">
-                            <p className="border-t-2 inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
+                            <p className="border-t-2 border-black inline-block pt-2">Rs. {totals.totalPayable.toFixed(2)} (Rupees {numberToWords(Math.round(totals.totalPayable))}) only.</p>
                         </div>
                         
                         {signatures && (
